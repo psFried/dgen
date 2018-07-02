@@ -1,5 +1,6 @@
 use super::{Formatter, StringWriter};
 
+use std::fmt::Display;
 use std::io::{self, Error};
 
 
@@ -62,6 +63,13 @@ impl <W: StringWriter> Formatter for CsvFormatter<W> {
 
     fn write_file_end(&mut self) -> Result<(), Error> {
         self.sink.flush()
+    }
+
+    fn write_value(&mut self, value: &Display) -> Result<(), Error> {
+        let CsvFormatter {ref mut sink, ref quote_character, ..} = *self;
+        write_str(sink, quote_character.as_str())?;
+        sink.write_value(value)?;
+        write_str(sink, quote_character.as_str())
     }
 
     fn write_str(&mut self, value: &str) -> Result<(), Error> {

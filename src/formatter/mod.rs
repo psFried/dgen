@@ -1,6 +1,7 @@
 mod csv;
 
 use std::io::{self, Write};
+use std::fmt::Display;
 
 pub trait Formatter {
 
@@ -14,6 +15,8 @@ pub trait Formatter {
     fn write_row_end(&mut self) -> io::Result<()>;
     fn write_file_end(&mut self) -> io::Result<()>;
 
+    fn write_value(&mut self, value: &Display) -> io::Result<()>;
+
     fn write_str(&mut self, value: &str) -> io::Result<()>;
 
     fn write_null(&mut self) -> io::Result<()>;
@@ -22,6 +25,7 @@ pub trait Formatter {
 
 
 pub trait StringWriter {
+    fn write_value(&mut self, value: &Display) -> io::Result<()>;
     fn write_str(&mut self, value: &str) -> io::Result<()>;
 
     fn flush(&mut self) -> io::Result<()>;
@@ -29,6 +33,13 @@ pub trait StringWriter {
 
 // TODO: replace this basic blanket impl with something that allows for different encodings
 impl <W: Write> StringWriter for W {
+    fn write_value(&mut self, value: &Display) -> io::Result<()> {
+        write!(self, "{}", value).map_err(|fmt| {
+            io::Error::new(io::ErrorKind::Other, "FormatError")
+        })
+    }
+
+
     fn write_str(&mut self, value: &str) -> io::Result<()> {
         self.write_all(value.as_bytes())
     }

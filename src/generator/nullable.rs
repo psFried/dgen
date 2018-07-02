@@ -1,17 +1,14 @@
-use super::ColumnGenerator;
+use super::{Generator, DataGenRng};
 use rand::Rng;
-use std::fmt::Display;
-use std::io;
-use std::marker::PhantomData;
-use formatter::Formatter;
+use std::fmt::{self, Display};
 
-pub struct NullableGenerator<S: ColumnGenerator> {
-    wrapped_generator: S,
-    null_frequency: f64,
+pub struct NullableGenerator<T: Display> {
+    wrapped_generator: Box<Generator<Output=T>>,
+    null_frequency: Box<Generator<Output=f64>>,
 }
 
-impl <S: ColumnGenerator> NullableGenerator<S> {
-    pub fn new(wrapped_generator: S, null_frequency: f64) -> NullableGenerator<S> {
+impl <T: Display> NullableGenerator<T> {
+    pub fn new(wrapped_generator: Box<Generator<Output=T>>, null_frequency: Box<Generator<Output=f64>>) -> NullableGenerator<T> {
         NullableGenerator {
             wrapped_generator,
             null_frequency,
@@ -19,13 +16,26 @@ impl <S: ColumnGenerator> NullableGenerator<S> {
     }
 }
 
+impl <T: Display> Generator for NullableGenerator<T> {
+    type Output = T;
 
-impl <S: ColumnGenerator> ColumnGenerator for NullableGenerator<S> {
-    fn gen_value<R: Rng, F: Formatter>(&mut self, rng: &mut R, formatter: &mut F) -> io::Result<()> {
-        if rng.gen_bool(self.null_frequency) {
-            formatter.write_null()
+    fn gen_value(&mut self, rng: &mut DataGenRng) -> Option<&T> {
+        let NullableGenerator {ref mut wrapped_generator, ref mut null_frequency} = *self;
+        let frequency = null_frequency.gen_value(rng);
+        let gen_null = rng.gen_bool(frequency.cloned().unwrap_or(100.0));
+        if gen_null {
+            None
         } else {
-            self.wrapped_generator.gen_value(rng, formatter)
+            wrapped_generator.gen_value(rng)
         }
     }
 }
+
+impl <T: Display> Display for NullableGenerator<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let NullableGenerator {ref wrapped_generator, ref null_frequency} = *self;
+
+        write!(f, "nullable({}, {})", wrapped_generator, null_frequency)
+    }
+}
+

@@ -1,56 +1,96 @@
-use super::ColumnGenerator;
+use super::{Generator, GeneratorArg, GeneratorType, DataGenRng, InvalidGeneratorArguments, DynUnsignedIntGenerator, DynCharGenerator};
 use rand::prelude::{Rng, Distribution};
 use rand::distributions::Alphanumeric;
-use formatter::Formatter;
-use std::io;
 use std::marker::PhantomData;
+use std::fmt::{self, Display};
 
-pub trait StringType {
-    fn gen_char<R: Rng>(rng: &mut R) -> char;
+
+pub struct AsciiChar(char);
+
+impl AsciiChar {
+    pub fn new() -> AsciiChar {
+        AsciiChar('x') // initial char doesn't matter, as it's just a tiny buffer that gets reused
+    }
 }
 
-pub struct Ascii;
-impl StringType for Ascii {
-    fn gen_char<R: Rng>(rng: &mut R) -> char {
-        rng.sample(Alphanumeric)
+impl Generator for AsciiChar {
+    type Output = char;
+
+    fn gen_value(&mut self, rng: &mut DataGenRng) -> Option<&char> {
+        self.0 = rng.sample(Alphanumeric);
+        Some(&self.0)
     }
 }
 
 
-pub struct StringGenerator<T: StringType> {
-    min_length: usize,
-    max_length: usize,
+impl Display for AsciiChar {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("ascii()")
+    }
+}
+
+
+pub fn char_generator(name: &str) -> Option<Box<Generator<Output=char>>> {
+    match name {
+        "ascii" => Some(Box::new(AsciiChar::new())),
+        _ => None
+    }
+}
+
+pub struct StringGenerator {
+    char_gen: Box<Generator<Output=char>>,
+    length_gen: Box<Generator<Output=u64>>,
     buffer: String,
-    _phantom_data: PhantomData<T>,
 }
 
+const INVALID_STRING_ARGS: &'static str = "Invalid arguments for string generator, expected ([UnsignedInt], [Char])";
 
+impl StringGenerator {
+    pub fn create(mut args: Vec<GeneratorArg>) -> Result<StringGenerator, InvalidGeneratorArguments> {
+        let num_args = args.len();
+        if num_args > 2 {
+            return Err(InvalidGeneratorArguments::new(INVALID_STRING_ARGS, args));
+        }
 
-impl <T: StringType> StringGenerator<T> {
-    pub fn new<S: StringType>(min_length: usize, max_length: usize) -> StringGenerator<S> {
+        unimplemented!();
+    }
+
+    pub fn new(length_gen: DynUnsignedIntGenerator, char_gen: DynCharGenerator) -> StringGenerator {
         StringGenerator {
-            min_length,
-            max_length,
-            buffer: String::with_capacity(max_length),
-            _phantom_data: PhantomData,
+            char_gen,
+            length_gen,
+            buffer: String::with_capacity(16)
         }
     }
 }
 
-impl <T: StringType> ColumnGenerator for StringGenerator<T> {
-    fn gen_value<R: Rng, F: Formatter>(&mut self, rng: &mut R, formatter: &mut F) -> io::Result<()> {
-        let target_len = rng.gen_range(self.min_length, self.max_length);
+fn default_charset() -> Box<Generator<Output=char>> {
+    Box::new(AsciiChar::new())
+}
 
-        while self.buffer.len() < target_len {
-            let next_char = T::gen_char(rng);
-            if (next_char.len_utf8() + self.buffer.len()) <= self.max_length {
-                self.buffer.push(next_char);
-            }
-            if self.buffer.len() >= target_len {
-                break;
-            }
+fn default_string_length_generator() -> Box<Generator<Output=u64>> {
+    // TODO: replace the default with a range
+    Box::new(::generator::constant::ConstantGenerator::new(Some(16)))
+}
+
+impl Generator for StringGenerator {
+    type Output = String;
+
+    fn gen_value(&mut self, rng: &mut DataGenRng) -> Option<&String> {
+        self.buffer.clear();
+        let remaining_chars = self.length_gen.gen_value(rng).cloned().unwrap_or(16);
+
+        for _ in 0..remaining_chars {
+            let next_char = self.char_gen.gen_value(rng).cloned().unwrap_or('x');
+            self.buffer.push(next_char);
         }
+        Some(&self.buffer)
+    }
+}
 
-        formatter.write_str(self.buffer.as_str())
+
+impl Display for StringGenerator {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "string({}, {})", self.length_gen, self.char_gen)
     }
 }
