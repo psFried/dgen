@@ -2,6 +2,7 @@ pub mod nullable;
 pub mod string;
 pub mod one_of;
 pub mod constant;
+pub mod uint;
 
 use std::fmt::{self, Display};
 

@@ -1,4 +1,5 @@
 mod ascii_string;
+mod unsigned_int;
 
 use generator::{GeneratorType, GeneratorArg};
 
@@ -14,7 +15,11 @@ pub trait FunctionCreator: Send + Sync + 'static {
 pub static ALL_FUNCTIONS: &[&FunctionCreator] = &[
     &self::ascii_string::AlphaNumeric as &FunctionCreator,
     &self::ascii_string::RandomAsciiString0 as &FunctionCreator,
-    &self::ascii_string::RandomAsciiString1 as &FunctionCreator
+    &self::ascii_string::RandomAsciiString1 as &FunctionCreator,
+
+    &self::unsigned_int::UnsignedInt0 as &FunctionCreator,
+    &self::unsigned_int::UnsignedInt1 as &FunctionCreator,
+    &self::unsigned_int::UnsignedInt2 as &FunctionCreator,
 ];
 
 
