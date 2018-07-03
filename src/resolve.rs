@@ -67,7 +67,7 @@ impl <'a> FunctionMatch<'a> {
         for i in 0..expected_arg_count {
             let expected_type = expected_args[i];
             if actual_args[i] != expected_type {
-                if expected_type == GeneratorType::Any {
+                if expected_type == GeneratorType::String {
                     num_coerced += 1;
                 } else {
                     // argument type does not match
@@ -87,7 +87,7 @@ impl <'a> FunctionMatch<'a> {
             }
             let expected_arg_type = expected_args[expected_arg_count - 1];
             if actual_args[i] != expected_arg_type {
-                if expected_arg_type == GeneratorType::Any {
+                if expected_arg_type == GeneratorType::String {
                     if !variadic_conversion_done {
                         num_coerced += 1;
                         variadic_conversion_done = true;

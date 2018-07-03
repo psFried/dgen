@@ -13,7 +13,6 @@ pub type DynDecimalGenerator = Box<Generator<Output=f64>>;
 pub type DynUnsignedIntGenerator = Box<Generator<Output=u64>>;
 pub type DynSignedIntGenerator = Box<Generator<Output=i64>>;
 pub type DynStringGenerator = Box<Generator<Output=String>>;
-pub type DynAnyGenerator = Box<Generator<Output=Box<Display>>>;
 
 pub enum GeneratorArg {
     Char(DynCharGenerator),
@@ -21,7 +20,6 @@ pub enum GeneratorArg {
     UnsignedInt(DynUnsignedIntGenerator),
     SignedInt(DynSignedIntGenerator),
     String(DynStringGenerator),
-    Any(DynAnyGenerator),
 }
 
 impl GeneratorArg {
@@ -32,7 +30,6 @@ impl GeneratorArg {
             GeneratorArg::UnsignedInt(_) => GeneratorType::UnsignedInt,
             GeneratorArg::SignedInt(_) => GeneratorType::SignedInt,
             GeneratorArg::String(_) => GeneratorType::String,
-            GeneratorArg::Any(_) => GeneratorType::Any,
         }
     }
 
@@ -42,21 +39,28 @@ impl GeneratorArg {
             _ => None
         }
     }
+
+    pub fn as_string(self) -> DynStringGenerator {
+        match self {
+            GeneratorArg::Char(gen) => WrappedAnyGen::new(gen),
+            GeneratorArg::Decimal(gen) => WrappedAnyGen::new(gen),
+            GeneratorArg::UnsignedInt(gen) => WrappedAnyGen::new(gen),
+            GeneratorArg::SignedInt(gen) => WrappedAnyGen::new(gen),
+            GeneratorArg::String(gen) => gen,
+        }
+    }
     
     pub fn gen_displayable(&mut self, rng: &mut DataGenRng) -> Option<&Display> {
         match self {
-            GeneratorArg::Char(ref mut gen) => gen.gen_value(rng).map(|v| v as &Display),
-            GeneratorArg::Decimal(ref mut gen) => gen.gen_value(rng).map(|v| v as &Display),
+            GeneratorArg::Char(gen) => gen.gen_value(rng).map(|v| v as &Display),
+            GeneratorArg::Decimal(gen) => gen.gen_value(rng).map(|v| v as &Display),
             GeneratorArg::UnsignedInt(gen) => gen.gen_value(rng).map(|v| v as &Display),
             GeneratorArg::SignedInt(gen) => gen.gen_value(rng).map(|v| v as &Display),
             GeneratorArg::String(gen) => gen.gen_value(rng).map(|v| v as &Display),
-            GeneratorArg::Any(gen) => gen.gen_value(rng).map(|v| v as &Display),
         }
     }
 
 }
-
-
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum GeneratorType {
@@ -65,7 +69,6 @@ pub enum GeneratorType {
     Decimal,
     Char,
     String,
-    Any,
 }
 
 impl Display for GeneratorType {
@@ -76,7 +79,6 @@ impl Display for GeneratorType {
             GeneratorType::UnsignedInt => "UnsignedInt",
             GeneratorType::SignedInt => "SignedInt",
             GeneratorType::String => "String",
-            GeneratorType::Any => "Any",
         };
         f.write_str(stringy)
     }
@@ -101,9 +103,6 @@ impl Display for GeneratorArg {
             GeneratorArg::String(ref gen) => {
                 write!(f, "{}: {}", gen, description)
             },
-            GeneratorArg::Any(ref gen) => {
-                write!(f, "{}: {}", gen, description)
-            },
         }
     }
 }
@@ -126,3 +125,38 @@ impl <G> BoxedGen for G where G: Generator, G::Output: Display + 'static {
     }
 }
 
+pub struct WrappedAnyGen<T: Display> {
+    wrapped: Box<Generator<Output=T>>,
+    buf: String,
+}
+
+impl <T: Display + 'static> WrappedAnyGen<T> {
+    pub fn new(gen: Box<Generator<Output=T>>) -> DynStringGenerator {
+        Box::new(WrappedAnyGen {
+            wrapped: gen,
+            buf: String::with_capacity(32)
+        })
+    }
+}
+
+impl <T: Display + 'static> Generator for WrappedAnyGen<T> {
+    type Output = String;
+
+    fn gen_value(&mut self, rng: &mut DataGenRng) -> Option<&String> {
+        use std::fmt::Write;
+        let WrappedAnyGen {ref mut wrapped, ref mut buf} = *self;
+        buf.clear();
+
+        wrapped.gen_value(rng).map(move |t|  {
+            // this isn't something that can practically fail at runtime since there's no io involved
+            let _ = buf.write_fmt(format_args!("{}", t));
+            &*buf
+        })
+    }
+}
+
+impl <T: Display + 'static> Display for WrappedAnyGen<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.wrapped)
+    }
+}
