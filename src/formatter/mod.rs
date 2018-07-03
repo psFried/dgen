@@ -1,4 +1,3 @@
-mod csv;
 
 use std::io::{self, Write};
 use std::fmt::Display;
@@ -6,45 +5,17 @@ use std::fmt::Display;
 pub trait Formatter {
 
     fn write_file_start(&mut self) -> io::Result<()>;
-    fn write_column_header(&mut self, column_name: &str) -> io::Result<()>;
-
-
-    fn write_row_start(&mut self) -> io::Result<()>;
-    fn write_column_start(&mut self, column_name: &str) -> io::Result<()>;
-    fn write_column_end(&mut self, column_name: &str) -> io::Result<()>;
-    fn write_row_end(&mut self) -> io::Result<()>;
     fn write_file_end(&mut self) -> io::Result<()>;
 
-    fn write_value(&mut self, value: &Display) -> io::Result<()>;
+    fn write_iteration_start(&mut self) -> io::Result<()>;
+    fn write_iteration_end(&mut self) -> io::Result<()>;
 
+    fn write_char(&mut self, value: &char) -> io::Result<()>;
+    fn write_u64(&mut self, value: &u64) -> io::Result<()>;
+    fn write_f64(&mut self, value: &f64) -> io::Result<()>;
     fn write_str(&mut self, value: &str) -> io::Result<()>;
+    fn write_value_as_str(&mut self, value: &Display) -> io::Result<()>;
 
     fn write_null(&mut self) -> io::Result<()>;
-
 }
 
-
-pub trait StringWriter {
-    fn write_value(&mut self, value: &Display) -> io::Result<()>;
-    fn write_str(&mut self, value: &str) -> io::Result<()>;
-
-    fn flush(&mut self) -> io::Result<()>;
-}
-
-// TODO: replace this basic blanket impl with something that allows for different encodings
-impl <W: Write> StringWriter for W {
-    fn write_value(&mut self, value: &Display) -> io::Result<()> {
-        write!(self, "{}", value).map_err(|fmt| {
-            io::Error::new(io::ErrorKind::Other, "FormatError")
-        })
-    }
-
-
-    fn write_str(&mut self, value: &str) -> io::Result<()> {
-        self.write_all(value.as_bytes())
-    }
-
-    fn flush(&mut self) -> io::Result<()> {
-        self.flush()
-    }
-}

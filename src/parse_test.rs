@@ -70,7 +70,7 @@ fn string(s: &str) -> Token {
     Token::StringLiteral(s.to_owned())
 }
 
-fn int(i: i64) -> Token {
+fn int(i: u64) -> Token {
     Token::IntLiteral(i)
 }
 

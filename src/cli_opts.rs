@@ -9,8 +9,36 @@ pub struct CliOptions {
     /// number of iterations to print
     #[structopt(short = "n", long = "iterations")]
     pub iteration_count: u64,
+    
+    #[structopt(subcommand)]
+    pub subcommand: SubCommand,
+}
 
-    /// Specification of how to generate data for a column
-    #[structopt(short = "g", long = "generate")]
-    pub program: String,
+#[derive(Debug, StructOpt)]
+pub enum SubCommand {
+    #[structopt(name = "help")]
+    ListFunctions {
+        #[structopt(short = "f", long = "name")]
+        name: Option<String>
+    },
+
+    #[structopt(name = "run")]
+    RunProgram {
+        /// Specification of how to generate data.{n}
+        /// The language syntax is intentionally very minimal and simple. There are only two types of expressions, 
+        /// literals and function calls. {n}
+        /// 
+        /// Literals: {n}
+        /// - String: Anything surrounded by double quotes, for example `"foo"`. Quote characters that appear inside 
+        ///           the string must be escaped with a backslash character (\).{n}
+        /// - Unsigned Integer: Any integer literal, for example `123` or `99`. {n}
+        /// - Decimal: A decimal number, for example `3.14` {n}
+        /// {n}
+        /// Function Calls: are made using the form functionName(arg1, arg2, argn) {n}
+        /// Arguments are positional and strongly typed (though no type annotations are used in the language syntax).) {n}
+        /// Variadic functions are supported.
+        /// 
+        #[structopt(short = "g", long = "generate")]
+        program: String
+    }
 }

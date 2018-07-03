@@ -11,6 +11,10 @@ impl FunctionCreator for RandomAsciiString1 {
     fn get_arg_types(&self) -> (&'static [GeneratorType], bool) {
         (&[GeneratorType::UnsignedInt], false)
     }
+    
+    fn get_description(&self) -> &'static str {
+        "Generates a random ascii string, using the argument to determine the length"
+    }
 
     fn create(&self, mut args: Vec<GeneratorArg>) -> GeneratorArg {
         use generator::string::StringGenerator;
@@ -29,6 +33,10 @@ impl FunctionCreator for RandomAsciiString0 {
     fn get_arg_types(&self) -> (&'static [GeneratorType], bool) {
         (&[], false)
     }
+    
+    fn get_description(&self) -> &'static str {
+        "Generates a random ascii string with the default length of 16 characters"
+    }
 
     fn create(&self, _args: Vec<GeneratorArg>) -> GeneratorArg {
         use generator::string::{default_charset, default_string_length_generator, StringGenerator};
@@ -44,6 +52,10 @@ impl FunctionCreator for AlphaNumeric {
 
     fn get_arg_types(&self) -> (&'static [GeneratorType], bool) {
         (&[], false)
+    }
+    
+    fn get_description(&self) -> &'static str {
+        "Generates a random alpha-numeric character from the ranges a-z,A-Z,0-9"
     }
 
     fn create(&self, _args: Vec<GeneratorArg>) -> GeneratorArg {

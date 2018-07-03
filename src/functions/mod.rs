@@ -5,6 +5,7 @@ use generator::{GeneratorType, GeneratorArg};
 pub trait FunctionCreator: Send + Sync + 'static {
     fn get_name(&self) -> &'static str;
     fn get_arg_types(&self) -> (&'static [GeneratorType], bool);
+    fn get_description(&self) -> &'static str;
     fn create(&self, args: Vec<GeneratorArg>) -> GeneratorArg;
 }
 
