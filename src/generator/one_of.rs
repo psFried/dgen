@@ -9,12 +9,12 @@ pub struct OneOfGenerator<T: Display> {
     _phantom_data: PhantomData<T>,
 }
 
-impl <T: Display> OneOfGenerator<T> {
-    pub fn new(wrapped: Vec<Box<Generator<Output=T>>>) -> OneOfGenerator<T> {
-        OneOfGenerator {
+impl <T: Display + 'static> OneOfGenerator<T> {
+    pub fn new(wrapped: Vec<Box<Generator<Output=T>>>) -> Box<Generator<Output=T>> {
+        Box::new(OneOfGenerator {
             wrapped,
             _phantom_data: PhantomData,
-        }
+        })
     }
 }
 

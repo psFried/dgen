@@ -5,10 +5,6 @@ pub struct CliOptions {
     /// Enable debug logging to stderr. Multiple occurrences will increase the verbosity
     #[structopt(short = "V", parse(from_occurrences))]
     pub debug: u64,
-
-    /// number of iterations to print
-    #[structopt(short = "n", long = "iterations")]
-    pub iteration_count: u64,
     
     #[structopt(subcommand)]
     pub subcommand: SubCommand,
@@ -16,12 +12,14 @@ pub struct CliOptions {
 
 #[derive(Debug, StructOpt)]
 pub enum SubCommand {
+    /// Print information on available functions
     #[structopt(name = "help")]
     ListFunctions {
         #[structopt(short = "f", long = "name")]
         name: Option<String>
     },
 
+    /// Run a program to generate some data
     #[structopt(name = "run")]
     RunProgram {
         /// Specification of how to generate data.{n}
@@ -38,7 +36,11 @@ pub enum SubCommand {
         /// Arguments are positional and strongly typed (though no type annotations are used in the language syntax).) {n}
         /// Variadic functions are supported.
         /// 
-        #[structopt(short = "g", long = "generate")]
-        program: String
+        #[structopt(short = "p", long = "program")]
+        program: String,
+
+        /// number of iterations to print
+        #[structopt(short = "n", long = "iterations")]
+        iteration_count: u64,
     }
 }

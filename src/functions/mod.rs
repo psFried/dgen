@@ -1,5 +1,6 @@
 mod ascii_string;
 mod unsigned_int;
+mod one_of;
 
 use generator::{GeneratorType, GeneratorArg};
 
@@ -20,6 +21,9 @@ pub static ALL_FUNCTIONS: &[&FunctionCreator] = &[
     &self::unsigned_int::UnsignedInt0 as &FunctionCreator,
     &self::unsigned_int::UnsignedInt1 as &FunctionCreator,
     &self::unsigned_int::UnsignedInt2 as &FunctionCreator,
+
+    &self::one_of::OneOfUint as &FunctionCreator,
+    &self::one_of::OneOfString as &FunctionCreator,
 ];
 
 

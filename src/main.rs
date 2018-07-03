@@ -60,11 +60,10 @@ fn main() {
     env_logger::init();
 
     let args = self::cli_opts::CliOptions::from_args();
-    let iterations = args.iteration_count;
     let verbosity = args.debug;
     match args.subcommand {
         SubCommand::ListFunctions{name} => list_functions(verbosity, name),
-        SubCommand::RunProgram {program} => run_program(verbosity, iterations, program)
+        SubCommand::RunProgram {program, iteration_count} => run_program(verbosity, iteration_count, program)
     }
 
 }
