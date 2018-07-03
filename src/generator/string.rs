@@ -1,4 +1,4 @@
-use super::{Generator, GeneratorArg, GeneratorType, DataGenRng, InvalidGeneratorArguments, DynUnsignedIntGenerator, DynCharGenerator};
+use super::{Generator, GeneratorArg, GeneratorType, DataGenRng, DynUnsignedIntGenerator, DynCharGenerator, DynStringGenerator};
 use rand::prelude::{Rng, Distribution};
 use rand::distributions::Alphanumeric;
 use std::marker::PhantomData;
@@ -46,29 +46,24 @@ pub struct StringGenerator {
 const INVALID_STRING_ARGS: &'static str = "Invalid arguments for string generator, expected ([UnsignedInt], [Char])";
 
 impl StringGenerator {
-    pub fn create(mut args: Vec<GeneratorArg>) -> Result<StringGenerator, InvalidGeneratorArguments> {
-        let num_args = args.len();
-        if num_args > 2 {
-            return Err(InvalidGeneratorArguments::new(INVALID_STRING_ARGS, args));
-        }
+     pub fn with_length(length_gen: DynUnsignedIntGenerator) -> DynStringGenerator {
+         StringGenerator::new(length_gen, default_charset())
+     }
 
-        unimplemented!();
-    }
-
-    pub fn new(length_gen: DynUnsignedIntGenerator, char_gen: DynCharGenerator) -> StringGenerator {
-        StringGenerator {
+    pub fn new(length_gen: DynUnsignedIntGenerator, char_gen: DynCharGenerator) -> DynStringGenerator {
+        Box::new(StringGenerator {
             char_gen,
             length_gen,
             buffer: String::with_capacity(16)
-        }
+        })
     }
 }
 
-fn default_charset() -> Box<Generator<Output=char>> {
+pub fn default_charset() -> Box<Generator<Output=char>> {
     Box::new(AsciiChar::new())
 }
 
-fn default_string_length_generator() -> Box<Generator<Output=u64>> {
+pub fn default_string_length_generator() -> Box<Generator<Output=u64>> {
     // TODO: replace the default with a range
     Box::new(::generator::constant::ConstantGenerator::new(Some(16)))
 }

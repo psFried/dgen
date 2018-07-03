@@ -16,13 +16,57 @@ mod generator;
 mod formatter;
 mod ast;
 mod column_spec_parser;
+mod resolve;
 
 #[cfg(test)]
 mod parse_test;
 
+use self::cli_opts::CliOptions;
+use self::generator::GeneratorArg;
+use std::fmt::Display;
+
+
+trait OrBail<T> {
+    fn or_bail(self) -> T;
+}
+
+impl <T, E> OrBail<T> for Result<T, E> where E: Display {
+    fn or_bail(self) -> T {
+        match self {
+            Ok(t) => t,
+            Err(e) => {
+                println!("Error: {}", e);
+                ::std::process::exit(1);
+            }
+        }
+    }
+}
+
+
+fn parse_generator(args: &CliOptions) -> GeneratorArg {
+    let token = self::column_spec_parser::TokenParser::new().parse(args.program.as_str()).or_bail();
+    self::resolve::into_generator(token).or_bail()
+}
 
 fn main() {
+    use structopt::StructOpt;
+    use rand::{Rng, SeedableRng, FromEntropy};
+    use generator::DataGenRng;
+
     env_logger::init();
 
-    println!("Hello, world!");
+    let args = self::cli_opts::CliOptions::from_args();
+
+    let mut generator = parse_generator(&args);
+    let mut rng: DataGenRng = DataGenRng::from_entropy();
+
+    for _ in 0..args.iteration_count {
+        let result = generator.gen_displayable(&mut rng);
+        if let Some(displayable) = result {
+            println!("{}", displayable);
+        } else {
+            break;
+        }
+    }
+
 }
