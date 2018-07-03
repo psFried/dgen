@@ -2,9 +2,9 @@
 #[derive(Debug, StructOpt)]
 #[structopt(name = "datagen", about = "Generate random data sets")]
 pub struct CliOptions {
-    /// Enable debug logging to stderr
-    #[structopt(short = "d", long = "debug")]
-    pub debug: bool,
+    /// Enable debug logging to stderr. Multiple occurrences will increase the verbosity
+    #[structopt(short = "V", parse(from_occurrences))]
+    pub debug: u64,
 
     /// number of iterations to print
     #[structopt(short = "n", long = "iterations")]

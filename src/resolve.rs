@@ -1,54 +1,11 @@
 use generator::{GeneratorArg, GeneratorType};
 use generator::constant::ConstantGenerator;
 use ast::{Token, FunctionCall};
+use functions::{FunctionCreator, ALL_FUNCTIONS};
 use std::fmt::{self, Display};
 
 
-trait FunctionCreator: Send + Sync + 'static {
-    fn get_name(&self) -> &'static str;
-    fn get_arg_types(&self) -> (&'static [GeneratorType], bool);
-    fn create(&self, args: Vec<GeneratorArg>) -> GeneratorArg;
-}
-
-struct RandomAsciiString1;
-impl FunctionCreator for RandomAsciiString1 {
-    fn get_name(&self) -> &'static str {
-        "asciiString"
-    }
-
-    fn get_arg_types(&self) -> (&'static [GeneratorType], bool) {
-        (&[GeneratorType::UnsignedInt], false)
-    }
-
-    fn create(&self, mut args: Vec<GeneratorArg>) -> GeneratorArg {
-        use generator::string::StringGenerator;
-        let len_gen = args.pop().unwrap().as_uint().unwrap();
-        GeneratorArg::String(StringGenerator::with_length(len_gen))
-    }
-}
-
-
-struct RandomAsciiString0;
-impl FunctionCreator for RandomAsciiString0 {
-    fn get_name(&self) -> &'static str {
-        "asciiString"
-    }
-
-    fn get_arg_types(&self) -> (&'static [GeneratorType], bool) {
-        (&[], false)
-    }
-
-    fn create(&self, mut args: Vec<GeneratorArg>) -> GeneratorArg {
-        use generator::string::{default_charset, default_string_length_generator, StringGenerator};
-        GeneratorArg::String(StringGenerator::new(default_string_length_generator(), default_charset()))
-    }
-}
-
-static ALL_FUNCTIONS: &[&FunctionCreator] = &[
-    &RandomAsciiString0 as &FunctionCreator,
-    &RandomAsciiString1 as &FunctionCreator
-];
-
+// TODO: put some real info in here for christs sake
 #[derive(Debug, PartialEq)]
 pub struct ResolveError;
 
@@ -61,7 +18,7 @@ impl Display for ResolveError {
 pub fn into_generator(token: Token) -> Result<GeneratorArg, ResolveError> {
     match token {
         Token::StringLiteral(val) => Ok(GeneratorArg::String(ConstantGenerator::create(val))),
-        Token::IntLiteral(int) => Ok(GeneratorArg::SignedInt(ConstantGenerator::create(int))),
+        Token::IntLiteral(int) => Ok(GeneratorArg::UnsignedInt(ConstantGenerator::create(int))),
         Token::DecimalLiteral(float) => Ok(GeneratorArg::Decimal(ConstantGenerator::create(float))),
         Token::Function(call) => resolve_function_call(call)
     }

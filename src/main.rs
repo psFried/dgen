@@ -16,6 +16,7 @@ mod generator;
 mod formatter;
 mod ast;
 mod column_spec_parser;
+mod functions;
 mod resolve;
 
 #[cfg(test)]
@@ -45,6 +46,9 @@ impl <T, E> OrBail<T> for Result<T, E> where E: Display {
 
 fn parse_generator(args: &CliOptions) -> GeneratorArg {
     let token = self::column_spec_parser::TokenParser::new().parse(args.program.as_str()).or_bail();
+    if args.debug >= 3 {
+        eprintln!("AST: {:?}", token);
+    }
     self::resolve::into_generator(token).or_bail()
 }
 

@@ -11,8 +11,8 @@ StringLiteral: String = {
     <s:r#""([^"\\]*(\\.[^"\\]*)*)""#> => s[1..s.len() - 1].replace(r#"\""#, r#"""#)
 };
 
-IntLiteral: i64 = {
-    <s:r"[0-9]+"> => i64::from_str(s).unwrap()
+IntLiteral: u64 = {
+    <s:r"[0-9]+"> => u64::from_str(s).unwrap()
 };
 
 DecimalLiteral: f64 = {

@@ -10,7 +10,7 @@ pub struct FunctionCall {
 pub enum Token {
     Function(FunctionCall),
     StringLiteral(String),
-    IntLiteral(i64),
+    IntLiteral(u64),
     DecimalLiteral(f64),
 }
 
