@@ -10,6 +10,7 @@ extern crate rand;
 #[macro_use]
 extern crate log;
 extern crate env_logger;
+extern crate regex;
 
 mod cli_opts;
 mod generator;
@@ -48,7 +49,7 @@ impl <T, E> OrBail<T> for Result<T, E> where E: Display {
 fn parse_generator(verbosity: u64, program: String) -> GeneratorArg {
     let token = self::column_spec_parser::TokenParser::new().parse(program.as_str()).or_bail();
     if verbosity >= 3 {
-        eprintln!("AST: {:?}", token);
+        eprintln!("AST: {:#?}", token);
     }
     self::resolve::into_generator(token).or_bail()
 }
@@ -69,9 +70,20 @@ fn main() {
 }
 
 fn list_functions(verbosity: u64, name: Option<String>) {
-    // TODO: filter output based on name, and print anything that's close to matching the name
+    use regex::Regex;
+    let name_filter = name.and_then(|n| {
+        let trimmed = n.trim();
+        Regex::new(trimmed).map_err(|err| {
+            eprintln!("Cannot parse filter '{}' as a regex", trimmed);
+            ()
+        }).ok()
+    });
+
+
     for fun in ALL_FUNCTIONS.iter() {
-        print_function_help(*fun);
+        if name_filter.as_ref().map(|filter| filter.is_match(fun.get_name())).unwrap_or(true) {
+            print_function_help(*fun);
+        }
     }
 }
 
@@ -95,6 +107,6 @@ fn run_program(verbosity: u64, iterations: u64, program: String) {
 
 
 fn print_function_help(fun: &FunctionCreator) {
-    // TODO: this output is going to be super ugly. Make it pretty
-    println!("{}({:?}) - {}", fun.get_name(), fun.get_arg_types().0, fun.get_description());
+    let help = self::functions::FunctionHelp(fun);
+    println!("{}", help);
 }

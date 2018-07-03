@@ -7,8 +7,6 @@ pub struct ConstantGenerator<T: Display> {
 }
 
 impl <T: Display + 'static> ConstantGenerator<T> {
-//    pub fn create(unparsed: String)
-
     pub fn new(value: Option<T>) -> ConstantGenerator<T> {
         ConstantGenerator {
             value,
