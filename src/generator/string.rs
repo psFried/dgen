@@ -1,7 +1,6 @@
-use super::{Generator, GeneratorArg, GeneratorType, DataGenRng, DynUnsignedIntGenerator, DynCharGenerator, DynStringGenerator};
-use rand::prelude::{Rng, Distribution};
+use super::{Generator, DataGenRng, DynUnsignedIntGenerator, DynCharGenerator, DynStringGenerator};
+use rand::prelude::Rng;
 use rand::distributions::Alphanumeric;
-use std::marker::PhantomData;
 use std::fmt::{self, Display};
 
 
@@ -30,20 +29,11 @@ impl Display for AsciiChar {
 }
 
 
-pub fn char_generator(name: &str) -> Option<Box<Generator<Output=char>>> {
-    match name {
-        "ascii" => Some(Box::new(AsciiChar::new())),
-        _ => None
-    }
-}
-
 pub struct StringGenerator {
     char_gen: Box<Generator<Output=char>>,
     length_gen: Box<Generator<Output=u64>>,
     buffer: String,
 }
-
-const INVALID_STRING_ARGS: &'static str = "Invalid arguments for string generator, expected ([UnsignedInt], [Char])";
 
 impl StringGenerator {
      pub fn with_length(length_gen: DynUnsignedIntGenerator) -> DynStringGenerator {
