@@ -1,7 +1,9 @@
 use super::{Generator, DataGenRng};
+use writer::DataGenOutput;
 use rand::Rng;
 use std::fmt::{self, Display};
 use std::marker::PhantomData;
+use std::io;
 
 
 pub struct OneOfGenerator<T: Display> {
@@ -26,6 +28,14 @@ impl <T: Display> Generator for OneOfGenerator<T> {
         gen.and_then(|g| {
             g.gen_value(rng)
         })
+    }
+
+    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> io::Result<u64> {
+        let gen = rng.choose_mut(self.wrapped.as_mut_slice());
+        // gen will be None only if `wrapped` is an empty vec
+        gen.map(|g| {
+            g.write_value(rng, output)
+        }).unwrap_or(Ok(0))
     }
 }
 

@@ -1,5 +1,7 @@
 use super::{DataGenRng, Generator};
+use writer::DataGenOutput;
 use std::fmt::{self, Display};
+use std::io;
 
 pub struct ConstantGenerator<T: Display> {
     value: Option<T>,
@@ -25,6 +27,15 @@ impl <T: Display> Generator for ConstantGenerator<T> {
     fn gen_value(&mut self, rng: &mut DataGenRng) -> Option<&T> {
         self.value.as_ref()
     }
+
+    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> io::Result<u64> {
+        if let Some(val) = self.gen_value(rng) {
+            output.write_string(val)
+        } else {
+            Ok(0)
+        }
+    }
+
 }
 
 impl <T: Display> Display for ConstantGenerator<T> {

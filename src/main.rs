@@ -6,7 +6,7 @@ extern crate regex;
 
 mod cli_opts;
 mod generator;
-mod formatter;
+mod writer;
 mod ast;
 mod column_spec_parser;
 mod functions;
@@ -83,15 +83,14 @@ fn run_program(verbosity: u64, iterations: u64, program: String) {
     let mut generator = parse_generator(verbosity, program);
     let mut rng: DataGenRng = DataGenRng::from_entropy();
 
-    for _ in 0..iterations {
-        let result = generator.gen_displayable(&mut rng);
-        if let Some(displayable) = result {
-            println!("{}", displayable);
-        } else {
-            break;
-        }
-    }
+    let sout = std::io::stdout();
+    // lock stdout once at the beginning so we don't have to keep locking/unlocking it
+    let mut lock = sout.lock();
+    let mut output = self::writer::DataGenOutput::new(&mut lock);
 
+    for _ in 0..iterations {
+        generator.write_value(&mut rng, &mut output).or_bail("runtime IO error");
+    }
 }
 
 fn print_function_help(fun: &FunctionCreator) {

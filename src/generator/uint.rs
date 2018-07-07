@@ -1,7 +1,9 @@
 use super::{DynUnsignedIntGenerator, Generator, DataGenRng};
 use super::constant::ConstantGenerator;
+use writer::DataGenOutput;
 use rand::Rng;
 use std::fmt;
+use std::io;
 
 pub const DEFAULT_MAX: u64 = u64::max_value();
 pub const DEFAULT_MIN: u64 = 0;
@@ -46,6 +48,14 @@ impl Generator for UnsignedIntGenerator {
             self.value = min;
         }
         Some(&self.value)
+    }
+
+    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> io::Result<u64> {
+        if let Some(val) = self.gen_value(rng) {
+            output.write_string(val)
+        } else {
+            unreachable!()
+        }
     }
 }
 

@@ -5,6 +5,8 @@ pub mod constant;
 pub mod uint;
 
 use std::fmt::{self, Display};
+use std::io;
+use writer::DataGenOutput;
 
 pub type DataGenRng = ::rand::prng::XorShiftRng;
 
@@ -14,6 +16,7 @@ pub type DynUnsignedIntGenerator = Box<Generator<Output=u64>>;
 pub type DynSignedIntGenerator = Box<Generator<Output=i64>>;
 pub type DynStringGenerator = Box<Generator<Output=String>>;
 
+#[allow(unused)]
 pub enum GeneratorArg {
     Char(DynCharGenerator),
     Decimal(DynDecimalGenerator),
@@ -50,13 +53,13 @@ impl GeneratorArg {
         }
     }
     
-    pub fn gen_displayable(&mut self, rng: &mut DataGenRng) -> Option<&Display> {
+    pub fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> io::Result<u64> {
         match self {
-            GeneratorArg::Char(gen) => gen.gen_value(rng).map(|v| v as &Display),
-            GeneratorArg::Decimal(gen) => gen.gen_value(rng).map(|v| v as &Display),
-            GeneratorArg::UnsignedInt(gen) => gen.gen_value(rng).map(|v| v as &Display),
-            GeneratorArg::SignedInt(gen) => gen.gen_value(rng).map(|v| v as &Display),
-            GeneratorArg::String(gen) => gen.gen_value(rng).map(|v| v as &Display),
+            GeneratorArg::Char(gen) => gen.write_value(rng, output),
+            GeneratorArg::Decimal(gen) => gen.write_value(rng, output),
+            GeneratorArg::UnsignedInt(gen) => gen.write_value(rng, output),
+            GeneratorArg::SignedInt(gen) => gen.write_value(rng, output),
+            GeneratorArg::String(gen) => gen.write_value(rng, output),
         }
     }
 
@@ -112,18 +115,10 @@ impl Display for GeneratorArg {
 pub trait Generator: Display {
     type Output: Display;
     fn gen_value(&mut self, rng: &mut DataGenRng) -> Option<&Self::Output>;
+
+    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> io::Result<u64>;
 }
 
-
-pub trait BoxedGen {
-    fn gen_displayable(&mut self, rng: &mut DataGenRng) -> Option<&Display>;
-}
-
-impl <G> BoxedGen for G where G: Generator, G::Output: Display + 'static {
-    fn gen_displayable(&mut self, rng: &mut DataGenRng) -> Option<&Display> {
-        self.gen_value(rng).map(|v| v as &Display)
-    }
-}
 
 pub struct WrappedAnyGen<T: Display> {
     wrapped: Box<Generator<Output=T>>,
@@ -152,6 +147,14 @@ impl <T: Display + 'static> Generator for WrappedAnyGen<T> {
             let _ = buf.write_fmt(format_args!("{}", t));
             &*buf
         })
+    }
+
+    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> io::Result<u64> {
+        if let Some(value) = self.gen_value(rng) {
+            output.write_string(value)
+        } else {
+            Ok(0)
+        }
     }
 }
 

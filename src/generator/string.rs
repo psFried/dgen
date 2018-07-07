@@ -1,7 +1,9 @@
 use super::{Generator, DataGenRng, DynUnsignedIntGenerator, DynCharGenerator, DynStringGenerator};
+use writer::DataGenOutput;
 use rand::prelude::Rng;
 use rand::distributions::Alphanumeric;
 use std::fmt::{self, Display};
+use std::io;
 
 
 pub struct AsciiChar(char);
@@ -18,6 +20,14 @@ impl Generator for AsciiChar {
     fn gen_value(&mut self, rng: &mut DataGenRng) -> Option<&char> {
         self.0 = rng.sample(Alphanumeric);
         Some(&self.0)
+    }
+
+    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> io::Result<u64> {
+        if let Some(val) = self.gen_value(rng) {
+            output.write_string(val)
+        } else {
+            unreachable!()
+        }
     }
 }
 
@@ -47,6 +57,16 @@ impl StringGenerator {
             buffer: String::with_capacity(16)
         })
     }
+
+    fn fill_buffer(&mut self, rng: &mut DataGenRng) {
+        self.buffer.clear();
+        let remaining_chars = self.length_gen.gen_value(rng).cloned().unwrap_or(16);
+
+        for _ in 0..remaining_chars {
+            let next_char = self.char_gen.gen_value(rng).cloned().unwrap_or('x');
+            self.buffer.push(next_char);
+        }
+    }
 }
 
 pub fn default_charset() -> Box<Generator<Output=char>> {
@@ -62,14 +82,13 @@ impl Generator for StringGenerator {
     type Output = String;
 
     fn gen_value(&mut self, rng: &mut DataGenRng) -> Option<&String> {
-        self.buffer.clear();
-        let remaining_chars = self.length_gen.gen_value(rng).cloned().unwrap_or(16);
-
-        for _ in 0..remaining_chars {
-            let next_char = self.char_gen.gen_value(rng).cloned().unwrap_or('x');
-            self.buffer.push(next_char);
-        }
+        self.fill_buffer(rng);
         Some(&self.buffer)
+    }
+
+    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> io::Result<u64> {
+        self.fill_buffer(rng);
+        output.write_string(&self.buffer)
     }
 }
 

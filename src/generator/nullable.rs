@@ -1,6 +1,8 @@
 use super::{Generator, DataGenRng};
+use writer::DataGenOutput;
 use rand::Rng;
 use std::fmt::{self, Display};
+use std::io;
 
 pub struct NullableGenerator<T: Display> {
     wrapped_generator: Box<Generator<Output=T>>,
@@ -14,19 +16,29 @@ impl <T: Display> NullableGenerator<T> {
             null_frequency,
         }
     }
+
+    fn will_generate(&mut self, rng: &mut DataGenRng) -> bool {
+        let frequency = self.null_frequency.gen_value(rng);
+        rng.gen_bool(frequency.cloned().unwrap_or(100.0))
+    }
 }
 
 impl <T: Display> Generator for NullableGenerator<T> {
     type Output = T;
 
     fn gen_value(&mut self, rng: &mut DataGenRng) -> Option<&T> {
-        let NullableGenerator {ref mut wrapped_generator, ref mut null_frequency} = *self;
-        let frequency = null_frequency.gen_value(rng);
-        let gen_null = rng.gen_bool(frequency.cloned().unwrap_or(100.0));
-        if gen_null {
-            None
+        if self.will_generate(rng) {
+            self.wrapped_generator.gen_value(rng)
         } else {
-            wrapped_generator.gen_value(rng)
+            None
+        }
+    }
+
+    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> io::Result<u64> {
+        if self.will_generate(rng) {
+            self.wrapped_generator.write_value(rng, output)
+        } else {
+            Ok(0)
         }
     }
 }
