@@ -10,6 +10,7 @@ use writer::DataGenOutput;
 
 pub type DataGenRng = ::rand::prng::XorShiftRng;
 
+pub type DynBoolGenerator = Box<Generator<Output=bool>>;
 pub type DynCharGenerator = Box<Generator<Output=char>>;
 pub type DynDecimalGenerator = Box<Generator<Output=f64>>;
 pub type DynUnsignedIntGenerator = Box<Generator<Output=u64>>;
@@ -18,6 +19,7 @@ pub type DynStringGenerator = Box<Generator<Output=String>>;
 
 #[allow(unused)]
 pub enum GeneratorArg {
+    Bool(DynBoolGenerator),
     Char(DynCharGenerator),
     Decimal(DynDecimalGenerator),
     UnsignedInt(DynUnsignedIntGenerator),
@@ -28,6 +30,7 @@ pub enum GeneratorArg {
 impl GeneratorArg {
     pub fn get_type(&self) -> GeneratorType {
         match *self {
+            GeneratorArg::Bool(_) => GeneratorType::Boolean,
             GeneratorArg::Char(_) => GeneratorType::Char,
             GeneratorArg::Decimal(_) => GeneratorType::Decimal,
             GeneratorArg::UnsignedInt(_) => GeneratorType::UnsignedInt,
@@ -45,6 +48,7 @@ impl GeneratorArg {
 
     pub fn as_string(self) -> DynStringGenerator {
         match self {
+            GeneratorArg::Bool(gen) => WrappedAnyGen::new(gen),
             GeneratorArg::Char(gen) => WrappedAnyGen::new(gen),
             GeneratorArg::Decimal(gen) => WrappedAnyGen::new(gen),
             GeneratorArg::UnsignedInt(gen) => WrappedAnyGen::new(gen),
@@ -55,6 +59,7 @@ impl GeneratorArg {
     
     pub fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> io::Result<u64> {
         match self {
+            GeneratorArg::Bool(gen) => gen.write_value(rng, output),
             GeneratorArg::Char(gen) => gen.write_value(rng, output),
             GeneratorArg::Decimal(gen) => gen.write_value(rng, output),
             GeneratorArg::UnsignedInt(gen) => gen.write_value(rng, output),
@@ -67,6 +72,7 @@ impl GeneratorArg {
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum GeneratorType {
+    Boolean,
     UnsignedInt,
     SignedInt,
     Decimal,
@@ -77,6 +83,7 @@ pub enum GeneratorType {
 impl Display for GeneratorType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let stringy  = match *self {
+            GeneratorType::Boolean => "Boolean",
             GeneratorType::Char => "Char",
             GeneratorType::Decimal => "Float",
             GeneratorType::UnsignedInt => "UnsignedInt",
@@ -91,6 +98,9 @@ impl Display for GeneratorArg {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let description = self.get_type();
         match *self {
+            GeneratorArg::Bool(ref gen) => {
+                write!(f, "{}: {}", gen, description)
+            },
             GeneratorArg::Char(ref gen) => {
                 write!(f, "{}: {}", gen, description)
             },

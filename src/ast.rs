@@ -11,7 +11,9 @@ pub enum Token {
     Function(FunctionCall),
     StringLiteral(String),
     IntLiteral(u64),
+    SignedIntLiteral(i64),
     DecimalLiteral(f64),
+    BooleanLiteral(bool),
 }
 
 #[derive(Debug, PartialEq)]

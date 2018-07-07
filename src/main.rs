@@ -1,9 +1,10 @@
-#[macro_use]
-extern crate structopt;
+#[macro_use] extern crate structopt;
+#[macro_use] extern crate failure;
 extern crate lalrpop_util;
 extern crate rand;
 extern crate regex;
 
+mod parser;
 mod cli_opts;
 mod generator;
 mod writer;
@@ -11,51 +12,64 @@ mod ast;
 mod column_spec_parser;
 mod functions;
 mod resolve;
-
-#[cfg(test)]
-mod parse_test;
+#[cfg(test)] mod parse_test; 
+#[cfg(test)] mod fun_test;
 
 use self::cli_opts::{CliOptions, SubCommand};
-use self::generator::GeneratorArg;
+use self::generator::{GeneratorArg, DataGenRng};
 use self::functions::{FunctionCreator, ALL_FUNCTIONS};
-use std::fmt::Display;
+use self::writer::DataGenOutput;
 use structopt::StructOpt;
+use failure::Error;
+use rand::FromEntropy;
 
 
 trait OrBail<T> {
-    fn or_bail(self, &'static str) -> T;
+    fn or_bail(self, verbosity: u64) -> T;
 }
 
-impl <T, E> OrBail<T> for Result<T, E> where E: Display {
-    fn or_bail(self, message: &'static str) -> T {
+impl <T> OrBail<T> for Result<T, Error> {
+    fn or_bail(self, verbosity: u64) -> T {
         match self {
             Ok(t) => t,
             Err(e) => {
-                println!("Error {}: {}", message, e);
+                eprintln!("Error: {}", e);
+                if print_backtraces(verbosity) {
+                    eprintln!("cause: {}", e.cause());
+                    eprintln!("backtrace: {}", e.backtrace());
+                }
                 ::std::process::exit(1);
             }
         }
     }
 }
 
-
-fn parse_generator(verbosity: u64, program: String) -> GeneratorArg {
-    let token = self::column_spec_parser::TokenParser::new().parse(program.as_str()).or_bail("Failed to parse program");
+fn parse_generator(verbosity: u64, program: &str) -> Result<GeneratorArg, Error> {
+    let token = parser::parse_token(program)?;
     if verbosity >= 3 {
         eprintln!("AST: {:#?}", token);
     }
-    self::resolve::into_generator(&token).or_bail("Program compilation failed")
+    let gen = self::resolve::into_generator(&token)?;
+    Ok(gen)
 }
 
 fn main() {
     // this call will print help and exit if --help is passed or args are invalid
     let args = CliOptions::from_args();
     let verbosity = args.debug;
+    if print_backtraces(verbosity) {
+        // backtraces won't get generated unless this variable is set
+        std::env::set_var("RUST_BACKTRACE", "1")
+    }
     match args.subcommand {
         SubCommand::ListFunctions{name} => list_functions(name),
-        SubCommand::RunProgram {program, iteration_count} => run_program(verbosity, iteration_count, program)
+        SubCommand::RunProgram {program, iteration_count} => run_program(verbosity, iteration_count, program).or_bail(verbosity)
     }
 
+}
+
+fn print_backtraces(verbosity: u64) -> bool {
+    verbosity >= 2
 }
 
 fn list_functions(name: Option<String>) {
@@ -76,24 +90,53 @@ fn list_functions(name: Option<String>) {
     }
 }
 
-fn run_program(verbosity: u64, iterations: u64, program: String) {
-    use rand::FromEntropy;
-    use generator::DataGenRng;
-
-    let mut generator = parse_generator(verbosity, program);
-    let mut rng: DataGenRng = DataGenRng::from_entropy();
-
+fn run_program(verbosity: u64, iterations: u64, program: String) -> Result<(), Error> {
     let sout = std::io::stdout();
     // lock stdout once at the beginning so we don't have to keep locking/unlocking it
     let mut lock = sout.lock();
-    let mut output = self::writer::DataGenOutput::new(&mut lock);
+    let output = self::writer::DataGenOutput::new(&mut lock);
 
-    for _ in 0..iterations {
-        generator.write_value(&mut rng, &mut output).or_bail("runtime IO error");
-    }
+    let program = Program::with_new_rng(verbosity, iterations, program, output);
+    program.run()
 }
+
 
 fn print_function_help(fun: &FunctionCreator) {
     let help = self::functions::FunctionHelp(fun);
     println!("{}", help);
+}
+
+
+pub struct Program<'a> {
+    verbosity: u64,
+    iterations: u64,
+    source: String,
+    rng: DataGenRng,
+    output: DataGenOutput<'a>,
+}
+
+impl <'a> Program<'a> {
+    pub fn with_new_rng(verbosity: u64, iterations: u64, source: String, out: DataGenOutput<'a>) -> Program<'a> {
+        Program::new(verbosity, iterations, source, DataGenRng::from_entropy(), out)
+    }
+
+    pub fn new(verbosity: u64, iterations: u64, source: String, rng: DataGenRng, output: DataGenOutput<'a>) -> Program<'a> {
+        Program {
+            verbosity,
+            iterations,
+            source,
+            rng,
+            output,
+        }
+    }
+
+    pub fn run(self) -> Result<(), Error> {
+        let Program {verbosity, iterations, source, mut rng, mut output} = self;
+        let mut generator = parse_generator(verbosity, source.as_str())?;
+
+        for _ in 0..iterations {
+            generator.write_value(&mut rng, &mut output)?;
+        }
+        Ok(())
+    }
 }

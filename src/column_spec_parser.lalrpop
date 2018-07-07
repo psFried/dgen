@@ -7,6 +7,11 @@ Comma<E>: Vec<E> = {
     <v0:(<E> ",")*> <e1:E?> => v0.into_iter().chain(e1).collect()
 };
 
+BooleanLiteral: bool = {
+    "true" => true,
+    "false" => false
+}
+
 StringLiteral: String = {
     <s:r#""([^"\\]*(\\.[^"\\]*)*)""#> => s[1..s.len() - 1].replace(r#"\""#, r#"""#)
 };
@@ -15,27 +20,33 @@ IntLiteral: u64 = {
     <s:r"[0-9]+"> => u64::from_str(s).unwrap()
 };
 
+SignedIntLiteral: i64 = {
+    <s:r"[-+][0-9]+"> => i64::from_str(s).unwrap()
+}
+
 DecimalLiteral: f64 = {
-  <s:r"[0-9]+\.[0-9]+"> => f64::from_str(s).unwrap()
+    <s:r"[0-9]+\.[0-9]+"> => f64::from_str(s).unwrap()
 };
 
 pub Token: ast::Token = {
-  <s:StringLiteral> => ast::Token::StringLiteral(s),
-  <i:IntLiteral> => ast::Token::IntLiteral(i),
-  <d:DecimalLiteral> => ast::Token::DecimalLiteral(d),
-  <f:FunctionCall> => ast::Token::Function(f)
+    <b:BooleanLiteral> => ast::Token::BooleanLiteral(b),
+    <s:StringLiteral> => ast::Token::StringLiteral(s),
+    <i:IntLiteral> => ast::Token::IntLiteral(i),
+    <i:SignedIntLiteral> => ast::Token::SignedIntLiteral(i),
+    <d:DecimalLiteral> => ast::Token::DecimalLiteral(d),
+    <f:FunctionCall> => ast::Token::Function(f)
 };
 
 FunctionCall: ast::FunctionCall = {
-  <n:Word>"(" <a:Comma<Token>> ")" => ast::FunctionCall { function_name: n, args: a }
+    <n:Word>"(" <a:Comma<Token>> ")" => ast::FunctionCall { function_name: n, args: a }
 };
 
 Word: String = {
-  <s:r"[a-zA-Z]+\w+"> => s.to_owned()
+    <s:r"[a-zA-Z]+\w+"> => s.to_owned()
 };
 
 pub ColumnSpec: ast::ColumnSpec = {
-  <n:Word> ":" <t:Token> => ast::ColumnSpec {column_name: n, spec: t }
+    <n:Word> ":" <t:Token> => ast::ColumnSpec {column_name: n, spec: t }
 }
 
 

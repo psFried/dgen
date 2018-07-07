@@ -4,7 +4,7 @@ use ast::{Token, FunctionCall};
 use functions::{FunctionCreator, ALL_FUNCTIONS};
 use std::fmt::{self, Display};
 
-
+#[derive(Debug, Fail)]
 pub struct ResolveError {
     message: &'static str,
     called_function: String,
@@ -60,8 +60,10 @@ impl Display for ResolveError {
 
 pub fn into_generator(token: &Token) -> Result<GeneratorArg, ResolveError> {
     match token {
+        Token::BooleanLiteral(val) => Ok(GeneratorArg::Bool(ConstantGenerator::create(val.clone()))),
         Token::StringLiteral(val) => Ok(GeneratorArg::String(ConstantGenerator::create(val.clone()))),
         Token::IntLiteral(int) => Ok(GeneratorArg::UnsignedInt(ConstantGenerator::create(int.clone()))),
+        Token::SignedIntLiteral(val) => Ok(GeneratorArg::SignedInt(ConstantGenerator::create(val.clone()))),
         Token::DecimalLiteral(float) => Ok(GeneratorArg::Decimal(ConstantGenerator::create(float.clone()))),
         Token::Function(call) => resolve_function_call(call)
     }

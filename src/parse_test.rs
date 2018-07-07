@@ -2,12 +2,36 @@ use column_spec_parser::{TokenParser, ColumnSpecParser};
 
 use ast::{Token, FunctionCall};
 
+#[test]
+fn parses_boolean_literal_false_token() {
+    let result = TokenParser::new().parse(r#"false"#);
+    assert_eq!(Ok(boolean(false)), result);
+}
+
+#[test]
+fn parses_boolean_literal_true_token() {
+    let result = TokenParser::new().parse(r#"true"#);
+    assert_eq!(Ok(boolean(true)), result);
+}
 
 #[test]
 fn parses_int_literal_token() {
     let result = TokenParser::new().parse(r#"1234"#);
     assert_eq!(Ok(int(1234)), result);
 }
+
+#[test]
+fn parses_unsigned_int_literal_negative_token() {
+    let result = TokenParser::new().parse(r#"-1234"#);
+    assert_eq!(Ok(sint(-1234)), result);
+}
+
+#[test]
+fn parses_unsigned_int_literal_positive_token() {
+    let result = TokenParser::new().parse(r#"+1234"#);
+    assert_eq!(Ok(sint(1234)), result);
+}
+
 
 #[test]
 fn parses_string_literal_with_escaped_quotes() {
@@ -76,4 +100,12 @@ fn int(i: u64) -> Token {
 
 fn float(f: f64) -> Token {
     Token::DecimalLiteral(f)
+}
+
+fn boolean(b: bool) -> Token {
+    Token::BooleanLiteral(b)
+}
+
+fn sint(i: i64) -> Token {
+    Token::SignedIntLiteral(i)
 }
