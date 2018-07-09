@@ -1,6 +1,7 @@
 use super::FunctionCreator;
 use generator::{GeneratorType, GeneratorArg};
 use generator::uint::UnsignedIntGenerator;
+use failure::Error;
 
 pub struct UnsignedInt0;
 impl FunctionCreator for UnsignedInt0 {
@@ -16,8 +17,8 @@ impl FunctionCreator for UnsignedInt0 {
         "generates an unsigned integer between 0 and 18,446,744,073,709,551,616 (2^64 - 1)"
     }
 
-    fn create(&self, args: Vec<GeneratorArg>) -> GeneratorArg {
-        GeneratorArg::UnsignedInt(UnsignedIntGenerator::with_default())
+    fn create(&self, args: Vec<GeneratorArg>) -> Result<GeneratorArg, Error> {
+        Ok(GeneratorArg::UnsignedInt(UnsignedIntGenerator::with_default()))
     }
 }
 
@@ -35,9 +36,9 @@ impl FunctionCreator for UnsignedInt1 {
         "generates an unsigned integer between 0 and the given maximum"
     }
 
-    fn create(&self, mut args: Vec<GeneratorArg>) -> GeneratorArg {
+    fn create(&self, mut args: Vec<GeneratorArg>) -> Result<GeneratorArg, Error> {
         let max = args.pop().unwrap().as_uint().unwrap();
-        GeneratorArg::UnsignedInt(UnsignedIntGenerator::with_max(max))
+        Ok(GeneratorArg::UnsignedInt(UnsignedIntGenerator::with_max(max)))
     }
 }
 
@@ -55,10 +56,10 @@ impl FunctionCreator for UnsignedInt2 {
         "generates an unsigned integer within the given range"
     }
 
-    fn create(&self, mut args: Vec<GeneratorArg>) -> GeneratorArg {
+    fn create(&self, mut args: Vec<GeneratorArg>) -> Result<GeneratorArg, Error> {
         let max = args.pop().unwrap().as_uint().unwrap();
         let min = args.pop().unwrap().as_uint().unwrap();
 
-        GeneratorArg::UnsignedInt(UnsignedIntGenerator::new(min, max))
+        Ok(GeneratorArg::UnsignedInt(UnsignedIntGenerator::new(min, max)))
     }
 }

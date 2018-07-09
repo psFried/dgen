@@ -3,17 +3,18 @@ mod unsigned_int;
 mod one_of;
 
 use generator::{GeneratorType, GeneratorArg};
+use failure::Error;
 
-pub trait FunctionCreator: Send + Sync + 'static {
-    fn get_name(&self) -> &'static str;
-    fn get_arg_types(&self) -> (&'static [GeneratorType], bool);
-    fn get_description(&self) -> &'static str;
-    fn create(&self, args: Vec<GeneratorArg>) -> GeneratorArg;
+pub trait FunctionCreator: 'static {
+    fn get_name(&self) -> &str;
+    fn get_arg_types(&self) -> (&[GeneratorType], bool);
+    fn get_description(&self) -> &str;
+    fn create(&self, args: Vec<GeneratorArg>) -> Result<GeneratorArg, Error>;
 }
 
 
 
-pub static ALL_FUNCTIONS: &[&FunctionCreator] = &[
+const BUILTIN_FUNCTIONS: &[&FunctionCreator] = &[
     &self::ascii_string::AlphaNumeric as &FunctionCreator,
     &self::ascii_string::RandomAsciiString0 as &FunctionCreator,
     &self::ascii_string::RandomAsciiString1 as &FunctionCreator,
@@ -26,6 +27,9 @@ pub static ALL_FUNCTIONS: &[&FunctionCreator] = &[
     &self::one_of::OneOfString as &FunctionCreator,
 ];
 
+pub fn get_builtin_functions() -> &'static [&'static FunctionCreator] {
+    BUILTIN_FUNCTIONS
+}
 
 pub struct FunctionHelp<'a>(pub &'a FunctionCreator);
 

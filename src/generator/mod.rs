@@ -6,6 +6,7 @@ pub mod uint;
 
 use std::fmt::{self, Display};
 use std::io;
+use std::clone::Clone;
 use writer::DataGenOutput;
 
 pub type DataGenRng = ::rand::prng::XorShiftRng;
@@ -25,6 +26,12 @@ pub enum GeneratorArg {
     UnsignedInt(DynUnsignedIntGenerator),
     SignedInt(DynSignedIntGenerator),
     String(DynStringGenerator),
+}
+
+impl fmt::Debug for GeneratorArg {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "GeneratorArg({})", self.get_type())
+    }
 }
 
 impl GeneratorArg {
@@ -67,7 +74,19 @@ impl GeneratorArg {
             GeneratorArg::String(gen) => gen.write_value(rng, output),
         }
     }
+}
 
+impl Clone for GeneratorArg {
+    fn clone(&self) -> GeneratorArg {
+        match self {
+            GeneratorArg::Bool(gen) => GeneratorArg::Bool(gen.new_from_prototype()),
+            GeneratorArg::Char(gen) => GeneratorArg::Char(gen.new_from_prototype()),
+            GeneratorArg::Decimal(gen) => GeneratorArg::Decimal(gen.new_from_prototype()),
+            GeneratorArg::UnsignedInt(gen) => GeneratorArg::UnsignedInt(gen.new_from_prototype()),
+            GeneratorArg::SignedInt(gen) => GeneratorArg::SignedInt(gen.new_from_prototype()),
+            GeneratorArg::String(gen) => GeneratorArg::String(gen.new_from_prototype()),
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -93,6 +112,7 @@ impl Display for GeneratorType {
         f.write_str(stringy)
     }
 }
+
 
 impl Display for GeneratorArg {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -122,11 +142,13 @@ impl Display for GeneratorArg {
 
 
 
-pub trait Generator: Display {
+pub trait Generator: Display + Send {
     type Output: Display;
     fn gen_value(&mut self, rng: &mut DataGenRng) -> Option<&Self::Output>;
 
     fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> io::Result<u64>;
+
+    fn new_from_prototype(&self) -> Box<Generator<Output=Self::Output>>;
 }
 
 
@@ -165,6 +187,12 @@ impl <T: Display + 'static> Generator for WrappedAnyGen<T> {
         } else {
             Ok(0)
         }
+    }
+    
+    fn new_from_prototype(&self) -> Box<Generator<Output=String>> {
+        let wrapped = self.wrapped.new_from_prototype();
+        let buf = String::with_capacity(self.buf.capacity());
+        Box::new(WrappedAnyGen { wrapped, buf })
     }
 }
 

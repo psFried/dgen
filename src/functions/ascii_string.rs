@@ -1,5 +1,6 @@
 use super::FunctionCreator;
 use generator::{GeneratorType, GeneratorArg};
+use failure::Error;
 
 
 pub struct RandomAsciiString1;
@@ -16,10 +17,10 @@ impl FunctionCreator for RandomAsciiString1 {
         "Generates a random ascii string, using the argument to determine the length"
     }
 
-    fn create(&self, mut args: Vec<GeneratorArg>) -> GeneratorArg {
+    fn create(&self, mut args: Vec<GeneratorArg>) -> Result<GeneratorArg, Error> {
         use generator::string::StringGenerator;
         let len_gen = args.pop().unwrap().as_uint().unwrap();
-        GeneratorArg::String(StringGenerator::with_length(len_gen))
+        Ok(GeneratorArg::String(StringGenerator::with_length(len_gen)))
     }
 }
 
@@ -38,9 +39,9 @@ impl FunctionCreator for RandomAsciiString0 {
         "Generates a random ascii string with the default length of 16 characters"
     }
 
-    fn create(&self, _args: Vec<GeneratorArg>) -> GeneratorArg {
+    fn create(&self, _args: Vec<GeneratorArg>) -> Result<GeneratorArg, Error> {
         use generator::string::{default_charset, default_string_length_generator, StringGenerator};
-        GeneratorArg::String(StringGenerator::new(default_string_length_generator(), default_charset()))
+        Ok(GeneratorArg::String(StringGenerator::new(default_string_length_generator(), default_charset())))
     }
 }
 
@@ -58,7 +59,7 @@ impl FunctionCreator for AlphaNumeric {
         "Generates a random alpha-numeric character from the ranges a-z,A-Z,0-9"
     }
 
-    fn create(&self, _args: Vec<GeneratorArg>) -> GeneratorArg {
-        GeneratorArg::Char(::generator::string::default_charset())
+    fn create(&self, _args: Vec<GeneratorArg>) -> Result<GeneratorArg, Error> {
+        Ok(GeneratorArg::Char(::generator::string::default_charset()))
     }
 }

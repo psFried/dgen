@@ -5,7 +5,7 @@ use rand::distributions::Alphanumeric;
 use std::fmt::{self, Display};
 use std::io;
 
-
+#[derive(Clone)]
 pub struct AsciiChar(char);
 
 impl AsciiChar {
@@ -28,6 +28,10 @@ impl Generator for AsciiChar {
         } else {
             unreachable!()
         }
+    }
+
+    fn new_from_prototype(&self) -> Box<Generator<Output=char>> {
+        Box::new(self.clone())
     }
 }
 
@@ -89,6 +93,13 @@ impl Generator for StringGenerator {
     fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> io::Result<u64> {
         self.fill_buffer(rng);
         output.write_string(&self.buffer)
+    }
+
+    fn new_from_prototype(&self) -> Box<Generator<Output=String>> {
+        let char_gen = self.char_gen.new_from_prototype();
+        let length_gen = self.length_gen.new_from_prototype();
+        let buffer = String::with_capacity(self.buffer.capacity());
+        Box::new(StringGenerator {char_gen, length_gen, buffer})
     }
 }
 

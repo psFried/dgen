@@ -9,16 +9,18 @@ mod cli_opts;
 mod generator;
 mod writer;
 mod ast;
-mod column_spec_parser;
+mod grammar;
 mod functions;
 mod resolve;
+mod interpreter;
 #[cfg(test)] mod parse_test; 
 #[cfg(test)] mod fun_test;
 
 use self::cli_opts::{CliOptions, SubCommand};
 use self::generator::{GeneratorArg, DataGenRng};
-use self::functions::{FunctionCreator, ALL_FUNCTIONS};
+use self::functions::{FunctionCreator, get_builtin_functions};
 use self::writer::DataGenOutput;
+use self::interpreter::Interpreter;
 use structopt::StructOpt;
 use failure::Error;
 use rand::FromEntropy;
@@ -44,14 +46,6 @@ impl <T> OrBail<T> for Result<T, Error> {
     }
 }
 
-fn parse_generator(verbosity: u64, program: &str) -> Result<GeneratorArg, Error> {
-    let token = parser::parse_token(program)?;
-    if verbosity >= 3 {
-        eprintln!("AST: {:#?}", token);
-    }
-    let gen = self::resolve::into_generator(&token)?;
-    Ok(gen)
-}
 
 fn main() {
     // this call will print help and exit if --help is passed or args are invalid
@@ -83,7 +77,7 @@ fn list_functions(name: Option<String>) {
     });
 
 
-    for fun in ALL_FUNCTIONS.iter() {
+    for fun in get_builtin_functions().iter() {
         if name_filter.as_ref().map(|filter| filter.is_match(fun.get_name())).unwrap_or(true) {
             print_function_help(*fun);
         }
@@ -113,6 +107,7 @@ pub struct Program<'a> {
     source: String,
     rng: DataGenRng,
     output: DataGenOutput<'a>,
+    interpreter: Interpreter,
 }
 
 impl <'a> Program<'a> {
@@ -127,12 +122,13 @@ impl <'a> Program<'a> {
             source,
             rng,
             output,
+            interpreter: Interpreter::new(verbosity)
         }
     }
 
     pub fn run(self) -> Result<(), Error> {
-        let Program {verbosity, iterations, source, mut rng, mut output} = self;
-        let mut generator = parse_generator(verbosity, source.as_str())?;
+        let Program {iterations, source, mut rng, mut output, mut interpreter, ..} = self;
+        let mut generator = interpreter.eval_program(source.as_str())?; 
 
         for _ in 0..iterations {
             generator.write_value(&mut rng, &mut output)?;

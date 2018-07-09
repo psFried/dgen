@@ -57,6 +57,12 @@ impl Generator for UnsignedIntGenerator {
             unreachable!()
         }
     }
+
+    fn new_from_prototype(&self) -> Box<Generator<Output=u64>> {
+        let min: DynUnsignedIntGenerator = self.min.new_from_prototype();
+        let max: DynUnsignedIntGenerator = self.max.new_from_prototype();
+        Box::new(UnsignedIntGenerator {min, max, value: 0})
+    }
 }
 
 impl fmt::Display for UnsignedIntGenerator {

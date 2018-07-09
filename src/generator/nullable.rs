@@ -23,7 +23,7 @@ impl <T: Display> NullableGenerator<T> {
     }
 }
 
-impl <T: Display> Generator for NullableGenerator<T> {
+impl <T: Display + 'static> Generator for NullableGenerator<T> {
     type Output = T;
 
     fn gen_value(&mut self, rng: &mut DataGenRng) -> Option<&T> {
@@ -40,6 +40,12 @@ impl <T: Display> Generator for NullableGenerator<T> {
         } else {
             Ok(0)
         }
+    }
+
+    fn new_from_prototype(&self) -> Box<Generator<Output=T>> {
+        let wrapped_generator = self.wrapped_generator.new_from_prototype();
+        let null_frequency = self.null_frequency.new_from_prototype();
+        Box::new(NullableGenerator{ wrapped_generator, null_frequency })
     }
 }
 

@@ -1,0 +1,73 @@
+use ast;
+use generator::GeneratorType;
+use std::str::FromStr;
+
+grammar;
+
+Comma<E>: Vec<E> = {
+    <v0:(<E> ",")*> <e1:E?> => v0.into_iter().chain(e1).collect()
+};
+
+BooleanLiteral: bool = {
+    "true" => true,
+    "false" => false
+}
+
+StringLiteral: String = {
+    <s:r#""([^"\\]*(\\.[^"\\]*)*)""#> => s[1..s.len() - 1].replace(r#"\""#, r#"""#)
+};
+
+IntLiteral: u64 = {
+    <s:r"[0-9]+"> => u64::from_str(s).unwrap()
+};
+
+SignedIntLiteral: i64 = {
+    <s:r"[-+][0-9]+"> => i64::from_str(s).unwrap()
+}
+
+DecimalLiteral: f64 = {
+    <s:r"[0-9]+\.[0-9]+"> => f64::from_str(s).unwrap()
+};
+
+pub Expr: ast::Expr = {
+    <b:BooleanLiteral> => ast::Expr::BooleanLiteral(b),
+    <s:StringLiteral> => ast::Expr::StringLiteral(s),
+    <i:IntLiteral> => ast::Expr::IntLiteral(i),
+    <i:SignedIntLiteral> => ast::Expr::SignedIntLiteral(i),
+    <d:DecimalLiteral> => ast::Expr::DecimalLiteral(d),
+    <f:FunctionCall> => ast::Expr::Function(f)
+};
+
+FunctionCall: ast::FunctionCall = {
+    <n:Word>"(" <a:Comma<Expr>> ")" => ast::FunctionCall { function_name: n, args: a }
+};
+
+Word: String = {
+    <s:r"[a-zA-Z]+\w+"> => s.to_owned()
+};
+
+GenType: GeneratorType = {
+    "Uint" => GeneratorType::UnsignedInt,
+    "String" => GeneratorType::String,
+    "Int" => GeneratorType::SignedInt,
+    "Boolean" => GeneratorType::Boolean,
+    "Float" => GeneratorType::Decimal,
+    "Char" => GeneratorType::Char
+}
+
+MacroArg: ast::MacroArgument = {
+    <n:Word> ":" <t:GenType>  => ast::MacroArgument {name: n, arg_type: t}
+}
+
+DefineMacro: ast::MacroDef = {
+    "def" <n:Word> "(" <args:Comma<MacroArg>> ")" "=" <e:Expr> ";" => ast::MacroDef { name: n, args: args, body: e }
+}
+
+
+pub Program: ast::Program = {
+    <m:DefineMacro*> <e:Expr> => ast::Program {assignments: m, expr: e }
+}
+
+pub Library: Vec<ast::MacroDef> = {
+    <m:DefineMacro*> => m
+}

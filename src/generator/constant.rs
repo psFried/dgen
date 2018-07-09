@@ -3,12 +3,13 @@ use writer::DataGenOutput;
 use std::fmt::{self, Display};
 use std::io;
 
-pub struct ConstantGenerator<T: Display> {
+#[derive(Clone, Debug)]
+pub struct ConstantGenerator<T: Display + Clone + Send> {
     value: Option<T>,
     buffer: String,
 }
 
-impl <T: Display + 'static> ConstantGenerator<T> {
+impl <T: Display  + Clone + Send + 'static> ConstantGenerator<T> {
     pub fn new(value: Option<T>) -> ConstantGenerator<T> {
         ConstantGenerator {
             value,
@@ -21,7 +22,7 @@ impl <T: Display + 'static> ConstantGenerator<T> {
     }
 }
 
-impl <T: Display> Generator for ConstantGenerator<T> {
+impl <T: Display + Clone + Send + 'static> Generator for ConstantGenerator<T> {
     type Output = T;
 
     fn gen_value(&mut self, rng: &mut DataGenRng) -> Option<&T> {
@@ -36,9 +37,12 @@ impl <T: Display> Generator for ConstantGenerator<T> {
         }
     }
 
+    fn new_from_prototype(&self) -> Box<Generator<Output=T>> {
+        Box::new(self.clone())
+    }
 }
 
-impl <T: Display> Display for ConstantGenerator<T> {
+impl <T: Display + Clone + Send> Display for ConstantGenerator<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if let Some(ref value) = self.value {
             write!(f, "const({})", value)

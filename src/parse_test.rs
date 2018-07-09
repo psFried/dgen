@@ -1,74 +1,75 @@
-use column_spec_parser::{TokenParser, ColumnSpecParser};
-
-use ast::{Token, FunctionCall};
+use grammar::ExprParser;
+use parser::parse_program;
+use generator::GeneratorType;
+use ast::{Expr, FunctionCall, MacroArgument, MacroDef, Program};
 
 #[test]
 fn parses_boolean_literal_false_token() {
-    let result = TokenParser::new().parse(r#"false"#);
+    let result = ExprParser::new().parse(r#"false"#);
     assert_eq!(Ok(boolean(false)), result);
 }
 
 #[test]
 fn parses_boolean_literal_true_token() {
-    let result = TokenParser::new().parse(r#"true"#);
+    let result = ExprParser::new().parse(r#"true"#);
     assert_eq!(Ok(boolean(true)), result);
 }
 
 #[test]
 fn parses_int_literal_token() {
-    let result = TokenParser::new().parse(r#"1234"#);
+    let result = ExprParser::new().parse(r#"1234"#);
     assert_eq!(Ok(int(1234)), result);
 }
 
 #[test]
 fn parses_unsigned_int_literal_negative_token() {
-    let result = TokenParser::new().parse(r#"-1234"#);
+    let result = ExprParser::new().parse(r#"-1234"#);
     assert_eq!(Ok(sint(-1234)), result);
 }
 
 #[test]
 fn parses_unsigned_int_literal_positive_token() {
-    let result = TokenParser::new().parse(r#"+1234"#);
+    let result = ExprParser::new().parse(r#"+1234"#);
     assert_eq!(Ok(sint(1234)), result);
 }
 
 
 #[test]
 fn parses_string_literal_with_escaped_quotes() {
-    let result = TokenParser::new().parse(r#""some\"str""#);
+    let result = ExprParser::new().parse(r#""some\"str""#);
     assert_eq!(Ok(string(r#"some"str"#)), result);
 }
 
 #[test]
 fn parses_string_literal_token() {
-    let result = TokenParser::new().parse(r#""somestr""#);
+    let result = ExprParser::new().parse(r#""somestr""#);
     assert_eq!(Ok(string("somestr")), result);
 }
 
 #[test]
 fn parses_decimal_literal_token() {
-    let result = TokenParser::new().parse(r#"123.45"#);
+    let result = ExprParser::new().parse(r#"123.45"#);
     assert_eq!(Ok(float(123.45)), result);
 }
 
 
 #[test]
 fn parses_function_call_with_literal_arguments() {
-    let result = TokenParser::new().parse(r#"fun_name("foo", 55, 12.5)"#);
+    let result = ExprParser::new().parse(r#"fun_name("foo", 55, 12.5)"#);
     let expected = FunctionCall {
         function_name: "fun_name".to_owned(),
         args: vec![
-            Token::StringLiteral("foo".to_owned()),
-            Token::IntLiteral(55),
-            Token::DecimalLiteral(12.5)
+            Expr::StringLiteral("foo".to_owned()),
+            Expr::IntLiteral(55),
+            Expr::DecimalLiteral(12.5)
         ]
     };
-    assert_eq!(Ok(Token::Function(expected)), result);
+    assert_eq!(Ok(Expr::Function(expected)), result);
 }
 
 #[test]
 fn parses_nested_function_calls() {
-    let result = TokenParser::new().parse(r#"fun1("foo", fun2(12.5, fun3(111)), "bar")"#);
+    let result = ExprParser::new().parse(r#"fun1("foo", fun2(12.5, fun3(111)), "bar")"#);
     let expected = fun("fun1", vec![
         string("foo"),
         fun("fun2", vec![
@@ -82,30 +83,89 @@ fn parses_nested_function_calls() {
     assert_eq!(Ok(expected), result);
 }
 
+#[test]
+fn parses_program_with_macro_definitions() {
+    let input = r#"
+    def wtf(count: Uint) = asciiString(count());
+    def foo() = wtf(uint(0, 9));
 
-fn fun(name: &str, args: Vec<Token>) -> Token {
-    Token::Function(FunctionCall {
+    foo()
+    "#;
+    let expected = Program {
+        assignments: vec![
+            MacroDef {
+                name: s("wtf"),
+                args: vec![
+                    MacroArgument {
+                        name: s("count"),
+                        arg_type: GeneratorType::UnsignedInt,
+                    }
+                ],
+                body: Expr::Function(FunctionCall {
+                    function_name: s("asciiString"),
+                    args: vec![
+                        Expr::Function(FunctionCall {
+                            function_name: s("count"),
+                            args: Vec::new(),
+                        })
+                    ]
+                })
+            },
+            MacroDef {
+                name: s("foo"),
+                args: Vec::new(),
+                body: Expr::Function(FunctionCall {
+                    function_name: s("wtf"),
+                    args: vec![
+                        Expr::Function(FunctionCall {
+                            function_name: s("uint"),
+                            args: vec![
+                                Expr::IntLiteral(0),
+                                Expr::IntLiteral(9)
+                            ]
+                        })
+                    ]
+                })
+            }
+        ],
+        expr: Expr::Function(FunctionCall {
+            function_name: s("foo"),
+            args: Vec::new(),
+        })
+    };
+
+    let actual = parse_program(input).expect("failed to parse input");
+    assert_eq!(expected, actual);
+}
+
+fn s(val: &str) -> String {
+    val.to_owned()
+}
+
+
+fn fun(name: &str, args: Vec<Expr>) -> Expr {
+    Expr::Function(FunctionCall {
         function_name: name.to_owned(),
         args
     })
 }
 
-fn string(s: &str) -> Token {
-    Token::StringLiteral(s.to_owned())
+fn string(s: &str) -> Expr {
+    Expr::StringLiteral(s.to_owned())
 }
 
-fn int(i: u64) -> Token {
-    Token::IntLiteral(i)
+fn int(i: u64) -> Expr {
+    Expr::IntLiteral(i)
 }
 
-fn float(f: f64) -> Token {
-    Token::DecimalLiteral(f)
+fn float(f: f64) -> Expr {
+    Expr::DecimalLiteral(f)
 }
 
-fn boolean(b: bool) -> Token {
-    Token::BooleanLiteral(b)
+fn boolean(b: bool) -> Expr {
+    Expr::BooleanLiteral(b)
 }
 
-fn sint(i: i64) -> Token {
-    Token::SignedIntLiteral(i)
+fn sint(i: i64) -> Expr {
+    Expr::SignedIntLiteral(i)
 }

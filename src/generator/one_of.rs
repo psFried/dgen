@@ -6,12 +6,12 @@ use std::marker::PhantomData;
 use std::io;
 
 
-pub struct OneOfGenerator<T: Display> {
+pub struct OneOfGenerator<T: Display + Send + 'static> {
     wrapped: Vec<Box<Generator<Output=T>>>,
     _phantom_data: PhantomData<T>,
 }
 
-impl <T: Display + 'static> OneOfGenerator<T> {
+impl <T: Display + Send + 'static> OneOfGenerator<T> {
     pub fn new(wrapped: Vec<Box<Generator<Output=T>>>) -> Box<Generator<Output=T>> {
         Box::new(OneOfGenerator {
             wrapped,
@@ -20,7 +20,7 @@ impl <T: Display + 'static> OneOfGenerator<T> {
     }
 }
 
-impl <T: Display> Generator for OneOfGenerator<T> {
+impl <T: Display + Send + 'static> Generator for OneOfGenerator<T> {
     type Output = T;
 
     fn gen_value(&mut self, rng: &mut DataGenRng) -> Option<&T> {
@@ -37,9 +37,14 @@ impl <T: Display> Generator for OneOfGenerator<T> {
             g.write_value(rng, output)
         }).unwrap_or(Ok(0))
     }
+    
+    fn new_from_prototype(&self) -> Box<Generator<Output=T>> {
+        let wrapped = self.wrapped.iter().map(|g| g.new_from_prototype()).collect::<Vec<Box<Generator<Output=T>>>>();
+        Box::new(OneOfGenerator {wrapped, _phantom_data: PhantomData})
+    }
 }
 
-impl <T: Display> Display for OneOfGenerator<T> {
+impl <T: Display + Send + 'static> Display for OneOfGenerator<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str("oneOf(")?;
         let mut first = true;

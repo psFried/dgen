@@ -1,8 +1,9 @@
 use generator::{GeneratorArg, GeneratorType};
 use generator::constant::ConstantGenerator;
-use ast::{Token, FunctionCall};
-use functions::{FunctionCreator, ALL_FUNCTIONS};
+use ast::{Expr, FunctionCall, MacroDef, Program};
+use functions::{FunctionCreator, get_builtin_functions};
 use std::fmt::{self, Display};
+use failure::Error;
 
 #[derive(Debug, Fail)]
 pub struct ResolveError {
@@ -58,19 +59,8 @@ impl Display for ResolveError {
     }
 }
 
-pub fn into_generator(token: &Token) -> Result<GeneratorArg, ResolveError> {
-    match token {
-        Token::BooleanLiteral(val) => Ok(GeneratorArg::Bool(ConstantGenerator::create(val.clone()))),
-        Token::StringLiteral(val) => Ok(GeneratorArg::String(ConstantGenerator::create(val.clone()))),
-        Token::IntLiteral(int) => Ok(GeneratorArg::UnsignedInt(ConstantGenerator::create(int.clone()))),
-        Token::SignedIntLiteral(val) => Ok(GeneratorArg::SignedInt(ConstantGenerator::create(val.clone()))),
-        Token::DecimalLiteral(float) => Ok(GeneratorArg::Decimal(ConstantGenerator::create(float.clone()))),
-        Token::Function(call) => resolve_function_call(call)
-    }
-}
-
 fn find_named_functions<'a>(name: &'a str) -> impl Iterator<Item=&FunctionCreator> {
-    ALL_FUNCTIONS.iter().filter(move |f| name == f.get_name()).map(|f| *f)
+    get_builtin_functions().iter().filter(move |f| name == f.get_name()).map(|f| *f)
 }
 
 #[derive(Clone)]
@@ -152,45 +142,139 @@ impl <'a> FunctionMatch<'a> {
     }
 }
 
-fn resolve_function_call(function_call: &FunctionCall) -> Result<GeneratorArg, ResolveError> {
-    let FunctionCall { ref function_name, ref args } = *function_call;
-    let mut resolved_args = Vec::with_capacity(args.len());
-    let mut resolved_argument_types: Vec<GeneratorType> = Vec::with_capacity(args.len());
-    for token in args.iter() {
-        let resolved_arg = into_generator(&token)?;
-        resolved_argument_types.push(resolved_arg.get_type());
-        resolved_args.push(resolved_arg);
+
+pub struct MacroDefFunctionCreator {
+    macro_def: MacroDef,
+    arg_types: Vec<GeneratorType>,
+}
+
+impl MacroDefFunctionCreator {
+    pub fn new(macro_def: MacroDef) -> MacroDefFunctionCreator {
+        let arg_types = macro_def.args.iter().map(|a| a.arg_type).collect();
+        MacroDefFunctionCreator {
+            macro_def,
+            arg_types,
+        }
+    }
+}
+
+struct MacroArgFunctionCreator {
+    name: String,
+    value: ::std::sync::Arc<GeneratorArg>
+}
+
+impl FunctionCreator for MacroArgFunctionCreator {
+    fn get_name(&self) -> &str {
+        unimplemented!()
+    }
+    fn get_arg_types(&self) -> (&[GeneratorType], bool) {
+        unimplemented!()
+    }
+    fn get_description(&self) -> &str {
+        unimplemented!()
+    }
+    fn create(&self, args: Vec<GeneratorArg>) -> Result<GeneratorArg, Error> {
+        unimplemented!()
+    }
+}
+
+impl FunctionCreator for MacroDefFunctionCreator {
+    fn get_name(&self) -> &str {
+        self.macro_def.name.as_str()
     }
 
-    // first find all the functions where just the name matches
-    let mut matching_name_functions = find_named_functions(function_name.as_str()).peekable();
-    if matching_name_functions.peek().is_none() {
-        return Err(ResolveError::no_such_function_name(function_name.clone(), resolved_argument_types));
+    fn get_arg_types(&self) -> (&[GeneratorType], bool) {
+        (self.arg_types.as_slice(), false)
     }
 
-    let matching_functions = matching_name_functions.flat_map(|fun| {
-            FunctionMatch::create(fun, resolved_argument_types.as_slice())
-        });
+    fn get_description(&self) -> &str {
+        "user defined function"
+    }
 
+    fn create(&self, args: Vec<GeneratorArg>) -> Result<GeneratorArg, Error> {
+        unimplemented!()
+    }
+}
 
-    let mut best_match = None;
-    let mut current_best_distance = usize::max_value();
-    // if multiple functions _could_ match, then we pick the one where the arguments match the most specifically
-    for function_match in matching_functions {
-        let match_distance = function_match.distance();
-        if match_distance < current_best_distance {
-            best_match = Some(function_match);
-            current_best_distance = match_distance;
-        } else if match_distance == current_best_distance {
-            // 2 or more functions have the same distance, which means we have to error out
-            return Err(ResolveError::ambiguous_function_call(function_name.clone(), resolved_argument_types.clone()));
+pub struct ProgramContext {
+    /// stack of scopes
+    macros: Vec<Vec<MacroDefFunctionCreator>>,
+}
+
+impl ProgramContext {
+    pub fn new() -> ProgramContext {
+        ProgramContext {
+            macros: Vec::new(),
         }
     }
 
-    best_match.ok_or_else(|| {
-        // there were no functions that matched both the name and the argument types
-        ResolveError::mismatched_function_args(function_name.clone(), resolved_argument_types.clone())
-    }).map(|creator| {
-        creator.call.create(resolved_args)
-    })
+    pub fn resolve_program(&mut self, program: &Program) -> Result<GeneratorArg, Error> {
+        let scope = program.assignments.iter().cloned().map(|m| MacroDefFunctionCreator::new(m)).collect();
+        self.macros.push(scope);
+        let result = self.resolve_expr(&program.expr);
+        self.macros.pop();
+        result
+    }
+
+    pub fn resolve_expr(&mut self, token: &Expr) -> Result<GeneratorArg, Error> {
+        match token {
+            Expr::BooleanLiteral(val) => Ok(GeneratorArg::Bool(ConstantGenerator::create(val.clone()))),
+            Expr::StringLiteral(val) => Ok(GeneratorArg::String(ConstantGenerator::create(val.clone()))),
+            Expr::IntLiteral(int) => Ok(GeneratorArg::UnsignedInt(ConstantGenerator::create(int.clone()))),
+            Expr::SignedIntLiteral(val) => Ok(GeneratorArg::SignedInt(ConstantGenerator::create(val.clone()))),
+            Expr::DecimalLiteral(float) => Ok(GeneratorArg::Decimal(ConstantGenerator::create(float.clone()))),
+            Expr::Function(call) => self.resolve_function_call(call)
+        }
+    }
+
+    fn get_matching_functions<'a>(&'a self, function_name: &'a str) -> impl Iterator<Item=&'a FunctionCreator> {
+        let f_name = function_name;
+        self.macros.iter().rev().flat_map(|v| v.iter())
+            .filter(move |i| i.get_name() == function_name)
+            .map(|i| i as &FunctionCreator)
+            .chain(find_named_functions(f_name))
+    }
+
+    fn resolve_function_call(&mut self, function_call: &FunctionCall) -> Result<GeneratorArg, Error> {
+        let FunctionCall { ref function_name, ref args } = *function_call;
+        let mut resolved_args = Vec::with_capacity(args.len());
+        let mut resolved_argument_types: Vec<GeneratorType> = Vec::with_capacity(args.len());
+        for token in args.iter() {
+            let resolved_arg = self.resolve_expr(&token)?;
+            resolved_argument_types.push(resolved_arg.get_type());
+            resolved_args.push(resolved_arg);
+        }
+
+        // first find all the functions where just the name matches
+        let mut matching_name_functions = self.get_matching_functions(function_name.as_str()).peekable();
+        // ensure that there's at least one function somewhere with a name that matches, and return early if not
+        if matching_name_functions.peek().is_none() {
+            return Err(ResolveError::no_such_function_name(function_name.clone(), resolved_argument_types).into());
+        }
+
+        let matching_functions = matching_name_functions.flat_map(|fun| {
+            FunctionMatch::create(fun, resolved_argument_types.as_slice())
+        });
+
+        let mut best_match = None;
+        let mut current_best_distance = usize::max_value();
+        // if multiple functions _could_ match, then we pick the one where the arguments match the most specifically
+        for function_match in matching_functions {
+            let match_distance = function_match.distance();
+            if match_distance < current_best_distance {
+                best_match = Some(function_match);
+                current_best_distance = match_distance;
+            } else if match_distance == current_best_distance {
+                // 2 or more functions have the same distance, which means we have to error out
+                return Err(ResolveError::ambiguous_function_call(function_name.clone(), resolved_argument_types.clone()).into());
+            }
+        }
+
+        best_match.ok_or_else(|| {
+            // there were no functions that matched both the name and the argument types
+            ResolveError::mismatched_function_args(function_name.clone(), resolved_argument_types.clone()).into()
+        }).and_then(|creator| {
+            creator.call.create(resolved_args)
+        })
+    }
 }
