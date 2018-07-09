@@ -1,5 +1,5 @@
-use ast::{Program, Expr};
-use grammar::{ExprParser, ProgramParser};
+use interpreter::ast::{Program, Expr};
+use interpreter::grammar::{ExprParser, ProgramParser};
 use failure::Error;
 
 

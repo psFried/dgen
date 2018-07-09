@@ -1,7 +1,7 @@
-use grammar::ExprParser;
-use parser::parse_program;
+use interpreter::grammar::ExprParser;
+use interpreter::parser::parse_program;
 use generator::GeneratorType;
-use ast::{Expr, FunctionCall, MacroArgument, MacroDef, Program};
+use interpreter::ast::{Expr, FunctionCall, MacroArgument, MacroDef, Program};
 
 #[test]
 fn parses_boolean_literal_false_token() {

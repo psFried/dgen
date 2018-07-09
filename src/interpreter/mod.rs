@@ -1,7 +1,15 @@
-use parser::parse_program;
-use resolve::ProgramContext;
+mod ast;
+mod grammar;
+mod parser;
+mod resolve;
+pub mod functions;
+#[cfg(test)] mod parse_test;
+
+use self::parser::parse_program;
+use self::resolve::ProgramContext;
 use generator::GeneratorArg;
 use failure::Error;
+
 
 pub struct Interpreter {
     context: ProgramContext,

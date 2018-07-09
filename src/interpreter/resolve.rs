@@ -1,7 +1,7 @@
 use generator::{GeneratorArg, GeneratorType};
 use generator::constant::ConstantGenerator;
-use ast::{Expr, FunctionCall, MacroDef, Program};
-use functions::{FunctionCreator, get_builtin_functions};
+use interpreter::ast::{Expr, FunctionCall, MacroDef, Program};
+use interpreter::functions::{FunctionCreator, FunctionHelp, get_builtin_functions};
 use std::fmt::{self, Display};
 use failure::Error;
 
@@ -53,7 +53,7 @@ impl Display for ResolveError {
                 f.write_str("\nother possible functions are: \n")?;
                 first = false;
             }
-            write!(f, "{}\n", ::functions::FunctionHelp(matching))?;
+            write!(f, "{}\n", FunctionHelp(matching))?;
         }
         Ok(())
     }

@@ -4,21 +4,15 @@ extern crate lalrpop_util;
 extern crate rand;
 extern crate regex;
 
-mod parser;
 mod cli_opts;
 mod generator;
 mod writer;
-mod ast;
-mod grammar;
-mod functions;
-mod resolve;
 mod interpreter;
-#[cfg(test)] mod parse_test; 
 #[cfg(test)] mod fun_test;
 
 use self::cli_opts::{CliOptions, SubCommand};
-use self::generator::{GeneratorArg, DataGenRng};
-use self::functions::{FunctionCreator, get_builtin_functions};
+use self::generator::DataGenRng;
+use self::interpreter::functions::{FunctionCreator, get_builtin_functions, FunctionHelp};
 use self::writer::DataGenOutput;
 use self::interpreter::Interpreter;
 use structopt::StructOpt;
@@ -96,7 +90,7 @@ fn run_program(verbosity: u64, iterations: u64, program: String) -> Result<(), E
 
 
 fn print_function_help(fun: &FunctionCreator) {
-    let help = self::functions::FunctionHelp(fun);
+    let help = FunctionHelp(fun);
     println!("{}", help);
 }
 
