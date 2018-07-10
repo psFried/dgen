@@ -3,3 +3,5 @@ def boolean(true_frequency: Float) = select2(true_frequency(), true, false);
 def boolean() = select2(true, false);
 
 
+def trailing_newline(value: String) = concat_delimited("", "", "\n", value());
+

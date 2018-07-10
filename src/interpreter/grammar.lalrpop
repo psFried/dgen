@@ -14,7 +14,7 @@ BooleanLiteral: bool = {
 }
 
 StringLiteral: String = {
-    <s:r#""([^"\\]*(\\.[^"\\]*)*)""#> => s[1..s.len() - 1].replace(r#"\""#, r#"""#)
+    <s:r#""([^"\\]*(\\.[^"\\]*)*)""#> => s[1..s.len() - 1].replace(r#"\""#, r#"""#).replace("\\n", "\n")
 };
 
 IntLiteral: u64 = {

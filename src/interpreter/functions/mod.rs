@@ -29,6 +29,9 @@ const BUILTIN_FUNCTIONS: &[&FunctionCreator] = &[
 
     &self::either::EitherFun as &FunctionCreator,
     &self::either::EitherFreqFun as &FunctionCreator,
+
+    &self::concat::SimpleConcat as &FunctionCreator,
+    &self::concat::ConcatDelimitedFun as &FunctionCreator,
 ];
 
 pub fn get_builtin_functions() -> &'static [&'static FunctionCreator] {
