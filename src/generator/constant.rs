@@ -25,7 +25,7 @@ impl <T: Display  + Clone + Send + 'static> ConstantGenerator<T> {
 impl <T: Display + Clone + Send + 'static> Generator for ConstantGenerator<T> {
     type Output = T;
 
-    fn gen_value(&mut self, rng: &mut DataGenRng) -> Option<&T> {
+    fn gen_value(&mut self, _rng: &mut DataGenRng) -> Option<&T> {
         self.value.as_ref()
     }
 

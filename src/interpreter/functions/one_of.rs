@@ -1,6 +1,7 @@
 use super::FunctionCreator;
 use generator::{GeneratorArg, GeneratorType};
 use generator::one_of::OneOfGenerator;
+use interpreter::resolve::ProgramContext;
 use failure::Error;
 
 // TODO: Add OneOf_ functions for other primitive types
@@ -18,7 +19,7 @@ impl FunctionCreator for OneOfUint {
         "randomly selects one of the given arguments using a uniform distribution"
     }
 
-    fn create(&self, args: Vec<GeneratorArg>) -> Result<GeneratorArg, Error> {
+    fn create(&self, args: Vec<GeneratorArg>, _ctx: &ProgramContext) -> Result<GeneratorArg, Error> {
         create_one_of(args)
     }
 }
@@ -37,7 +38,7 @@ impl FunctionCreator for OneOfString {
         "randomly selects one of the given arguments using a uniform distribution. Allows for mixed input types"
     }
 
-    fn create(&self, args: Vec<GeneratorArg>) -> Result<GeneratorArg, Error> {
+    fn create(&self, args: Vec<GeneratorArg>, _ctx: &ProgramContext) -> Result<GeneratorArg, Error> {
         create_one_of(args)
     }
 }

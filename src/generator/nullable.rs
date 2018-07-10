@@ -10,6 +10,7 @@ pub struct NullableGenerator<T: Display> {
 }
 
 impl <T: Display> NullableGenerator<T> {
+    #[allow(dead_code)]
     pub fn new(wrapped_generator: Box<Generator<Output=T>>, null_frequency: Box<Generator<Output=f64>>) -> NullableGenerator<T> {
         NullableGenerator {
             wrapped_generator,

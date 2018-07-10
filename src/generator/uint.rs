@@ -20,6 +20,7 @@ impl UnsignedIntGenerator {
         UnsignedIntGenerator::new(ConstantGenerator::create(DEFAULT_MIN), ConstantGenerator::create(DEFAULT_MAX))
     }
 
+    #[allow(dead_code)]
     pub fn with_min(min: DynUnsignedIntGenerator) -> DynUnsignedIntGenerator {
         UnsignedIntGenerator::new(min, ConstantGenerator::create(DEFAULT_MAX))
     }

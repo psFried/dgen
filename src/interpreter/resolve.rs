@@ -156,25 +156,37 @@ impl MacroDefFunctionCreator {
             arg_types,
         }
     }
+
+    pub fn bind_arguments(&self, args: Vec<GeneratorArg>) -> Vec<MacroArgFunctionCreator> {
+        args.into_iter().zip(self.macro_def.args.iter()).map(|(value, arg_type)| {
+            MacroArgFunctionCreator::new(arg_type.name.clone(), value)
+        }).collect()
+    }
 }
 
-struct MacroArgFunctionCreator {
+pub struct MacroArgFunctionCreator {
     name: String,
-    value: ::std::sync::Arc<GeneratorArg>
+    value: GeneratorArg
+}
+
+impl MacroArgFunctionCreator {
+    pub fn new(name: String, value: GeneratorArg) -> MacroArgFunctionCreator {
+        MacroArgFunctionCreator {name, value}
+    }
 }
 
 impl FunctionCreator for MacroArgFunctionCreator {
     fn get_name(&self) -> &str {
-        unimplemented!()
+        self.name.as_str()
     }
     fn get_arg_types(&self) -> (&[GeneratorType], bool) {
-        unimplemented!()
+        (&[], false)
     }
     fn get_description(&self) -> &str {
-        unimplemented!()
+        self.name.as_str()
     }
-    fn create(&self, args: Vec<GeneratorArg>) -> Result<GeneratorArg, Error> {
-        unimplemented!()
+    fn create(&self, args: Vec<GeneratorArg>, ctx: &ProgramContext) -> Result<GeneratorArg, Error> {
+        Ok(self.value.clone())
     }
 }
 
@@ -191,8 +203,9 @@ impl FunctionCreator for MacroDefFunctionCreator {
         "user defined function"
     }
 
-    fn create(&self, args: Vec<GeneratorArg>) -> Result<GeneratorArg, Error> {
-        unimplemented!()
+    fn create(&self, args: Vec<GeneratorArg>, ctx: &ProgramContext) -> Result<GeneratorArg, Error> {
+        let bound_args = self.bind_arguments(args);
+        ctx.resolve_macro_call(&self.macro_def.body, bound_args)
     }
 }
 
@@ -208,6 +221,10 @@ impl ProgramContext {
         }
     }
 
+    pub fn resolve_macro_call(&self, body: &Expr, args: Vec<MacroArgFunctionCreator>) -> Result<GeneratorArg, Error> {
+        self.resolve_expr_private(body, args.as_slice())
+    }
+
     pub fn resolve_program(&mut self, program: &Program) -> Result<GeneratorArg, Error> {
         let scope = program.assignments.iter().cloned().map(|m| MacroDefFunctionCreator::new(m)).collect();
         self.macros.push(scope);
@@ -216,15 +233,20 @@ impl ProgramContext {
         result
     }
 
-    pub fn resolve_expr(&mut self, token: &Expr) -> Result<GeneratorArg, Error> {
+    pub fn resolve_expr(&self, token: &Expr) -> Result<GeneratorArg, Error> {
+        self.resolve_expr_private(token, &[])
+    }
+
+    fn resolve_expr_private(&self, token: &Expr, bound_arguments: &[MacroArgFunctionCreator]) -> Result<GeneratorArg, Error> {
         match token {
             Expr::BooleanLiteral(val) => Ok(GeneratorArg::Bool(ConstantGenerator::create(val.clone()))),
             Expr::StringLiteral(val) => Ok(GeneratorArg::String(ConstantGenerator::create(val.clone()))),
             Expr::IntLiteral(int) => Ok(GeneratorArg::UnsignedInt(ConstantGenerator::create(int.clone()))),
             Expr::SignedIntLiteral(val) => Ok(GeneratorArg::SignedInt(ConstantGenerator::create(val.clone()))),
             Expr::DecimalLiteral(float) => Ok(GeneratorArg::Decimal(ConstantGenerator::create(float.clone()))),
-            Expr::Function(call) => self.resolve_function_call(call)
+            Expr::Function(call) => self.resolve_function_call(call, bound_arguments)
         }
+
     }
 
     fn get_matching_functions<'a>(&'a self, function_name: &'a str) -> impl Iterator<Item=&'a FunctionCreator> {
@@ -235,18 +257,22 @@ impl ProgramContext {
             .chain(find_named_functions(f_name))
     }
 
-    fn resolve_function_call(&mut self, function_call: &FunctionCall) -> Result<GeneratorArg, Error> {
+    fn resolve_function_call(&self, function_call: &FunctionCall, bound_args: &[MacroArgFunctionCreator]) -> Result<GeneratorArg, Error> {
         let FunctionCall { ref function_name, ref args } = *function_call;
         let mut resolved_args = Vec::with_capacity(args.len());
         let mut resolved_argument_types: Vec<GeneratorType> = Vec::with_capacity(args.len());
         for token in args.iter() {
-            let resolved_arg = self.resolve_expr(&token)?;
+            let resolved_arg = self.resolve_expr_private(&token, bound_args)?;
             resolved_argument_types.push(resolved_arg.get_type());
             resolved_args.push(resolved_arg);
         }
 
+        let matching_arg_functions = bound_args.iter()
+                .filter(|a| a.get_name() == function_name.as_str())
+                .map(|a| a as &FunctionCreator);
+
         // first find all the functions where just the name matches
-        let mut matching_name_functions = self.get_matching_functions(function_name.as_str()).peekable();
+        let mut matching_name_functions = matching_arg_functions.chain(self.get_matching_functions(function_name.as_str())).peekable();
         // ensure that there's at least one function somewhere with a name that matches, and return early if not
         if matching_name_functions.peek().is_none() {
             return Err(ResolveError::no_such_function_name(function_name.clone(), resolved_argument_types).into());
@@ -274,7 +300,7 @@ impl ProgramContext {
             // there were no functions that matched both the name and the argument types
             ResolveError::mismatched_function_args(function_name.clone(), resolved_argument_types.clone()).into()
         }).and_then(|creator| {
-            creator.call.create(resolved_args)
+            creator.call.create(resolved_args, self)
         })
     }
 }

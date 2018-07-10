@@ -47,13 +47,10 @@ impl <T: Display + Send + 'static> Generator for OneOfGenerator<T> {
 impl <T: Display + Send + 'static> Display for OneOfGenerator<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str("oneOf(")?;
-        let mut first = true;
         for (idx, gen) in self.wrapped.iter().enumerate() {
-            if !first {
+            if idx > 0 {
                 f.write_str(", ")?;
-            } else {
-                first = false;
-            }
+            }  
             write!(f, "{}", gen)?;
         }
         f.write_str(")")

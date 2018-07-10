@@ -2,6 +2,7 @@ mod ascii_string;
 mod unsigned_int;
 mod one_of;
 
+use interpreter::resolve::ProgramContext;
 use generator::{GeneratorType, GeneratorArg};
 use failure::Error;
 
@@ -9,7 +10,7 @@ pub trait FunctionCreator: 'static {
     fn get_name(&self) -> &str;
     fn get_arg_types(&self) -> (&[GeneratorType], bool);
     fn get_description(&self) -> &str;
-    fn create(&self, args: Vec<GeneratorArg>) -> Result<GeneratorArg, Error>;
+    fn create(&self, args: Vec<GeneratorArg>, ctx: &ProgramContext) -> Result<GeneratorArg, Error>;
 }
 
 
