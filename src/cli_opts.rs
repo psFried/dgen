@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "datagen", about = "Generate random data sets")]
@@ -37,10 +38,18 @@ pub enum SubCommand {
         /// Variadic functions are supported.
         /// 
         #[structopt(short = "p", long = "program")]
-        program: String,
+        program: Option<String>,
+
+        /// Read the generator program from the given file
+        #[structopt(short = "f", long = "program-file", parse(from_os_str))]
+        program_file: Option<PathBuf>,
+
+        // read the generator program from stdin
+        #[structopt(short = "-", long = "stdin")]
+        stdin: bool,
 
         /// number of iterations to print
-        #[structopt(short = "n", long = "iterations")]
+        #[structopt(short = "n", long = "iterations", default_value = "1")]
         iteration_count: u64,
     }
 }

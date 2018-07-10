@@ -19,6 +19,8 @@ use self::interpreter::Interpreter;
 use structopt::StructOpt;
 use failure::Error;
 use rand::FromEntropy;
+use std::io::{self, Read};
+use std::path::PathBuf;
 
 
 trait OrBail<T> {
@@ -52,9 +54,45 @@ fn main() {
     }
     match args.subcommand {
         SubCommand::ListFunctions{name} => list_functions(name),
-        SubCommand::RunProgram {program, iteration_count} => run_program(verbosity, iteration_count, program).or_bail(verbosity)
+        SubCommand::RunProgram {program, iteration_count, program_file, stdin} => {
+            let source = parse_program(program, program_file, stdin).or_bail(verbosity);
+            run_program(verbosity, iteration_count, source).or_bail(verbosity)
+        }
     }
 
+}
+
+fn parse_program(program: Option<String>, program_file: Option<PathBuf>, stdin: bool) -> Result<String, Error> {
+    let mut program_string: Option<String> = None;
+
+    if stdin {
+        program_string = Some(read_from_stdin()?);
+    } else if program.is_some() {
+        program_string = program;
+    } else if program_file.is_some() {
+        program_string = Some(read_from_file(program_file.unwrap())?);
+    }
+
+
+    program_string.ok_or_else(|| {
+        format_err!("Must specify one of program, program-file, or stdin")
+    })
+}
+
+fn read_from_file(file: PathBuf) -> io::Result<String> {
+    use std::fs::OpenOptions;
+
+    let mut handle = OpenOptions::new().read(true).open(&file)?;
+    let mut s = String::with_capacity(256);
+    handle.read_to_string(&mut s)?;
+    Ok(s)
+}
+
+fn read_from_stdin() -> io::Result<String> {
+    let mut s = String::with_capacity(256);
+    let mut sin = io::stdin();
+    sin.read_to_string(&mut s)?;
+    Ok(s)
 }
 
 fn print_backtraces(verbosity: u64) -> bool {
