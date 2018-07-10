@@ -1,6 +1,7 @@
 mod ascii_string;
 mod unsigned_int;
 mod one_of;
+mod either;
 
 use interpreter::resolve::ProgramContext;
 use generator::{GeneratorType, GeneratorArg};
@@ -13,8 +14,6 @@ pub trait FunctionCreator: 'static {
     fn create(&self, args: Vec<GeneratorArg>, ctx: &ProgramContext) -> Result<GeneratorArg, Error>;
 }
 
-
-
 const BUILTIN_FUNCTIONS: &[&FunctionCreator] = &[
     &self::ascii_string::AlphaNumeric as &FunctionCreator,
     &self::ascii_string::RandomAsciiString0 as &FunctionCreator,
@@ -26,6 +25,9 @@ const BUILTIN_FUNCTIONS: &[&FunctionCreator] = &[
 
     &self::one_of::OneOfUint as &FunctionCreator,
     &self::one_of::OneOfString as &FunctionCreator,
+
+    &self::either::EitherFun as &FunctionCreator,
+    &self::either::EitherFreqFun as &FunctionCreator,
 ];
 
 pub fn get_builtin_functions() -> &'static [&'static FunctionCreator] {

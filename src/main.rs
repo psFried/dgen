@@ -4,6 +4,7 @@ extern crate lalrpop_util;
 extern crate rand;
 extern crate regex;
 
+mod libraries;
 mod cli_opts;
 mod generator;
 mod writer;
@@ -122,6 +123,8 @@ impl <'a> Program<'a> {
 
     pub fn run(self) -> Result<(), Error> {
         let Program {iterations, source, mut rng, mut output, mut interpreter, ..} = self;
+        interpreter.eval_library(libraries::STANDARD_LIB)?;
+
         let mut generator = interpreter.eval_program(source.as_str())?; 
 
         for _ in 0..iterations {

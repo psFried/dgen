@@ -5,7 +5,7 @@ mod resolve;
 pub mod functions;
 #[cfg(test)] mod parse_test;
 
-use self::parser::parse_program;
+use self::parser::{parse_program, parse_library};
 use self::resolve::ProgramContext;
 use generator::GeneratorArg;
 use failure::Error;
@@ -25,11 +25,21 @@ impl Interpreter {
         }
     }
 
+    pub fn eval_library(&mut self, lib: &str) -> Result<(), Error> {
+        let ast = parse_library(lib)?;
+        if self.verbosity >= 3 {
+            eprintln!("LIBRARY AST: {:?}", ast);
+        }
+        self.context.add_lib(ast);
+        Ok(())
+    }
+
     pub fn eval_program(&mut self, program: &str) -> Result<GeneratorArg, Error> {
         let ast = parse_program(program)?;
         if self.verbosity >= 3 {
-            eprintln!("AST: {:?}", ast);
+            eprintln!("PROGRAM AST: {:?}", ast);
         }
-        self.context.resolve_program(&ast)
+        self.context.resolve_program(ast)
     }
+
 }

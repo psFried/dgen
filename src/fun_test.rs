@@ -9,7 +9,26 @@ use failure::Error;
 fn generate_ascii_strings() {
     let expected_output = "aACrrnGjOTedJsRy";
     let input = "asciiString(uint(0, 10))";
-    test_program_success(4, input, expected_output)
+    test_program_success(4, input, expected_output);
+}
+
+#[test]
+fn declare_and_use_macros() {
+    let expected_output = "DPaADCI2CrrnGjOTboedJ";
+    let input = r#"
+        def foo(len: Uint) = asciiString(len());
+        def bar() = foo(7);
+
+        bar()
+    "#;
+    test_program_success(3, input, expected_output);
+}
+
+#[test]
+fn use_std_boolean_function() {
+    let expected_output = "truetruetrue";
+    let input = r#"boolean(1.0)"#;
+    test_program_success(3, input, expected_output);
 }
 
 const RAND_SEED: &[u8; 16] = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];

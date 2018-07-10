@@ -1,3 +1,4 @@
+pub mod either;
 pub mod nullable;
 pub mod string;
 pub mod one_of;
@@ -11,12 +12,14 @@ use writer::DataGenOutput;
 
 pub type DataGenRng = ::rand::prng::XorShiftRng;
 
-pub type DynBoolGenerator = Box<Generator<Output=bool>>;
-pub type DynCharGenerator = Box<Generator<Output=char>>;
-pub type DynDecimalGenerator = Box<Generator<Output=f64>>;
-pub type DynUnsignedIntGenerator = Box<Generator<Output=u64>>;
-pub type DynSignedIntGenerator = Box<Generator<Output=i64>>;
-pub type DynStringGenerator = Box<Generator<Output=String>>;
+pub type DynGenerator<T> = Box<Generator<Output=T>>;
+
+pub type DynBoolGenerator = DynGenerator<bool>;
+pub type DynCharGenerator = DynGenerator<char>;
+pub type DynDecimalGenerator = DynGenerator<f64>;
+pub type DynUnsignedIntGenerator = DynGenerator<u64>;
+pub type DynSignedIntGenerator = DynGenerator<i64>;
+pub type DynStringGenerator = DynGenerator<String>;
 
 #[allow(unused)]
 pub enum GeneratorArg {
@@ -49,6 +52,34 @@ impl GeneratorArg {
     pub fn as_uint(self) -> Option<DynUnsignedIntGenerator> {
         match self {
             GeneratorArg::UnsignedInt(gen) => Some(gen),
+            _ => None
+        }
+    }
+
+    pub fn as_bool(self) -> Option<DynBoolGenerator> {
+        match self {
+            GeneratorArg::Bool(gen) => Some(gen),
+            _ => None
+        }
+    }
+
+    pub fn as_decimal(self) -> Option<DynDecimalGenerator> {
+        match self {
+            GeneratorArg::Decimal(gen) => Some(gen),
+            _ => None
+        }
+    }
+
+    pub fn as_char(self) -> Option<DynCharGenerator> {
+        match self {
+            GeneratorArg::Char(gen) => Some(gen),
+            _ => None
+        }
+    }
+
+    pub fn as_signed_int(self) -> Option<DynSignedIntGenerator> {
+        match self {
+            GeneratorArg::SignedInt(gen) => Some(gen),
             _ => None
         }
     }

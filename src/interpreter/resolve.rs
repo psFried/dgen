@@ -225,10 +225,15 @@ impl ProgramContext {
         self.resolve_expr_private(body, args.as_slice())
     }
 
-    pub fn resolve_program(&mut self, program: &Program) -> Result<GeneratorArg, Error> {
-        let scope = program.assignments.iter().cloned().map(|m| MacroDefFunctionCreator::new(m)).collect();
+    pub fn add_lib(&mut self, lib: Vec<MacroDef>) {
+        let scope = lib.into_iter().map(MacroDefFunctionCreator::new).collect();
         self.macros.push(scope);
-        let result = self.resolve_expr(&program.expr);
+    }
+
+    pub fn resolve_program(&mut self, program: Program) -> Result<GeneratorArg, Error> {
+        let Program {assignments, expr} = program;
+        self.add_lib(assignments);
+        let result = self.resolve_expr(&expr);
         self.macros.pop();
         result
     }
