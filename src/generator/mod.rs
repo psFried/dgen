@@ -4,6 +4,7 @@ pub mod string;
 pub mod one_of;
 pub mod constant;
 pub mod uint;
+pub mod concat;
 
 use std::fmt::{self, Display};
 use std::io;

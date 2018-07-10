@@ -2,6 +2,7 @@ mod ascii_string;
 mod unsigned_int;
 mod one_of;
 mod either;
+mod concat;
 
 use interpreter::resolve::ProgramContext;
 use generator::{GeneratorType, GeneratorArg};
