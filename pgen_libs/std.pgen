@@ -2,6 +2,48 @@
 def boolean(true_frequency: Float) = select2(true_frequency(), true, false);
 def boolean() = select2(true, false);
 
+def trailing_newline(value: String) = concat(value(), "\n");
 
-def trailing_newline(value: String) = concat_delimited("", "", "\n", value());
+def surround(middle: String, beginningAndEnd: String) = concat(beginningAndEnd(), middle(), beginningAndEnd());
+def double_quote(value: String) = surround(value(), "\"");
+def quote(value: String) = double_quote(value());
+def single_quote(value: String) = surround(value(), "'");
 
+def easy_csv_headers(column_count: Uint, quote_char: String, value_separator: String, line_separator: String) = 
+    concat(
+        repeat_delimited(
+            column_count(), 
+            surround(alphanumeric_string(uint(4, 50)), quote_char()),
+            value_separator()
+        ),
+        line_separator()
+    );
+
+def easy_csv_row(column_count: Uint, quote_char: String, value_separator: String, line_separator: String) = 
+    concat(
+        repeat_delimited(
+            column_count(),
+            surround(
+                one_of(
+                    alphanumeric_string(uint(0, 60)),
+                    uint(),
+                    boolean()
+                ), 
+                quote_char()
+            ),
+            value_separator()
+        ),
+        line_separator()
+    );
+
+def easy_csv(column_count: Uint, row_count: Uint, quote_char: String, value_separator: String, line_separator: String) = 
+    concat(
+        easy_csv_headers(column_count(), quote_char(), value_separator(), line_separator()),
+        repeat(
+            row_count(), 
+            easy_csv_row(column_count(), quote_char(), value_separator(), line_separator())
+        )
+    );
+
+def easy_csv(column_count: Uint, row_count: Uint) = easy_csv(column_count(), row_count(), "\"", ",", "\n");
+    

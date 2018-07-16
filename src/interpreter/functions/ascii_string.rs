@@ -7,7 +7,7 @@ use failure::Error;
 pub struct RandomAsciiString1;
 impl FunctionCreator for RandomAsciiString1 {
     fn get_name(&self) -> &'static str {
-        "asciiString"
+        "alphanumeric_string"
     }
 
     fn get_arg_types(&self) -> (&'static [GeneratorType], bool) {
@@ -29,7 +29,7 @@ impl FunctionCreator for RandomAsciiString1 {
 pub struct RandomAsciiString0;
 impl FunctionCreator for RandomAsciiString0 {
     fn get_name(&self) -> &'static str {
-        "asciiString"
+        "alphanumeric_string"
     }
 
     fn get_arg_types(&self) -> (&'static [GeneratorType], bool) {
@@ -37,7 +37,7 @@ impl FunctionCreator for RandomAsciiString0 {
     }
     
     fn get_description(&self) -> &'static str {
-        "Generates a random ascii string with the default length of 16 characters"
+        "Generates a random ascii alphanumeric string with the default length of 16 characters"
     }
 
     fn create(&self, _args: Vec<GeneratorArg>, _ctx: &ProgramContext) -> Result<GeneratorArg, Error> {
@@ -49,7 +49,7 @@ impl FunctionCreator for RandomAsciiString0 {
 pub struct AlphaNumeric;
 impl FunctionCreator for AlphaNumeric {
     fn get_name(&self) -> &'static str {
-        "alphanum"
+        "alphanumeric"
     }
 
     fn get_arg_types(&self) -> (&'static [GeneratorType], bool) {

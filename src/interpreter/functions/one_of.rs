@@ -8,7 +8,7 @@ use failure::Error;
 pub struct OneOfUint;
 impl FunctionCreator for OneOfUint {
     fn get_name(&self) -> &'static str {
-        "oneOf"
+        "one_of"
     }
 
     fn get_arg_types(&self) -> (&'static [GeneratorType], bool) {
@@ -27,7 +27,7 @@ impl FunctionCreator for OneOfUint {
 pub struct OneOfString;
 impl FunctionCreator for OneOfString {
     fn get_name(&self) -> &'static str {
-        "oneOf"
+        "one_of"
     }
 
     fn get_arg_types(&self) -> (&'static [GeneratorType], bool) {

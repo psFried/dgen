@@ -5,6 +5,7 @@ pub mod one_of;
 pub mod constant;
 pub mod uint;
 pub mod concat;
+pub mod repeat;
 
 use std::fmt::{self, Display};
 use std::io;

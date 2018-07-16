@@ -3,6 +3,7 @@ mod unsigned_int;
 mod one_of;
 mod either;
 mod concat;
+mod repeat;
 
 use interpreter::resolve::ProgramContext;
 use generator::{GeneratorType, GeneratorArg};
@@ -32,6 +33,9 @@ const BUILTIN_FUNCTIONS: &[&FunctionCreator] = &[
 
     &self::concat::SimpleConcat as &FunctionCreator,
     &self::concat::ConcatDelimitedFun as &FunctionCreator,
+
+    &self::repeat::RepeatFun as &FunctionCreator,
+    &self::repeat::RepeatDelimitedFun as &FunctionCreator,
 ];
 
 pub fn get_builtin_functions() -> &'static [&'static FunctionCreator] {
