@@ -1,9 +1,8 @@
 [package]
-name = "data-gen"
+name = "pgen"
 version = "0.1.0"
-authors = ["Phil Fried <pfried@paxata.com>"]
+authors = ["Phil Fried <philipsfried@gmail.com>"]
 build = "build.rs"
-
 
 [dependencies]
 structopt = "0.2.10"
