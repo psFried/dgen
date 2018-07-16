@@ -109,10 +109,12 @@ fn list_functions(name: Option<String>) {
         }).ok()
     });
 
+    let mut interpreter = Interpreter::new(0);
+    interpreter.eval_library(libraries::STANDARD_LIB).unwrap();
 
-    for fun in get_builtin_functions().iter() {
+    for fun in interpreter.function_iter() {
         if name_filter.as_ref().map(|filter| filter.is_match(fun.get_name())).unwrap_or(true) {
-            print_function_help(*fun);
+            print_function_help(fun);
         }
     }
 }

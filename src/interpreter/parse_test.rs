@@ -86,9 +86,15 @@ fn parses_nested_function_calls() {
 #[test]
 fn parses_program_with_macro_definitions() {
     let input = r#"
-    def wtf(count: Uint) = asciiString(count());
-    def foo() = wtf(uint(0, 9));
+    #   comment 1    
 
+    def wtf(count: Uint) = asciiString(count());
+
+    # comment 2    
+       #comment 3
+    def foo() = wtf(uint(0, 9)); # ignored comment
+
+# ignored comment
     foo()
     "#;
     let expected = Program {
@@ -109,7 +115,8 @@ fn parses_program_with_macro_definitions() {
                             args: Vec::new(),
                         })
                     ]
-                })
+                }),
+                doc_comments: vec!["comment 1".to_owned()]
             },
             MacroDef {
                 name: s("foo"),
@@ -125,7 +132,11 @@ fn parses_program_with_macro_definitions() {
                             ]
                         })
                     ]
-                })
+                }),
+                doc_comments: vec![
+                    "comment 2".to_owned(),
+                    "comment 3".to_owned(),
+                ]
             }
         ],
         expr: Expr::Function(FunctionCall {

@@ -5,6 +5,7 @@ mod resolve;
 pub mod functions;
 #[cfg(test)] mod parse_test;
 
+use self::functions::FunctionCreator;
 use self::parser::{parse_program, parse_library};
 use self::resolve::ProgramContext;
 use generator::GeneratorArg;
@@ -42,4 +43,7 @@ impl Interpreter {
         self.context.resolve_program(ast)
     }
 
+    pub fn function_iter(&self) -> impl Iterator<Item = &FunctionCreator> {
+        self.context.function_iter()
+    }
 }

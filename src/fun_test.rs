@@ -8,7 +8,7 @@ use failure::Error;
 #[test]
 fn generate_ascii_strings() {
     let expected_output = "aACrrnGjOTedJsRy";
-    let input = "asciiString(uint(0, 10))";
+    let input = "alphanumeric_string(uint(0, 10))";
     test_program_success(4, input, expected_output);
 }
 
@@ -16,7 +16,7 @@ fn generate_ascii_strings() {
 fn declare_and_use_macros() {
     let expected_output = "DPaADCI2CrrnGjOTboedJ";
     let input = r#"
-        def foo(len: Uint) = asciiString(len());
+        def foo(len: Uint) = alphanumeric_string(len());
         def bar() = foo(7);
 
         bar()

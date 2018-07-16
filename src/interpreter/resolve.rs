@@ -144,16 +144,24 @@ impl <'a> FunctionMatch<'a> {
 
 
 pub struct MacroDefFunctionCreator {
+    description: String,
     macro_def: MacroDef,
     arg_types: Vec<GeneratorType>,
 }
 
 impl MacroDefFunctionCreator {
-    pub fn new(macro_def: MacroDef) -> MacroDefFunctionCreator {
+    pub fn new(mut macro_def: MacroDef) -> MacroDefFunctionCreator {
+        let description = if macro_def.doc_comments.is_empty() {
+            "user defined function".to_owned()
+        } else {
+            macro_def.doc_comments.join("\n")
+        };
+        macro_def.doc_comments.clear(); // just to deallocate the memory
         let arg_types = macro_def.args.iter().map(|a| a.arg_type).collect();
         MacroDefFunctionCreator {
             macro_def,
             arg_types,
+            description,
         }
     }
 
@@ -200,7 +208,7 @@ impl FunctionCreator for MacroDefFunctionCreator {
     }
 
     fn get_description(&self) -> &str {
-        "user defined function"
+        self.description.as_str()
     }
 
     fn create(&self, args: Vec<GeneratorArg>, ctx: &ProgramContext) -> Result<GeneratorArg, Error> {
@@ -240,6 +248,12 @@ impl ProgramContext {
 
     pub fn resolve_expr(&self, token: &Expr) -> Result<GeneratorArg, Error> {
         self.resolve_expr_private(token, &[])
+    }
+
+    pub fn function_iter(&self) -> impl Iterator<Item = &FunctionCreator> {
+        self.macros.iter().rev().flat_map(|v| v.iter())
+            .map(|i| i as &FunctionCreator)
+            .chain(get_builtin_functions().iter().map(|f| *f))
     }
 
     fn resolve_expr_private(&self, token: &Expr, bound_arguments: &[MacroArgFunctionCreator]) -> Result<GeneratorArg, Error> {

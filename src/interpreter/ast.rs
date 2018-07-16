@@ -30,6 +30,7 @@ pub struct MacroArgument {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct MacroDef {
+    pub doc_comments: Vec<String>,
     pub name: String,
     pub args: Vec<MacroArgument>,
     pub body: Expr,
