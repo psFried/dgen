@@ -16,7 +16,7 @@ pub enum SubCommand {
     /// Print information on available functions
     #[structopt(name = "help")]
     ListFunctions {
-        #[structopt(short = "f", long = "name")]
+        #[structopt(short = "f", long = "function")]
         name: Option<String>
     },
 
@@ -45,7 +45,7 @@ pub enum SubCommand {
         program_file: Option<PathBuf>,
 
         // read the generator program from stdin
-        #[structopt(short = "-", long = "stdin")]
+        #[structopt(short = "s", long = "stdin")]
         stdin: bool,
 
         /// number of iterations to print

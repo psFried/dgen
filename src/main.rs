@@ -73,7 +73,6 @@ fn parse_program(program: Option<String>, program_file: Option<PathBuf>, stdin: 
         program_string = Some(read_from_file(program_file.unwrap())?);
     }
 
-
     program_string.ok_or_else(|| {
         format_err!("Must specify one of program, program-file, or stdin")
     })
