@@ -193,7 +193,7 @@ impl FunctionCreator for MacroArgFunctionCreator {
     fn get_description(&self) -> &str {
         self.name.as_str()
     }
-    fn create(&self, args: Vec<GeneratorArg>, ctx: &ProgramContext) -> Result<GeneratorArg, Error> {
+    fn create(&self, _args: Vec<GeneratorArg>, _ctx: &ProgramContext) -> Result<GeneratorArg, Error> {
         Ok(self.value.clone())
     }
 }

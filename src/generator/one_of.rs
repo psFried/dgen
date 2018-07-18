@@ -3,7 +3,7 @@ use writer::DataGenOutput;
 use rand::Rng;
 use std::fmt::{self, Display};
 use std::marker::PhantomData;
-use std::io;
+use failure::Error;
 
 
 pub struct OneOfGenerator<T: Display + Send + 'static> {
@@ -23,19 +23,20 @@ impl <T: Display + Send + 'static> OneOfGenerator<T> {
 impl <T: Display + Send + 'static> Generator for OneOfGenerator<T> {
     type Output = T;
 
-    fn gen_value(&mut self, rng: &mut DataGenRng) -> Option<&T> {
-        let gen = rng.choose_mut(self.wrapped.as_mut_slice());
-        gen.and_then(|g| {
-            g.gen_value(rng)
-        })
+    fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&T>, Error> {
+        match rng.choose_mut(self.wrapped.as_mut_slice()) {
+            Some(gen) => gen.gen_value(rng),
+            None => Ok(None)
+        }
     }
 
-    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> io::Result<u64> {
+    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> Result<u64, Error> {
         let gen = rng.choose_mut(self.wrapped.as_mut_slice());
         // gen will be None only if `wrapped` is an empty vec
-        gen.map(|g| {
-            g.write_value(rng, output)
-        }).unwrap_or(Ok(0))
+        match gen {
+            Some(g) => g.write_value(rng, output),
+            None => Ok(0)
+        }
     }
     
     fn new_from_prototype(&self) -> Box<Generator<Output=T>> {

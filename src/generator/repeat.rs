@@ -1,8 +1,8 @@
-use generator::{Generator, GeneratorArg, DataGenRng, DynUnsignedIntGenerator, DynStringGenerator, DynGenerator};
+use generator::{Generator, DataGenRng, DynUnsignedIntGenerator, DynStringGenerator, DynGenerator};
 use writer::DataGenOutput;
 
-use std::io;
 use std::fmt::{self, Display};
+use failure::Error;
 
 pub const REPEAT_FUN_NAME: &'static str = "repeat";
 pub const REPEAT_DELIMITED_FUN_NAME: &'static str = "repeat_delimited";
@@ -24,26 +24,26 @@ impl RepeatDelimited {
 impl Generator for RepeatDelimited {
     type Output = String;
 
-    fn gen_value(&mut self, rng: &mut DataGenRng) -> Option<&String> {
+    fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&String>, Error> {
         use std::fmt::Write;
         let RepeatDelimited {ref mut count, ref mut repeat, ref mut delimiter, ref mut buffer} = *self;
         buffer.clear();
-        let num = count.gen_value(rng).cloned().unwrap_or(0);
+        let num = count.gen_value(rng)?.cloned().unwrap_or(0);
         for i in 0..num {
             if i > 0 {
-                if let Some(val) = delimiter.gen_value(rng) {
-                    buffer.write_fmt(format_args!("{}", val)).ok()?;
+                if let Some(val) = delimiter.gen_value(rng)? {
+                    buffer.write_fmt(format_args!("{}", val))?;
                 }
             }
-            if let Some(val) = repeat.gen_value(rng) {
-                buffer.write_fmt(format_args!("{}", val)).ok()?;
+            if let Some(val) = repeat.gen_value(rng)? {
+                buffer.write_fmt(format_args!("{}", val))?;
             }
         }
-        Some(&*buffer)
+        Ok(Some(&*buffer))
     }
 
-    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> io::Result<u64> {
-        let num = self.count.gen_value(rng).cloned().unwrap_or(0);
+    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> Result<u64, Error> {
+        let num = self.count.gen_value(rng)?.cloned().unwrap_or(0);
         let mut written = 0;
         for i in 0..num {
             if i > 0 {
@@ -86,21 +86,21 @@ impl <T: Display + 'static> Repeat<T> {
 impl <T: Display + 'static> Generator for Repeat<T> {
     type Output = String;
 
-    fn gen_value(&mut self, rng: &mut DataGenRng) -> Option<&String> {
+    fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&String>, Error> {
         use std::fmt::Write;
         let Repeat {ref mut count, ref mut repeat, ref mut buffer} = *self;
         buffer.clear();
-        let num = count.gen_value(rng).cloned().unwrap_or(0);
+        let num = count.gen_value(rng)?.cloned().unwrap_or(0);
         for _ in 0..num {
-            if let Some(val) = repeat.gen_value(rng) {
-                buffer.write_fmt(format_args!("{}", val)).ok()?;
+            if let Some(val) = repeat.gen_value(rng)? {
+                buffer.write_fmt(format_args!("{}", val))?;
             }
         }
-        Some(&*buffer)
+        Ok(Some(&*buffer))
     }
 
-    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> io::Result<u64> {
-        let num = self.count.gen_value(rng).cloned().unwrap_or(0);
+    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> Result<u64, Error> {
+        let num = self.count.gen_value(rng)?.cloned().unwrap_or(0);
         let mut written = 0;
         for _ in 0..num {
             written += self.repeat.write_value(rng, output)?;

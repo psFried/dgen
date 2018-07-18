@@ -8,9 +8,9 @@ pub mod concat;
 pub mod repeat;
 
 use std::fmt::{self, Display};
-use std::io;
 use std::clone::Clone;
 use writer::DataGenOutput;
+use failure::Error;
 
 pub type DataGenRng = ::rand::prng::XorShiftRng;
 
@@ -97,7 +97,7 @@ impl GeneratorArg {
         }
     }
     
-    pub fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> io::Result<u64> {
+    pub fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> Result<u64, Error> {
         match self {
             GeneratorArg::Bool(gen) => gen.write_value(rng, output),
             GeneratorArg::Char(gen) => gen.write_value(rng, output),
@@ -177,9 +177,9 @@ impl Display for GeneratorArg {
 
 pub trait Generator: Display + Send {
     type Output: Display;
-    fn gen_value(&mut self, rng: &mut DataGenRng) -> Option<&Self::Output>;
+    fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&Self::Output>, Error>;
 
-    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> io::Result<u64>;
+    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> Result<u64, Error>;
 
     fn new_from_prototype(&self) -> Box<Generator<Output=Self::Output>>;
 }
@@ -202,21 +202,24 @@ impl <T: Display + 'static> WrappedAnyGen<T> {
 impl <T: Display + 'static> Generator for WrappedAnyGen<T> {
     type Output = String;
 
-    fn gen_value(&mut self, rng: &mut DataGenRng) -> Option<&String> {
+    fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&String>, Error> {
         use std::fmt::Write;
         let WrappedAnyGen {ref mut wrapped, ref mut buf} = *self;
         buf.clear();
 
-        wrapped.gen_value(rng).map(move |t|  {
-            // this isn't something that can practically fail at runtime since there's no io involved
-            let _ = buf.write_fmt(format_args!("{}", t));
-            &*buf
+        wrapped.gen_value(rng).map(|t|  {
+            t.map(move |value| {
+                // this isn't something that can practically fail at runtime since there's no io involved
+                let _ = buf.write_fmt(format_args!("{}", value));
+                &*buf
+            })
         })
     }
 
-    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> io::Result<u64> {
-        if let Some(value) = self.gen_value(rng) {
-            output.write_string(value)
+    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> Result<u64, Error> {
+        if let Some(value) = self.gen_value(rng)? {
+            let n = output.write_string(value)?;
+            Ok(n)
         } else {
             Ok(0)
         }

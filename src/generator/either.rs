@@ -1,9 +1,9 @@
 use generator::{Generator, DataGenRng, DynDecimalGenerator, DynGenerator};
 use writer::DataGenOutput;
 
-use std::io;
 use std::fmt::{self, Display};
 use rand::Rng;
+use failure::Error;
 
 pub const EITHER_FUNCTION_NAME: &'static str = "select2";
 pub const MAX_FREQUENCY: f64 = 1.0;
@@ -25,10 +25,10 @@ impl <T: Display + Clone + 'static> Either<T> {
         Either::new(freq, a, b)
     }
 
-    fn will_select_a(&mut self, rng: &mut DataGenRng) -> bool {
-        let a_freq = self.a_frequency.gen_value(rng).cloned().unwrap_or(50.0);
+    fn will_select_a(&mut self, rng: &mut DataGenRng) -> Result<bool, Error> {
+        let a_freq = self.a_frequency.gen_value(rng)?.cloned().unwrap_or(50.0);
         let a_freq = a_freq.min(MAX_FREQUENCY).max(MIN_FREQUENCY);
-        rng.gen_bool(a_freq)
+        Ok(rng.gen_bool(a_freq))
     }
 }
 
@@ -36,16 +36,16 @@ impl <T: Display + Clone + 'static> Either<T> {
 impl <T: Display + Clone + 'static> Generator for Either<T> {
     type Output = T;
 
-    fn gen_value(&mut self, rng: &mut DataGenRng) -> Option<&T> {
-        if self.will_select_a(rng) {
+    fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&T>, Error> {
+        if self.will_select_a(rng)? {
             self.a.gen_value(rng)
         } else {
             self.b.gen_value(rng)
         }
     }
 
-    fn write_value(&mut self, rng: &mut DataGenRng, out: &mut DataGenOutput) -> io::Result<u64> {
-        if self.will_select_a(rng) {
+    fn write_value(&mut self, rng: &mut DataGenRng, out: &mut DataGenOutput) -> Result<u64, Error> {
+        if self.will_select_a(rng)? {
             self.a.write_value(rng, out)
         } else {
             self.b.write_value(rng, out)

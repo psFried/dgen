@@ -1,7 +1,7 @@
 use super::{DataGenRng, Generator};
 use writer::DataGenOutput;
 use std::fmt::{self, Display};
-use std::io;
+use failure::Error;
 
 #[derive(Clone, Debug)]
 pub struct ConstantGenerator<T: Display + Clone + Send> {
@@ -25,13 +25,13 @@ impl <T: Display  + Clone + Send + 'static> ConstantGenerator<T> {
 impl <T: Display + Clone + Send + 'static> Generator for ConstantGenerator<T> {
     type Output = T;
 
-    fn gen_value(&mut self, _rng: &mut DataGenRng) -> Option<&T> {
-        self.value.as_ref()
+    fn gen_value(&mut self, _rng: &mut DataGenRng) -> Result<Option<&T>, Error> {
+        Ok(self.value.as_ref())
     }
 
-    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> io::Result<u64> {
-        if let Some(val) = self.gen_value(rng) {
-            output.write_string(val)
+    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> Result<u64, Error> {
+        if let Some(val) = self.gen_value(rng)? {
+            output.write_string(val).map_err(|e| e.into())
         } else {
             Ok(0)
         }

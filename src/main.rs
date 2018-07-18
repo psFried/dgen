@@ -13,7 +13,7 @@ mod interpreter;
 
 use self::cli_opts::{CliOptions, SubCommand};
 use self::generator::DataGenRng;
-use self::interpreter::functions::{FunctionCreator, get_builtin_functions, FunctionHelp};
+use self::interpreter::functions::{FunctionCreator, FunctionHelp};
 use self::writer::DataGenOutput;
 use self::interpreter::Interpreter;
 use structopt::StructOpt;
@@ -136,7 +136,6 @@ fn print_function_help(fun: &FunctionCreator) {
 
 
 pub struct Program<'a> {
-    verbosity: u64,
     iterations: u64,
     source: String,
     rng: DataGenRng,
@@ -151,7 +150,6 @@ impl <'a> Program<'a> {
 
     pub fn new(verbosity: u64, iterations: u64, source: String, rng: DataGenRng, output: DataGenOutput<'a>) -> Program<'a> {
         Program {
-            verbosity,
             iterations,
             source,
             rng,

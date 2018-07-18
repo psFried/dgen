@@ -2,7 +2,7 @@ use super::{Generator, DataGenRng};
 use writer::DataGenOutput;
 use rand::Rng;
 use std::fmt::{self, Display};
-use std::io;
+use failure::Error;
 
 pub struct NullableGenerator<T: Display> {
     wrapped_generator: Box<Generator<Output=T>>,
@@ -18,25 +18,25 @@ impl <T: Display> NullableGenerator<T> {
         }
     }
 
-    fn will_generate(&mut self, rng: &mut DataGenRng) -> bool {
-        let frequency = self.null_frequency.gen_value(rng);
-        rng.gen_bool(frequency.cloned().unwrap_or(100.0))
+    fn will_generate(&mut self, rng: &mut DataGenRng) -> Result<bool, Error> {
+        let frequency = self.null_frequency.gen_value(rng)?;
+        Ok(rng.gen_bool(frequency.cloned().unwrap_or(100.0)))
     }
 }
 
 impl <T: Display + 'static> Generator for NullableGenerator<T> {
     type Output = T;
 
-    fn gen_value(&mut self, rng: &mut DataGenRng) -> Option<&T> {
-        if self.will_generate(rng) {
+    fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&T>, Error> {
+        if self.will_generate(rng)? {
             self.wrapped_generator.gen_value(rng)
         } else {
-            None
+            Ok(None)
         }
     }
 
-    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> io::Result<u64> {
-        if self.will_generate(rng) {
+    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> Result<u64, Error> {
+        if self.will_generate(rng)? {
             self.wrapped_generator.write_value(rng, output)
         } else {
             Ok(0)

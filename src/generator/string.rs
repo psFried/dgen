@@ -3,7 +3,7 @@ use writer::DataGenOutput;
 use rand::prelude::Rng;
 use rand::distributions::Alphanumeric;
 use std::fmt::{self, Display};
-use std::io;
+use failure::Error;
 
 #[derive(Clone)]
 pub struct AsciiChar(char);
@@ -17,14 +17,14 @@ impl AsciiChar {
 impl Generator for AsciiChar {
     type Output = char;
 
-    fn gen_value(&mut self, rng: &mut DataGenRng) -> Option<&char> {
+    fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&char>, Error> {
         self.0 = rng.sample(Alphanumeric);
-        Some(&self.0)
+        Ok(Some(&self.0))
     }
 
-    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> io::Result<u64> {
-        if let Some(val) = self.gen_value(rng) {
-            output.write_string(val)
+    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> Result<u64, Error> {
+        if let Some(val) = self.gen_value(rng)? {
+            output.write_string(val).map_err(Into::into)
         } else {
             unreachable!()
         }
@@ -62,14 +62,15 @@ impl StringGenerator {
         })
     }
 
-    fn fill_buffer(&mut self, rng: &mut DataGenRng) {
+    fn fill_buffer(&mut self, rng: &mut DataGenRng) -> Result<(), Error> {
         self.buffer.clear();
-        let remaining_chars = self.length_gen.gen_value(rng).cloned().unwrap_or(16);
+        let remaining_chars = self.length_gen.gen_value(rng)?.cloned().unwrap_or(16);
 
         for _ in 0..remaining_chars {
-            let next_char = self.char_gen.gen_value(rng).cloned().unwrap_or('x');
+            let next_char = self.char_gen.gen_value(rng)?.cloned().unwrap_or('x');
             self.buffer.push(next_char);
         }
+        Ok(())
     }
 }
 
@@ -85,14 +86,14 @@ pub fn default_string_length_generator() -> Box<Generator<Output=u64>> {
 impl Generator for StringGenerator {
     type Output = String;
 
-    fn gen_value(&mut self, rng: &mut DataGenRng) -> Option<&String> {
-        self.fill_buffer(rng);
-        Some(&self.buffer)
+    fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&String>, Error> {
+        self.fill_buffer(rng)?;
+        Ok(Some(&self.buffer))
     }
 
-    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> io::Result<u64> {
-        self.fill_buffer(rng);
-        output.write_string(&self.buffer)
+    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> Result<u64, Error> {
+        self.fill_buffer(rng)?;
+        output.write_string(&self.buffer).map_err(Into::into)
     }
 
     fn new_from_prototype(&self) -> Box<Generator<Output=String>> {

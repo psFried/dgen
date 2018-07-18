@@ -3,7 +3,7 @@ use super::constant::ConstantGenerator;
 use writer::DataGenOutput;
 use rand::Rng;
 use std::fmt;
-use std::io;
+use failure::Error;
 
 pub const DEFAULT_MAX: u64 = u64::max_value();
 pub const DEFAULT_MIN: u64 = 0;
@@ -37,9 +37,9 @@ impl UnsignedIntGenerator {
 impl Generator for UnsignedIntGenerator {
     type Output = u64;
 
-    fn gen_value(&mut self, rng: &mut DataGenRng) -> Option<&u64> {
-        let min = self.min.gen_value(rng).cloned().unwrap_or(DEFAULT_MIN);
-        let max = self.max.gen_value(rng).cloned().unwrap_or(DEFAULT_MAX);
+    fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&u64>, Error> {
+        let min = self.min.gen_value(rng)?.cloned().unwrap_or(DEFAULT_MIN);
+        let max = self.max.gen_value(rng)?.cloned().unwrap_or(DEFAULT_MAX);
 
         if min < max {
             self.value = rng.gen_range(min, max);
@@ -48,12 +48,12 @@ impl Generator for UnsignedIntGenerator {
         } else {
             self.value = min;
         }
-        Some(&self.value)
+        Ok(Some(&self.value))
     }
 
-    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> io::Result<u64> {
-        if let Some(val) = self.gen_value(rng) {
-            output.write_string(val)
+    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> Result<u64, Error> {
+        if let Some(val) = self.gen_value(rng)? {
+            output.write_string(val).map_err(Into::into)
         } else {
             unreachable!()
         }

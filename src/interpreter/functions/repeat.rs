@@ -15,7 +15,7 @@ impl FunctionCreator for RepeatFun {
     fn get_description(&self) -> &str {
         "repeats the given generator the given number of times"
     }
-    fn create(&self, mut args: Vec<GeneratorArg>, ctx: &ProgramContext) -> Result<GeneratorArg, Error> {
+    fn create(&self, mut args: Vec<GeneratorArg>, _ctx: &ProgramContext) -> Result<GeneratorArg, Error> {
         let wrapped = args.pop().unwrap().as_string();
         let count = args.pop().unwrap().as_uint().unwrap();
         Ok(GeneratorArg::String(Repeat::new(count, wrapped)))
@@ -30,10 +30,12 @@ impl FunctionCreator for RepeatDelimitedFun {
     fn get_arg_types(&self) -> (&[GeneratorType], bool) {
         (&[GeneratorType::UnsignedInt, GeneratorType::String, GeneratorType::String], false)
     }
+
     fn get_description(&self) -> &str {
         "repeats the given generator the given number of times"
     }
-    fn create(&self, mut args: Vec<GeneratorArg>, ctx: &ProgramContext) -> Result<GeneratorArg, Error> {
+
+    fn create(&self, mut args: Vec<GeneratorArg>, _ctx: &ProgramContext) -> Result<GeneratorArg, Error> {
         let delimiter = args.pop().unwrap().as_string();
         let wrapped = args.pop().unwrap().as_string();
         let count = args.pop().unwrap().as_uint().unwrap();

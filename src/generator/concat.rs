@@ -1,8 +1,8 @@
-use generator::{Generator, GeneratorArg, DataGenRng, DynStringGenerator};
+use generator::{Generator, DataGenRng, DynStringGenerator};
 use writer::DataGenOutput;
 
 use std::fmt::{self, Display};
-use std::io;
+use failure::Error;
 
 pub const CONCAT_FUNCTION_NAME: &'static str = "concat_delimited";
 
@@ -34,34 +34,35 @@ fn empty_string_gen() -> DynStringGenerator {
     ::generator::constant::ConstantGenerator::create("".to_owned())
 }
 
-fn push_str(buffer: &mut String, gen: &mut DynStringGenerator, rng: &mut DataGenRng) {
-    if let Some(val) = gen.gen_value(rng) {
+fn push_str(buffer: &mut String, gen: &mut DynStringGenerator, rng: &mut DataGenRng) -> Result<(), Error> {
+    if let Some(val) = gen.gen_value(rng)? {
         buffer.push_str(val);
     }
+    Ok(())
 }
 
 impl Generator for ConcatFormatter {
     type Output = String;
 
-    fn gen_value(&mut self, rng: &mut DataGenRng) -> Option<&String> {
+    fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&String>, Error> {
         let ConcatFormatter {ref mut wrapped, ref mut value_delimeter, ref mut prefix, ref mut suffix, ref mut buffer} = *self;
         buffer.clear();
 
-        push_str(buffer, prefix, rng);
+        push_str(buffer, prefix, rng)?;
         for (idx, gen) in wrapped.iter_mut().enumerate() {
             if idx > 0 {
-                push_str(buffer, value_delimeter, rng);
+                push_str(buffer, value_delimeter, rng)?;
             }
-            push_str(buffer, gen, rng);
+            push_str(buffer, gen, rng)?;
         }
-        push_str(buffer, suffix, rng);
+        push_str(buffer, suffix, rng)?;
 
-        Some(&*buffer)
+        Ok(Some(&*buffer))
     }
 
-    fn write_value(&mut self, rng: &mut DataGenRng, out: &mut DataGenOutput) -> io::Result<u64> {
+    fn write_value(&mut self, rng: &mut DataGenRng, out: &mut DataGenOutput) -> Result<u64, Error> {
         let mut total = 0;
-        let ConcatFormatter {ref mut wrapped, ref mut value_delimeter, ref mut prefix, ref mut suffix, ref mut buffer} = *self;
+        let ConcatFormatter {ref mut wrapped, ref mut value_delimeter, ref mut prefix, ref mut suffix, ..} = *self;
 
         total += prefix.write_value(rng, out)?;
 
