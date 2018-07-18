@@ -4,6 +4,7 @@ mod one_of;
 mod either;
 mod concat;
 mod repeat;
+mod file;
 
 use interpreter::resolve::ProgramContext;
 use generator::{GeneratorType, GeneratorArg};
@@ -36,6 +37,8 @@ const BUILTIN_FUNCTIONS: &[&FunctionCreator] = &[
 
     &self::repeat::RepeatFun as &FunctionCreator,
     &self::repeat::RepeatDelimitedFun as &FunctionCreator,
+
+    &self::file::SelectFromFileFun as &FunctionCreator,
 ];
 
 pub fn get_builtin_functions() -> &'static [&'static FunctionCreator] {
