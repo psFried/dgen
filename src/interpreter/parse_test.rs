@@ -41,17 +41,45 @@ fn parses_string_literal_with_escaped_quotes() {
 }
 
 #[test]
-fn parses_string_literal_token() {
-    let result = ExprParser::new().parse(r#""somestr""#);
-    assert_eq!(Ok(string("somestr")), result);
-}
-
-#[test]
 fn parses_decimal_literal_token() {
     let result = ExprParser::new().parse(r#"123.45"#);
     assert_eq!(Ok(float(123.45)), result);
 }
 
+#[test]
+fn parses_basic_string_literal_token() {
+    string_literal_test(r#""somestr""#, "somestr");
+}
+
+#[test]
+fn parses_string_literal_with_whitespace_chars_and_escape_sequences() {
+    string_literal_test(r#"" some\t str\n ""#, " some\t str\n ");
+}
+
+#[test]
+fn parses_string_literal_with_unicode_escape_sequences() {
+    string_literal_test(r#""foo\U{1F4A9}""#, "foo💩");
+}
+
+#[test]
+fn parses_string_literal_that_is_all_whitespace() {
+    string_literal_test(r#"" \t \n \r ""#, " \t \n \r ");
+}
+
+#[test]
+fn parses_basic_char_literal() {
+    char_literal_test("'a'", 'a');
+}
+
+#[test]
+fn parses_unicode_char_literal() {
+    char_literal_test(r#"'\u{1f4a9}'"#, '\u{1f4a9}');
+}
+
+#[test]
+fn parses_newline_escaped_char_literal() {
+    char_literal_test(r#"'\n'"#, '\n');
+}
 
 #[test]
 fn parses_function_call_with_literal_arguments() {
@@ -153,6 +181,15 @@ fn s(val: &str) -> String {
     val.to_owned()
 }
 
+fn string_literal_test(to_parse: &str, expected: &str) {
+    let actual = ExprParser::new().parse(to_parse);
+    assert_eq!(Ok(Expr::StringLiteral(s(expected))), actual);
+}
+
+fn char_literal_test(to_parse: &str, expected: char) {
+    let actual = ExprParser::new().parse(to_parse);
+    assert_eq!(Ok(ch(expected)), actual);
+}
 
 fn fun(name: &str, args: Vec<Expr>) -> Expr {
     Expr::Function(FunctionCall {
@@ -163,6 +200,10 @@ fn fun(name: &str, args: Vec<Expr>) -> Expr {
 
 fn string(s: &str) -> Expr {
     Expr::StringLiteral(s.to_owned())
+}
+
+fn ch(s: char) -> Expr {
+    Expr::CharLiteral(s)
 }
 
 fn int(i: u64) -> Expr {

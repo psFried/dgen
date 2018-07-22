@@ -1,7 +1,8 @@
 #![allow(unused)]
-use interpreter::ast;
+use interpreter::ast::{self, process_string_escapes};
 use generator::GeneratorType;
 use std::str::FromStr;
+use lalrpop_util::ParseError;
 
 grammar;
 
@@ -18,10 +19,6 @@ BooleanLiteral: bool = {
     "false" => false
 }
 
-StringLiteral: String = {
-    <s:r#""([^"\\]*(\\.[^"\\]*)*)""#> => s[1..s.len() - 1].replace(r#"\""#, r#"""#).replace("\\n", "\n")
-};
-
 IntLiteral: u64 = {
     <s:r"[0-9]+"> => u64::from_str(s).unwrap()
 };
@@ -34,7 +31,27 @@ DecimalLiteral: f64 = {
     <s:r"[0-9]+\.[0-9]+"> => f64::from_str(s).unwrap()
 };
 
+StringLiteral: String = {
+    //<s:r#""([^"\\]*(\\.[^"\\]*)*)""#> => s[1..s.len() - 1].replace(r#"\""#, r#"""#).replace("\\n", "\n")
+    <s:r#""([^"\\]*(\\.[^"\\]*)*)""#> =>? {
+        process_string_escapes(&s[1..(s.len() - 1)]).map_err(|e| {
+            eprintln!("invalid string literal: {}", e);
+            ParseError::User { error: e}
+        })
+    }
+};
+
+CharLiteral: char = {
+    <c:r"'[^']+'"> =>? {
+        process_string_escapes(&c[1..(c.len() - 1)]).map_err(|e| {
+            eprintln!("invalid char literal: {}", e);
+            ParseError::User { error: e}
+        }).map(|s| s.chars().next().unwrap())
+    }
+}
+
 pub Expr: ast::Expr = {
+    <c:Comment*> <l:CharLiteral> => ast::Expr::CharLiteral(l),
     <c:Comment*> <b:BooleanLiteral> => ast::Expr::BooleanLiteral(b),
     <c:Comment*> <s:StringLiteral> => ast::Expr::StringLiteral(s),
     <c:Comment*> <i:IntLiteral> => ast::Expr::IntLiteral(i),
@@ -44,10 +61,10 @@ pub Expr: ast::Expr = {
 };
 
 FunctionCall: ast::FunctionCall = {
-    <n:Word>"(" <a:Comma<Expr>> ")" => ast::FunctionCall { function_name: n, args: a }
+    <n:FunctionName>"(" <a:Comma<Expr>> ")" => ast::FunctionCall { function_name: n, args: a }
 };
 
-Word: String = {
+FunctionName: String = {
     <s:r"[a-zA-Z]+\w+"> => s.to_owned()
 };
 
@@ -61,11 +78,11 @@ GenType: GeneratorType = {
 }
 
 MacroArg: ast::MacroArgument = {
-    <n:Word> ":" <t:GenType>  => ast::MacroArgument {name: n, arg_type: t}
+    <n:FunctionName> ":" <t:GenType>  => ast::MacroArgument {name: n, arg_type: t}
 }
 
 DefineMacro: ast::MacroDef = {
-    <c:Comment*> "def" <n:Word> "(" <args:Comma<MacroArg>> ")" "=" <e:Expr> ";" => ast::MacroDef { name: n, args: args, body: e, doc_comments: c }
+    <c:Comment*> "def" <n:FunctionName> "(" <args:Comma<MacroArg>> ")" "=" <e:Expr> ";" => ast::MacroDef { name: n, args: args, body: e, doc_comments: c }
 }
 
 

@@ -258,6 +258,7 @@ impl ProgramContext {
 
     fn resolve_expr_private(&self, token: &Expr, bound_arguments: &[MacroArgFunctionCreator]) -> Result<GeneratorArg, Error> {
         match token {
+            Expr::CharLiteral(val) => Ok(GeneratorArg::Char(ConstantGenerator::create(val.clone()))),
             Expr::BooleanLiteral(val) => Ok(GeneratorArg::Bool(ConstantGenerator::create(val.clone()))),
             Expr::StringLiteral(val) => Ok(GeneratorArg::String(ConstantGenerator::create(val.clone()))),
             Expr::IntLiteral(int) => Ok(GeneratorArg::UnsignedInt(ConstantGenerator::create(int.clone()))),
