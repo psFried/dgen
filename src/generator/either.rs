@@ -5,7 +5,7 @@ use std::fmt::{self, Display};
 use rand::Rng;
 use failure::Error;
 
-pub const EITHER_FUNCTION_NAME: &'static str = "select2";
+pub const EITHER_FUNCTION_NAME: &'static str = "either";
 pub const MAX_FREQUENCY: f64 = 1.0;
 pub const MIN_FREQUENCY: f64 = 0.0;
 

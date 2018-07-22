@@ -1,9 +1,9 @@
 
 # Generates boolan values with the given frequency of `true`. The frequency must be between 0 and 1
-def boolean(true_frequency: Float) = select2(true_frequency(), true, false);
+def boolean(true_frequency: Float) = either(true_frequency(), true, false);
 
 # Generates boolan values with a frequency of 0.5
-def boolean() = select2(true, false);
+def boolean() = either(true, false);
 
 # Adds a newline character after the given value
 def trailing_newline(value: String) = concat(value(), "\n");

@@ -64,6 +64,10 @@ fn create_one_of(args: Vec<GeneratorArg>) -> Result<GeneratorArg, Error> {
                 let generators = args.into_iter().map(|a| a.as_string()).collect::<Vec<_>>();
                 Ok(GeneratorArg::String(OneOfGenerator::new(generators)))
             }
+            GeneratorType::Char => {
+                let gens = args.into_iter().map(|a| a.as_char().unwrap()).collect::<Vec<_>>();
+                Ok(GeneratorArg::Char(OneOfGenerator::new(gens)))
+            }
             _ => {
                 unimplemented!();
             }

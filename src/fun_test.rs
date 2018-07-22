@@ -25,6 +25,32 @@ fn declare_and_use_macros() {
 }
 
 #[test]
+fn use_custom_string_function() {
+    let input = r#"
+        def consonants() = one_of('b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 
+                'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z');
+        def vowels() = one_of('a', 'e', 'i', 'o', 'u');
+
+        def chars() = either(vowels(), consonants());
+
+        string(10, chars())
+    "#;
+    let expected_output = "ausjmhpije";
+    test_program_success(1, input, expected_output);
+}
+
+#[test]
+fn use_easy_csv_function() {
+    let input = "easy_csv(2, 3)";
+    let expected_output = r#""DCI2","rnGjOTboedJsRyC2F59PJ1KOiibFmf9eT8P"
+"6856658967277113641","true"
+"true","p5xK7LZAhglu"
+"true","16469683845218708375"
+"#;
+    test_program_success(1, input, expected_output);
+}
+
+#[test]
 fn use_std_boolean_function() {
     let expected_output = "truetruetrue";
     let input = r#"boolean(1.0)"#;

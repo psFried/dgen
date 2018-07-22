@@ -1,11 +1,12 @@
 use super::FunctionCreator;
 use generator::{GeneratorType, GeneratorArg};
+use generator::string::{default_charset, default_string_length_generator, StringGenerator};
 use interpreter::resolve::ProgramContext;
 use failure::Error;
 
 
-pub struct RandomAsciiString1;
-impl FunctionCreator for RandomAsciiString1 {
+pub struct AlphanumericString1;
+impl FunctionCreator for AlphanumericString1 {
     fn get_name(&self) -> &'static str {
         "alphanumeric_string"
     }
@@ -26,8 +27,8 @@ impl FunctionCreator for RandomAsciiString1 {
 }
 
 /// 0-arg version of asciiString
-pub struct RandomAsciiString0;
-impl FunctionCreator for RandomAsciiString0 {
+pub struct AlphanumericString0;
+impl FunctionCreator for AlphanumericString0 {
     fn get_name(&self) -> &'static str {
         "alphanumeric_string"
     }
@@ -41,13 +42,12 @@ impl FunctionCreator for RandomAsciiString0 {
     }
 
     fn create(&self, _args: Vec<GeneratorArg>, _ctx: &ProgramContext) -> Result<GeneratorArg, Error> {
-        use generator::string::{default_charset, default_string_length_generator, StringGenerator};
         Ok(GeneratorArg::String(StringGenerator::new(default_string_length_generator(), default_charset())))
     }
 }
 
-pub struct AlphaNumeric;
-impl FunctionCreator for AlphaNumeric {
+pub struct AlphaNumericChar;
+impl FunctionCreator for AlphaNumericChar {
     fn get_name(&self) -> &'static str {
         "alphanumeric"
     }
@@ -61,6 +61,27 @@ impl FunctionCreator for AlphaNumeric {
     }
 
     fn create(&self, _args: Vec<GeneratorArg>, _ctx: &ProgramContext) -> Result<GeneratorArg, Error> {
-        Ok(GeneratorArg::Char(::generator::string::default_charset()))
+        Ok(GeneratorArg::Char(default_charset()))
+    }
+}
+
+pub struct StringFunction;
+impl FunctionCreator for StringFunction {
+    fn get_name(&self) -> &'static str {
+        "string"
+    }
+
+    fn get_arg_types(&self) -> (&'static [GeneratorType], bool) {
+        (&[GeneratorType::UnsignedInt, GeneratorType::Char], false)
+    }
+    
+    fn get_description(&self) -> &'static str {
+        "Generates a random string using the given length and character generators"
+    }
+
+    fn create(&self, mut args: Vec<GeneratorArg>, _ctx: &ProgramContext) -> Result<GeneratorArg, Error> {
+        let charset = args.pop().unwrap().as_char().unwrap();
+        let lengeh = args.pop().unwrap().as_uint().unwrap();
+        Ok(GeneratorArg::String(StringGenerator::new(lengeh, charset)))
     }
 }
