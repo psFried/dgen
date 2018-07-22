@@ -96,6 +96,16 @@ fn parses_function_call_with_literal_arguments() {
 }
 
 #[test]
+fn parses_function_call_without_parens_or_arguments() {
+    let result = ExprParser::new().parse("fun_name");
+    let expected = FunctionCall {
+        function_name: "fun_name".to_owned(),
+        args: Vec::new(),
+    };
+    assert_eq!(Ok(Expr::Function(expected)), result);
+}
+
+#[test]
 fn parses_nested_function_calls() {
     let result = ExprParser::new().parse(r#"fun1("foo", fun2(12.5, fun3(111)), "bar")"#);
     let expected = fun("fun1", vec![
@@ -123,7 +133,7 @@ fn parses_program_with_macro_definitions() {
     def foo() = wtf(uint(0, 9)); # ignored comment
 
 # ignored comment
-    foo()
+    foo
     "#;
     let expected = Program {
         assignments: vec![

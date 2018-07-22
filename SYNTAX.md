@@ -17,7 +17,7 @@ Literals are the simplest type of expression there is. Each literal represents a
 
 ### Function calls
 
-A function call takes the form of `function_name(argument1, argument2, ..., argumentN)`. Functions that take no arguments are called with empty parentheses. For example, to generate random unsigned integers, you can call the `uint()` function. Alternatively, to generate random unsigned integers within a given range, you can call `uint(7, 33)`. 
+A function call takes the form of `function_name(argument1, argument2, ..., argumentN)`. Functions that take no arguments may either be called with empty parenstheses or with none at all. There is no difference. For example, to generate random unsigned integers, you can call the `uint()` function (just `uint` is also valid). Alternatively, to generate random unsigned integers within a given range, you can call `uint(7, 33)`. Passing arguments to a function will always require parentheses.
 
 Expressions can be arbitrarily nested. For example, to generate random alphanumeric strings or varying lengths with double quotes around them, you could use `double_quote(alphanumeric_string(uint(3, 40)))`. This will generate strings between 3 and 40 characters long and put quotes around them.
 

@@ -31,9 +31,9 @@ fn use_custom_string_function() {
                 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z');
         def vowels() = one_of('a', 'e', 'i', 'o', 'u');
 
-        def chars() = either(vowels(), consonants());
+        def chars() = either(vowels, consonants);
 
-        string(10, chars())
+        string(10, chars)
     "#;
     let expected_output = "ausjmhpije";
     test_program_success(1, input, expected_output);
