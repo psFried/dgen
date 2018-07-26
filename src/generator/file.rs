@@ -34,13 +34,13 @@ impl RandFileReader {
         let RandFileReader { ref mut file, ref file_len, ref region_offsets, ref delimiter} = *self;
         let region_idx = rng.gen_range(0, region_offsets.len() - 1);
         let region_start = region_offsets[region_idx];
-        let nread = if region_idx < (region_offsets.len() - 1) {
+        let mut nread = if region_idx < (region_offsets.len() - 1) {
             // there's another region after this one, so we'll stop there
             region_offsets[region_idx + 1] - region_start
         } else {
             *file_len - region_start  // we'll just read to the end of the file
         };
-        let nread = nread - delimiter.len() as u64;
+        nread -= delimiter.len() as u64;
 
         if (buffer.len() as u64) < nread {
             buffer.resize(nread as usize, 0);
@@ -146,6 +146,7 @@ fn find_region_offsets(file: &mut File, delimiter: &str) -> Result<Vec<u64>, io:
 
     let mut carry_over = [0; 64];
     let mut carry_over_len = 0;
+    let mut index_adder = 0;
     loop {
         let nread = do_read(file, &mut buffer[carry_over_len..])?;
         if nread == 0 {
@@ -157,20 +158,23 @@ fn find_region_offsets(file: &mut File, delimiter: &str) -> Result<Vec<u64>, io:
             buffer[0..carry_over_len].copy_from_slice(co);
         }
 
-        let mut idx = 1; // start at 1 since we already put a region start at 0 
-        while idx < nread {
-            if is_region_start(&buffer[..], idx, delimiter_bytes) {
-                result.push(idx as u64 + delimiter_length as u64);
-                idx += delimiter_length;
+        let buffer_end = nread + carry_over_len;
+        let mut buffer_idx = 0; 
+        while buffer_idx < buffer_end {
+            if is_region_start(&buffer[..], buffer_idx, delimiter_bytes) {
+                let resolved_idx = buffer_idx as u64 + index_adder;
+                result.push(resolved_idx);
+                buffer_idx += delimiter_length;
             } else {
-                idx += 1;
+                buffer_idx += 1;
             }
         }
         // take the last n bytes from the current buffer and put it into the carry_over
         // we'll copy it into the beginning of the buffer on the next loop around
-        let co = &buffer[(nread - delimiter_length)..nread];
+        let co = &buffer[(buffer_end - delimiter_length)..buffer_end];
         carry_over[0..delimiter_length].copy_from_slice(co);
         carry_over_len = delimiter_length;
+        index_adder += nread as u64;
     }
     Ok(result)
 }

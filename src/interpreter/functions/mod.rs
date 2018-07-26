@@ -40,6 +40,7 @@ const BUILTIN_FUNCTIONS: &[&FunctionCreator] = &[
     &self::repeat::RepeatDelimitedFun as &FunctionCreator,
 
     &self::file::SelectFromFileFun as &FunctionCreator,
+    &self::file::WordsFunction as &FunctionCreator,
 ];
 
 pub fn get_builtin_functions() -> &'static [&'static FunctionCreator] {

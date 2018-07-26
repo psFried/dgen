@@ -1,4 +1,4 @@
-use super::{DataGenRng, Generator, DynGenerator, DynStringGenerator};
+use super::{DataGenRng, Generator, DynStringGenerator};
 use writer::DataGenOutput;
 use std::fmt::{self, Display};
 use failure::Error;
