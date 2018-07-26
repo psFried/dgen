@@ -6,12 +6,12 @@ use std::marker::PhantomData;
 use failure::Error;
 
 
-pub struct OneOfGenerator<T: Display + Send + 'static> {
+pub struct OneOfGenerator<T: Display + ?Sized + 'static> {
     wrapped: Vec<Box<Generator<Output=T>>>,
     _phantom_data: PhantomData<T>,
 }
 
-impl <T: Display + Send + 'static> OneOfGenerator<T> {
+impl <T: Display + ?Sized + 'static> OneOfGenerator<T> {
     pub fn new(wrapped: Vec<Box<Generator<Output=T>>>) -> Box<Generator<Output=T>> {
         Box::new(OneOfGenerator {
             wrapped,
@@ -20,7 +20,7 @@ impl <T: Display + Send + 'static> OneOfGenerator<T> {
     }
 }
 
-impl <T: Display + Send + 'static> Generator for OneOfGenerator<T> {
+impl <T: Display + ?Sized + 'static> Generator for OneOfGenerator<T> {
     type Output = T;
 
     fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&T>, Error> {
@@ -45,7 +45,7 @@ impl <T: Display + Send + 'static> Generator for OneOfGenerator<T> {
     }
 }
 
-impl <T: Display + Send + 'static> Display for OneOfGenerator<T> {
+impl <T: Display + ?Sized + 'static> Display for OneOfGenerator<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str("oneOf(")?;
         for (idx, gen) in self.wrapped.iter().enumerate() {

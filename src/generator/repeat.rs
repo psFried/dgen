@@ -16,15 +16,15 @@ pub struct RepeatDelimited {
 }
 
 impl RepeatDelimited {
-    pub fn new(count: DynUnsignedIntGenerator, repeat: DynStringGenerator, delimiter: DynStringGenerator) -> DynGenerator<String> {
+    pub fn new(count: DynUnsignedIntGenerator, repeat: DynStringGenerator, delimiter: DynStringGenerator) -> DynStringGenerator {
         Box::new(RepeatDelimited{ count, repeat, delimiter, buffer: String::new() })
     }
 }
 
 impl Generator for RepeatDelimited {
-    type Output = String;
+    type Output = str;
 
-    fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&String>, Error> {
+    fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&str>, Error> {
         use std::fmt::Write;
         let RepeatDelimited {ref mut count, ref mut repeat, ref mut delimiter, ref mut buffer} = *self;
         buffer.clear();
@@ -39,7 +39,7 @@ impl Generator for RepeatDelimited {
                 buffer.write_fmt(format_args!("{}", val))?;
             }
         }
-        Ok(Some(&*buffer))
+        Ok(Some(buffer.as_str()))
     }
 
     fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> Result<u64, Error> {
@@ -71,22 +71,22 @@ impl  Display for RepeatDelimited {
 
 
 
-pub struct Repeat<T: Display + 'static> {
+pub struct Repeat<T: Display + ?Sized + 'static> {
     count: DynUnsignedIntGenerator,
     repeat: DynGenerator<T>,
     buffer: String,
 }
 
-impl <T: Display + 'static> Repeat<T> {
-    pub fn new(count: DynUnsignedIntGenerator, repeat: DynGenerator<T>) -> DynGenerator<String> {
+impl <T: Display + ?Sized + 'static> Repeat<T> {
+    pub fn new(count: DynUnsignedIntGenerator, repeat: DynGenerator<T>) -> DynStringGenerator {
         Box::new(Repeat{ count, repeat, buffer: String::new() })
     }
 }
 
-impl <T: Display + 'static> Generator for Repeat<T> {
-    type Output = String;
+impl <T: Display + ?Sized + 'static> Generator for Repeat<T> {
+    type Output = str;
 
-    fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&String>, Error> {
+    fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&str>, Error> {
         use std::fmt::Write;
         let Repeat {ref mut count, ref mut repeat, ref mut buffer} = *self;
         buffer.clear();
@@ -116,7 +116,7 @@ impl <T: Display + 'static> Generator for Repeat<T> {
     }
 }
 
-impl  <T: Display + 'static> Display for Repeat<T> {
+impl  <T: Display + ?Sized + 'static> Display for Repeat<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}({}, {})", REPEAT_FUN_NAME, self.count, self.repeat)
     }

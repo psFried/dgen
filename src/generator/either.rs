@@ -9,13 +9,13 @@ pub const EITHER_FUNCTION_NAME: &'static str = "either";
 pub const MAX_FREQUENCY: f64 = 1.0;
 pub const MIN_FREQUENCY: f64 = 0.0;
 
-pub struct Either<T: Display + Clone + 'static> {
+pub struct Either<T: Display + ?Sized + 'static> {
     a: DynGenerator<T>,
     b: DynGenerator<T>,
     a_frequency: DynDecimalGenerator,
 }
 
-impl <T: Display + Clone + 'static> Either<T> {
+impl <T: Display + ?Sized + 'static> Either<T> {
     pub fn new(a_frequency: DynDecimalGenerator, a: DynGenerator<T>, b: DynGenerator<T>) -> DynGenerator<T> {
         Box::new(Either { a_frequency, a, b })
     }
@@ -33,7 +33,7 @@ impl <T: Display + Clone + 'static> Either<T> {
 }
 
 
-impl <T: Display + Clone + 'static> Generator for Either<T> {
+impl <T: Display + ?Sized + 'static> Generator for Either<T> {
     type Output = T;
 
     fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&T>, Error> {
@@ -60,7 +60,7 @@ impl <T: Display + Clone + 'static> Generator for Either<T> {
     }
 }
 
-impl <T: Display + Clone + 'static> Display for Either<T> {
+impl <T: Display + ?Sized + 'static> Display for Either<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}({}, {}, {})", EITHER_FUNCTION_NAME, self.a_frequency, self.a, self.b)
     }

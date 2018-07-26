@@ -22,7 +22,7 @@ pub type DynCharGenerator = DynGenerator<char>;
 pub type DynDecimalGenerator = DynGenerator<f64>;
 pub type DynUnsignedIntGenerator = DynGenerator<u64>;
 pub type DynSignedIntGenerator = DynGenerator<i64>;
-pub type DynStringGenerator = DynGenerator<String>;
+pub type DynStringGenerator = DynGenerator<str>;
 
 #[allow(unused)]
 pub enum GeneratorArg {
@@ -176,8 +176,8 @@ impl Display for GeneratorArg {
 
 
 
-pub trait Generator: Display + Send {
-    type Output: Display;
+pub trait Generator: Display {
+    type Output: Display + ?Sized;
     fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&Self::Output>, Error>;
 
     fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> Result<u64, Error>;
@@ -201,9 +201,9 @@ impl <T: Display + 'static> WrappedAnyGen<T> {
 }
 
 impl <T: Display + 'static> Generator for WrappedAnyGen<T> {
-    type Output = String;
+    type Output = str;
 
-    fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&String>, Error> {
+    fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&str>, Error> {
         use std::fmt::Write;
         let WrappedAnyGen {ref mut wrapped, ref mut buf} = *self;
         buf.clear();
@@ -212,7 +212,7 @@ impl <T: Display + 'static> Generator for WrappedAnyGen<T> {
             t.map(move |value| {
                 // this isn't something that can practically fail at runtime since there's no io involved
                 let _ = buf.write_fmt(format_args!("{}", value));
-                &*buf
+                buf.as_str()
             })
         })
     }
@@ -226,7 +226,7 @@ impl <T: Display + 'static> Generator for WrappedAnyGen<T> {
         }
     }
     
-    fn new_from_prototype(&self) -> Box<Generator<Output=String>> {
+    fn new_from_prototype(&self) -> Box<Generator<Output=str>> {
         let wrapped = self.wrapped.new_from_prototype();
         let buf = String::with_capacity(self.buf.capacity());
         Box::new(WrappedAnyGen { wrapped, buf })

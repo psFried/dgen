@@ -1,5 +1,5 @@
 use generator::{GeneratorArg, GeneratorType};
-use generator::constant::ConstantGenerator;
+use generator::constant::{ConstantGenerator, ConstantStringGenerator};
 use interpreter::ast::{Expr, FunctionCall, MacroDef, Program};
 use interpreter::functions::{FunctionCreator, FunctionHelp, get_builtin_functions};
 use std::fmt::{self, Display};
@@ -260,7 +260,7 @@ impl ProgramContext {
         match token {
             Expr::CharLiteral(val) => Ok(GeneratorArg::Char(ConstantGenerator::create(val.clone()))),
             Expr::BooleanLiteral(val) => Ok(GeneratorArg::Bool(ConstantGenerator::create(val.clone()))),
-            Expr::StringLiteral(val) => Ok(GeneratorArg::String(ConstantGenerator::create(val.clone()))),
+            Expr::StringLiteral(val) => Ok(GeneratorArg::String(ConstantStringGenerator::new(val.clone()))),
             Expr::IntLiteral(int) => Ok(GeneratorArg::UnsignedInt(ConstantGenerator::create(int.clone()))),
             Expr::SignedIntLiteral(val) => Ok(GeneratorArg::SignedInt(ConstantGenerator::create(val.clone()))),
             Expr::DecimalLiteral(float) => Ok(GeneratorArg::Decimal(ConstantGenerator::create(float.clone()))),

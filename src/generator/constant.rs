@@ -1,4 +1,4 @@
-use super::{DataGenRng, Generator};
+use super::{DataGenRng, Generator, DynGenerator, DynStringGenerator};
 use writer::DataGenOutput;
 use std::fmt::{self, Display};
 use failure::Error;
@@ -49,6 +49,41 @@ impl <T: Display + Clone + Send> Display for ConstantGenerator<T> {
         } else {
             write!(f, "const(null)")
         }
+    }
+}
+
+#[derive(Clone, PartialEq, Debug)]
+pub struct ConstantStringGenerator(String);
+
+pub fn empty_string() -> DynStringGenerator {
+    ConstantStringGenerator::new("")
+}
+
+impl ConstantStringGenerator {
+
+    pub fn new<S: Into<String>>(value: S) -> DynStringGenerator {
+        Box::new(ConstantStringGenerator(value.into()))
+    }
+}
+
+impl Generator for ConstantStringGenerator {
+    type Output = str;
+
+    fn gen_value(&mut self, _rng: &mut DataGenRng) -> Result<Option<&str>, Error> {
+        Ok(Some(self.0.as_str()))
+    }
+
+    fn write_value(&mut self, _rng: &mut DataGenRng, output: &mut DataGenOutput) -> Result<u64, Error> {
+        output.write_string(self.0.as_str()).map_err(|e| e.into())
+    }
+
+    fn new_from_prototype(&self) -> Box<Generator<Output=str>> {
+        Box::new(self.clone())
+    }
+}
+impl Display for ConstantStringGenerator {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "const({})", self.0)
     }
 }
 

@@ -84,9 +84,9 @@ pub fn default_string_length_generator() -> Box<Generator<Output=u64>> {
 }
 
 impl Generator for StringGenerator {
-    type Output = String;
+    type Output = str;
 
-    fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&String>, Error> {
+    fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&str>, Error> {
         self.fill_buffer(rng)?;
         Ok(Some(&self.buffer))
     }
@@ -96,7 +96,7 @@ impl Generator for StringGenerator {
         output.write_string(&self.buffer).map_err(Into::into)
     }
 
-    fn new_from_prototype(&self) -> Box<Generator<Output=String>> {
+    fn new_from_prototype(&self) -> Box<Generator<Output=str>> {
         let char_gen = self.char_gen.new_from_prototype();
         let length_gen = self.length_gen.new_from_prototype();
         let buffer = String::with_capacity(self.buffer.capacity());

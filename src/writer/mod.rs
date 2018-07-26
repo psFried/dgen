@@ -2,28 +2,6 @@
 use std::io::{self, Write};
 use std::fmt::Display;
 
-// pub struct LockedStdout<'a> {
-//     stdout: io::Stdout,
-//     lock: io::StdoutLock<'a>
-// }
-
-// impl <'a> LockedStdout<'a> {
-//     pub fn new() -> Box<Write> {
-//         let stdout = io::stdout();
-//         let lock = stdout.lock();
-//         Box::new(LockedStdout { stdout, lock })
-//     }
-// }
-
-// impl <'a> Write for LockedStdout<'a> {
-//     fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
-//         self.lock.write(bytes)
-//     }
-//     fn flush(&mut self) -> io::Result<()> {
-//         self.lock.flush()
-//     }
-// }
-
 pub struct TrackingWriter<'a> {
     delegate: &'a mut Write,
     num_written: u64,
@@ -71,11 +49,10 @@ impl <'a> DataGenOutput<'a> {
         self.writer.write_all(bytes).map(|()| bytes.len() as u64)
     }
 
-    pub fn write_string<D: Display>(&mut self, value: &D) -> io::Result<u64> {
+    pub fn write_string<D: Display + ?Sized>(&mut self, value: &D) -> io::Result<u64> {
         let start = self.writer.get_num_bytes_written();
         self.writer.write_fmt(format_args!("{}", value)).map(|()| {
             self.writer.get_num_bytes_written() - start
         })
     }
-
 }

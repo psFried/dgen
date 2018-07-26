@@ -16,7 +16,8 @@ pub struct ConcatFormatter {
 
 impl ConcatFormatter {
     pub fn simple(wrapped: Vec<DynStringGenerator>) -> DynStringGenerator {
-        ConcatFormatter::new(wrapped, empty_string_gen(), empty_string_gen(), empty_string_gen())
+        use generator::constant::empty_string;
+        ConcatFormatter::new(wrapped, empty_string(), empty_string(), empty_string())
     }
 
     pub fn new(wrapped: Vec<DynStringGenerator>, value_delimeter: DynStringGenerator, prefix: DynStringGenerator, suffix: DynStringGenerator) -> DynStringGenerator {
@@ -30,10 +31,6 @@ impl ConcatFormatter {
     }
 }
 
-fn empty_string_gen() -> DynStringGenerator {
-    ::generator::constant::ConstantGenerator::create("".to_owned())
-}
-
 fn push_str(buffer: &mut String, gen: &mut DynStringGenerator, rng: &mut DataGenRng) -> Result<(), Error> {
     if let Some(val) = gen.gen_value(rng)? {
         buffer.push_str(val);
@@ -42,9 +39,9 @@ fn push_str(buffer: &mut String, gen: &mut DynStringGenerator, rng: &mut DataGen
 }
 
 impl Generator for ConcatFormatter {
-    type Output = String;
+    type Output = str;
 
-    fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&String>, Error> {
+    fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&str>, Error> {
         let ConcatFormatter {ref mut wrapped, ref mut value_delimeter, ref mut prefix, ref mut suffix, ref mut buffer} = *self;
         buffer.clear();
 
@@ -57,7 +54,7 @@ impl Generator for ConcatFormatter {
         }
         push_str(buffer, suffix, rng)?;
 
-        Ok(Some(&*buffer))
+        Ok(Some(buffer.as_str()))
     }
 
     fn write_value(&mut self, rng: &mut DataGenRng, out: &mut DataGenOutput) -> Result<u64, Error> {
