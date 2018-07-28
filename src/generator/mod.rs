@@ -7,6 +7,7 @@ pub mod uint;
 pub mod concat;
 pub mod repeat;
 pub mod file;
+mod mapped;
 
 use std::fmt::{self, Display};
 use std::clone::Clone;

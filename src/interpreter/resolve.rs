@@ -156,7 +156,7 @@ impl MacroDefFunctionCreator {
         } else {
             macro_def.doc_comments.join("\n")
         };
-        macro_def.doc_comments.clear(); // just to deallocate the memory
+        macro_def.doc_comments = Vec::new(); // just to deallocate the memory
         let arg_types = macro_def.args.iter().map(|a| a.arg_type).collect();
         MacroDefFunctionCreator {
             macro_def,
