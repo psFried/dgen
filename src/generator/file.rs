@@ -32,15 +32,24 @@ impl RandFileReader {
 
     fn read_random_region<'a>(&mut self, rng: &mut DataGenRng, buffer: &'a mut Vec<u8>) -> Result<&'a str, Error> {
         let RandFileReader { ref mut file, ref file_len, ref region_offsets, ref delimiter} = *self;
-        let region_idx = rng.gen_range(0, region_offsets.len() - 1);
-        let region_start = region_offsets[region_idx];
-        let mut nread = if region_idx < (region_offsets.len() - 1) {
+        let region_idx = rng.gen_range(0, region_offsets.len() + 1);
+        let region_start = if region_idx == 0 {
+            0
+        } else {
+            // the stored offset is the index of the start of the delimiter
+            // so we need to add the delimiter length
+            region_offsets[region_idx - 1] + delimiter.len() as u64
+        };
+
+        let nread = if region_offsets[region_idx.min(region_offsets.len() - 1)] == region_start {
+            0
+        } else if region_idx < (region_offsets.len() - 1) {
             // there's another region after this one, so we'll stop there
-            region_offsets[region_idx + 1] - region_start
+            region_offsets[region_idx] - region_start // - delimiter.len() as u64
         } else {
             *file_len - region_start  // we'll just read to the end of the file
         };
-        nread -= delimiter.len() as u64;
+
 
         if (buffer.len() as u64) < nread {
             buffer.resize(nread as usize, 0);
@@ -139,12 +148,11 @@ fn do_read<R: Read>(read: &mut R, buf: &mut [u8]) -> io::Result<usize> {
 
 fn find_region_offsets(file: &mut File, delimiter: &str) -> Result<Vec<u64>, io::Error> {
     file.seek(SeekFrom::Start(0))?;
-    let mut result = vec![0]; // always a region at the beginning
+    let mut result = Vec::with_capacity(32);
     let mut buffer = [0; 8192];
     let delimiter_bytes = delimiter.as_bytes();
     let delimiter_length = delimiter_bytes.len();
 
-    let mut carry_over = [0; 64];
     let mut carry_over_len = 0;
     let mut index_adder = 0;
     loop {
@@ -153,12 +161,7 @@ fn find_region_offsets(file: &mut File, delimiter: &str) -> Result<Vec<u64>, io:
             break;
         }
 
-        if carry_over_len > 0 { // put the carry over into the beginning of the buffer
-            let co = &carry_over[0..carry_over_len];
-            buffer[0..carry_over_len].copy_from_slice(co);
-        }
-
-        let buffer_end = nread + carry_over_len;
+        let buffer_end = nread - carry_over_len;
         let mut buffer_idx = 0; 
         while buffer_idx < buffer_end {
             if is_region_start(&buffer[..], buffer_idx, delimiter_bytes) {
@@ -169,11 +172,15 @@ fn find_region_offsets(file: &mut File, delimiter: &str) -> Result<Vec<u64>, io:
                 buffer_idx += 1;
             }
         }
-        // take the last n bytes from the current buffer and put it into the carry_over
-        // we'll copy it into the beginning of the buffer on the next loop around
-        let co = &buffer[(buffer_end - delimiter_length)..buffer_end];
-        carry_over[0..delimiter_length].copy_from_slice(co);
-        carry_over_len = delimiter_length;
+
+        // take the last n bytes from the end of the buffer and put them back at the beginning so
+        // that we can make sure to catch all the occurences of multi-byte delimiters
+        for i in 0..carry_over_len {
+            let end_idx = buffer_end + i;
+            let byte = buffer[end_idx];
+            buffer[i] = byte;
+        }
+        carry_over_len = delimiter_length - 1;
         index_adder += nread as u64;
     }
     Ok(result)
@@ -188,7 +195,7 @@ mod test {
     const RAND_SEED: &[u8; 16] = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 
     #[test]
-    fn produces_words_from_file() {
+    fn produces_words_from_file_with_lf_line_endings() {
         let mut rng = DataGenRng::from_seed(*RAND_SEED);
         let path_gen = ConstantStringGenerator::new("test-data/simple-words.txt");
         let delim = ConstantStringGenerator::new("\n");
@@ -197,7 +204,20 @@ mod test {
         let expected = vec!["foo", "bar", "baz", "", "qux"];
         for _ in 0..20 {
             let actual = subject.gen_value(&mut rng).expect("failed to gen value").unwrap();
-            println!("actual='{}'", actual);
+            assert!(expected.contains(&actual));
+        }
+    }
+
+    #[test]
+    fn produces_words_from_file_with_crlf_line_endings() {
+        let mut rng = DataGenRng::from_seed(*RAND_SEED);
+        let path_gen = ConstantStringGenerator::new("test-data/crlf-words.txt");
+        let delim = ConstantStringGenerator::new("\r\n");
+        let mut subject = SelectFromFile::new(path_gen, delim);
+
+        let expected = vec!["foo", "bar", "baz", "", "qux"];
+        for _ in 0..20 {
+            let actual = subject.gen_value(&mut rng).expect("failed to gen value").unwrap();
             assert!(expected.contains(&actual));
         }
     }
