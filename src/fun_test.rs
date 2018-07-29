@@ -74,6 +74,32 @@ fn declare_and_use_function_with_mapper() {
     test_program_success(1, input, expected);
 }
 
+#[test]
+fn pass_mapped_function_as_function_argument() {
+    let input = r#"
+        def compare_words(word_fun: String) = 
+            repeat(3, concat(word_fun, " != ", word_fun, "\n"));
+
+        compare_words(alphanumeric() { w -> repeat_delimited(3, w, ", ") } )
+    "#;
+    let expected = "D, D, D != P, P, P\na, a, a != A, A, A\nD, D, D != C, C, C\n";
+    test_program_success(1, input, expected);
+}
+
+#[test]
+fn mapping_a_mapped_function() {
+    let input = r#"
+        def compare_words(word_fun: String) = 
+            repeat(3, word_fun() {word -> 
+                concat(single_quote(word), " == ", single_quote(word), "\n")
+            });
+        
+        compare_words(alphanumeric() { w -> repeat_delimited(3, w, "_") } )
+    "#;
+    let expected = "'D_D_D' == 'D_D_D'\n'P_P_P' == 'P_P_P'\n'a_a_a' == 'a_a_a'\n";
+    test_program_success(1, input, expected);
+}
+
 const RAND_SEED: &[u8; 16] = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 
 fn run_program(iterations: u64, program: &str) -> Result<Vec<u8>, Error> {

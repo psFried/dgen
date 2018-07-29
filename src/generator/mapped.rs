@@ -230,7 +230,9 @@ impl <T: Display + ?Sized + 'static> Generator for ArgResettingGen<T> {
     }
 
     fn new_from_prototype(&self) -> DynGenerator<T> {
-        unimplemented!();
+        let resetter = self.resetter.clone();
+        let mapper = self.mapper.new_from_prototype();
+        Box::new(ArgResettingGen {resetter, mapper})
     }
 }
 
