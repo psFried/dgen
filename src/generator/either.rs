@@ -1,9 +1,9 @@
-use generator::{Generator, DataGenRng, DynDecimalGenerator, DynGenerator};
+use generator::{DataGenRng, DynDecimalGenerator, DynGenerator, Generator};
 use writer::DataGenOutput;
 
-use std::fmt::{self, Display};
-use rand::Rng;
 use failure::Error;
+use rand::Rng;
+use std::fmt::{self, Display};
 
 pub const EITHER_FUNCTION_NAME: &'static str = "either";
 pub const MAX_FREQUENCY: f64 = 1.0;
@@ -15,8 +15,12 @@ pub struct Either<T: Display + ?Sized + 'static> {
     a_frequency: DynDecimalGenerator,
 }
 
-impl <T: Display + ?Sized + 'static> Either<T> {
-    pub fn new(a_frequency: DynDecimalGenerator, a: DynGenerator<T>, b: DynGenerator<T>) -> DynGenerator<T> {
+impl<T: Display + ?Sized + 'static> Either<T> {
+    pub fn new(
+        a_frequency: DynDecimalGenerator,
+        a: DynGenerator<T>,
+        b: DynGenerator<T>,
+    ) -> DynGenerator<T> {
         Box::new(Either { a_frequency, a, b })
     }
 
@@ -32,8 +36,7 @@ impl <T: Display + ?Sized + 'static> Either<T> {
     }
 }
 
-
-impl <T: Display + ?Sized + 'static> Generator for Either<T> {
+impl<T: Display + ?Sized + 'static> Generator for Either<T> {
     type Output = T;
 
     fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&T>, Error> {
@@ -56,14 +59,16 @@ impl <T: Display + ?Sized + 'static> Generator for Either<T> {
         let a_frequency = self.a_frequency.new_from_prototype();
         let a = self.a.new_from_prototype();
         let b = self.b.new_from_prototype();
-        Box::new(Either {a_frequency, a, b})
+        Box::new(Either { a_frequency, a, b })
     }
 }
 
-impl <T: Display + ?Sized + 'static> Display for Either<T> {
+impl<T: Display + ?Sized + 'static> Display for Either<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}({}, {}, {})", EITHER_FUNCTION_NAME, self.a_frequency, self.a, self.b)
+        write!(
+            f,
+            "{}({}, {}, {})",
+            EITHER_FUNCTION_NAME, self.a_frequency, self.a, self.b
+        )
     }
 }
-
-

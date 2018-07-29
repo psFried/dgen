@@ -1,3 +1,4 @@
+#![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused)]
 use interpreter::ast::{self, process_string_escapes};
 use generator::GeneratorType;

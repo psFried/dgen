@@ -1,9 +1,8 @@
-use rand::SeedableRng;
-use generator::DataGenRng;
-use writer::DataGenOutput;
 use super::Program;
 use failure::Error;
-
+use generator::DataGenRng;
+use rand::SeedableRng;
+use writer::DataGenOutput;
 
 #[test]
 fn generate_ascii_strings() {
@@ -104,7 +103,7 @@ const RAND_SEED: &[u8; 16] = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 
 fn run_program(iterations: u64, program: &str) -> Result<Vec<u8>, Error> {
     let rng = DataGenRng::from_seed(*RAND_SEED);
-    
+
     let mut out = Vec::new();
     {
         let output = DataGenOutput::new(&mut out);

@@ -1,7 +1,7 @@
-use interpreter::grammar::ExprParser;
-use interpreter::parser::parse_program;
 use generator::GeneratorType;
 use interpreter::ast::{Expr, FunctionCall, FunctionMapper, MacroArgument, MacroDef, Program};
+use interpreter::grammar::ExprParser;
+use interpreter::parser::parse_program;
 
 #[test]
 fn parses_boolean_literal_false_token() {
@@ -32,7 +32,6 @@ fn parses_unsigned_int_literal_positive_token() {
     let result = ExprParser::new().parse(r#"+1234"#);
     assert_eq!(Ok(sint(1234)), result);
 }
-
 
 #[test]
 fn parses_string_literal_with_escaped_quotes() {
@@ -89,7 +88,7 @@ fn parses_function_call_with_literal_arguments() {
         args: vec![
             Expr::StringLiteral("foo".to_owned()),
             Expr::IntLiteral(55),
-            Expr::DecimalLiteral(12.5)
+            Expr::DecimalLiteral(12.5),
         ],
         mapper: None,
     };
@@ -110,16 +109,14 @@ fn parses_function_call_without_parens_or_arguments() {
 #[test]
 fn parses_nested_function_calls() {
     let result = ExprParser::new().parse(r#"fun1("foo", fun2(12.5, fun3(111)), "bar")"#);
-    let expected = fun("fun1", vec![
-        string("foo"),
-        fun("fun2", vec![
-            float(12.5),
-            fun("fun3", vec![
-                int(111)
-            ])
-        ]),
-        string("bar")
-    ]);
+    let expected = fun(
+        "fun1",
+        vec![
+            string("foo"),
+            fun("fun2", vec![float(12.5), fun("fun3", vec![int(111)])]),
+            string("bar"),
+        ],
+    );
     assert_eq!(Ok(expected), result);
 }
 
@@ -129,13 +126,15 @@ fn parses_mapped_function_call() {
         inner(mapper_arg, mapper_arg)
     }"#;
     let result = ExprParser::new().parse(input);
-    let expected = mfun("fun1", 
-            vec![ string("foo"), int(7)],
-            "mapper_arg",
-            fun("inner", vec![
-                fun("mapper_arg", Vec::new()),
-                fun("mapper_arg", Vec::new()),
-            ]) );
+    let expected = mfun(
+        "fun1",
+        vec![string("foo"), int(7)],
+        "mapper_arg",
+        fun(
+            "inner",
+            vec![fun("mapper_arg", Vec::new()), fun("mapper_arg", Vec::new())],
+        ),
+    );
     assert_eq!(Ok(expected), result);
 }
 
@@ -157,53 +156,41 @@ fn parses_program_with_macro_definitions() {
         assignments: vec![
             MacroDef {
                 name: s("wtf"),
-                args: vec![
-                    MacroArgument {
-                        name: s("count"),
-                        arg_type: GeneratorType::UnsignedInt,
-                    }
-                ],
+                args: vec![MacroArgument {
+                    name: s("count"),
+                    arg_type: GeneratorType::UnsignedInt,
+                }],
                 body: Expr::Function(FunctionCall {
                     function_name: s("asciiString"),
-                    args: vec![
-                        Expr::Function(FunctionCall {
-                            function_name: s("count"),
-                            args: Vec::new(),
-                            mapper: None,
-                        })
-                    ],
+                    args: vec![Expr::Function(FunctionCall {
+                        function_name: s("count"),
+                        args: Vec::new(),
+                        mapper: None,
+                    })],
                     mapper: None,
                 }),
-                doc_comments: vec!["comment 1".to_owned()]
+                doc_comments: vec!["comment 1".to_owned()],
             },
             MacroDef {
                 name: s("foo"),
                 args: Vec::new(),
                 body: Expr::Function(FunctionCall {
                     function_name: s("wtf"),
-                    args: vec![
-                        Expr::Function(FunctionCall {
-                            function_name: s("uint"),
-                            args: vec![
-                                Expr::IntLiteral(0),
-                                Expr::IntLiteral(9)
-                            ],
-                            mapper: None
-                        })
-                    ],
+                    args: vec![Expr::Function(FunctionCall {
+                        function_name: s("uint"),
+                        args: vec![Expr::IntLiteral(0), Expr::IntLiteral(9)],
+                        mapper: None,
+                    })],
                     mapper: None,
                 }),
-                doc_comments: vec![
-                    "comment 2".to_owned(),
-                    "comment 3".to_owned(),
-                ]
-            }
+                doc_comments: vec!["comment 2".to_owned(), "comment 3".to_owned()],
+            },
         ],
         expr: Expr::Function(FunctionCall {
             function_name: s("foo"),
             args: Vec::new(),
             mapper: None,
-        })
+        }),
     };
 
     let actual = parse_program(input).expect("failed to parse input");
@@ -239,7 +226,7 @@ fn mfun(name: &str, args: Vec<Expr>, mapper_arg_name: &str, mapper_body: Expr) -
         mapper: Some(Box::new(FunctionMapper {
             arg_name: mapper_arg_name.to_owned(),
             mapper_body,
-        }))
+        })),
     })
 }
 

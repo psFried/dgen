@@ -1,14 +1,14 @@
 mod ascii_string;
-mod unsigned_int;
-mod one_of;
-mod either;
 mod concat;
-mod repeat;
+mod either;
 mod file;
+mod one_of;
+mod repeat;
+mod unsigned_int;
 
-use interpreter::resolve::ProgramContext;
-use generator::{GeneratorType, GeneratorArg};
 use failure::Error;
+use generator::{GeneratorArg, GeneratorType};
+use interpreter::resolve::ProgramContext;
 
 pub trait FunctionCreator: 'static {
     fn get_name(&self) -> &str;
@@ -22,23 +22,17 @@ const BUILTIN_FUNCTIONS: &[&FunctionCreator] = &[
     &self::ascii_string::AlphanumericString0 as &FunctionCreator,
     &self::ascii_string::AlphanumericString1 as &FunctionCreator,
     &self::ascii_string::StringFunction as &FunctionCreator,
-
     &self::unsigned_int::UnsignedInt0 as &FunctionCreator,
     &self::unsigned_int::UnsignedInt1 as &FunctionCreator,
     &self::unsigned_int::UnsignedInt2 as &FunctionCreator,
-
     &self::one_of::OneOfUint as &FunctionCreator,
     &self::one_of::OneOfString as &FunctionCreator,
-
     &self::either::EitherFun as &FunctionCreator,
     &self::either::EitherFreqFun as &FunctionCreator,
-
     &self::concat::SimpleConcat as &FunctionCreator,
     &self::concat::ConcatDelimitedFun as &FunctionCreator,
-
     &self::repeat::RepeatFun as &FunctionCreator,
     &self::repeat::RepeatDelimitedFun as &FunctionCreator,
-
     &self::file::SelectFromFileFun as &FunctionCreator,
     &self::file::WordsFunction as &FunctionCreator,
 ];
@@ -50,7 +44,7 @@ pub fn get_builtin_functions() -> &'static [&'static FunctionCreator] {
 pub struct FunctionHelp<'a>(pub &'a FunctionCreator);
 
 use std::fmt;
-impl <'a> fmt::Display for  FunctionHelp<'a> {
+impl<'a> fmt::Display for FunctionHelp<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}(", self.0.get_name())?;
 
@@ -67,4 +61,3 @@ impl <'a> fmt::Display for  FunctionHelp<'a> {
         write!(f, ") - {}", self.0.get_description())
     }
 }
-

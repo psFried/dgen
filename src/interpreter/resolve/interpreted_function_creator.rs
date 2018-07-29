@@ -1,9 +1,8 @@
-use interpreter::functions::FunctionCreator;
-use interpreter::ast::MacroDef;
-use interpreter::ProgramContext;
-use generator::{GeneratorArg, GeneratorType};
 use failure::Error;
-
+use generator::{GeneratorArg, GeneratorType};
+use interpreter::ast::MacroDef;
+use interpreter::functions::FunctionCreator;
+use interpreter::ProgramContext;
 
 pub struct MacroDefFunctionCreator {
     description: String,
@@ -28,20 +27,21 @@ impl MacroDefFunctionCreator {
     }
 
     pub fn bind_arguments(&self, args: Vec<GeneratorArg>) -> Vec<MacroArgFunctionCreator> {
-        args.into_iter().zip(self.macro_def.args.iter()).map(|(value, arg_type)| {
-            MacroArgFunctionCreator::new(arg_type.name.clone(), value)
-        }).collect()
+        args.into_iter()
+            .zip(self.macro_def.args.iter())
+            .map(|(value, arg_type)| MacroArgFunctionCreator::new(arg_type.name.clone(), value))
+            .collect()
     }
 }
 
 pub struct MacroArgFunctionCreator {
     name: String,
-    value: GeneratorArg
+    value: GeneratorArg,
 }
 
 impl MacroArgFunctionCreator {
     pub fn new(name: String, value: GeneratorArg) -> MacroArgFunctionCreator {
-        MacroArgFunctionCreator {name, value}
+        MacroArgFunctionCreator { name, value }
     }
 }
 
@@ -55,7 +55,11 @@ impl FunctionCreator for MacroArgFunctionCreator {
     fn get_description(&self) -> &str {
         self.name.as_str()
     }
-    fn create(&self, _args: Vec<GeneratorArg>, _ctx: &ProgramContext) -> Result<GeneratorArg, Error> {
+    fn create(
+        &self,
+        _args: Vec<GeneratorArg>,
+        _ctx: &ProgramContext,
+    ) -> Result<GeneratorArg, Error> {
         Ok(self.value.clone())
     }
 }

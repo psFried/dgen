@@ -1,13 +1,12 @@
-
-use std::io::{self, Write};
 use std::fmt::Display;
+use std::io::{self, Write};
 
 pub struct TrackingWriter<'a> {
     delegate: &'a mut Write,
     num_written: u64,
 }
 
-impl <'a> Write for TrackingWriter<'a> {
+impl<'a> Write for TrackingWriter<'a> {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         let result = self.delegate.write(buf);
         if let Ok(num) = result.as_ref() {
@@ -21,8 +20,8 @@ impl <'a> Write for TrackingWriter<'a> {
     }
 }
 
-impl <'a> TrackingWriter <'a> {
-    pub fn new(delegate:  &'a mut Write) -> TrackingWriter<'a> {
+impl<'a> TrackingWriter<'a> {
+    pub fn new(delegate: &'a mut Write) -> TrackingWriter<'a> {
         TrackingWriter {
             delegate,
             num_written: 0,
@@ -38,9 +37,9 @@ pub struct DataGenOutput<'a> {
     writer: TrackingWriter<'a>,
 }
 
-impl <'a> DataGenOutput<'a> {
+impl<'a> DataGenOutput<'a> {
     pub fn new(writer: &'a mut Write) -> DataGenOutput<'a> {
-        DataGenOutput { 
+        DataGenOutput {
             writer: TrackingWriter::new(writer),
         }
     }
@@ -51,8 +50,8 @@ impl <'a> DataGenOutput<'a> {
 
     pub fn write_string<D: Display + ?Sized>(&mut self, value: &D) -> io::Result<u64> {
         let start = self.writer.get_num_bytes_written();
-        self.writer.write_fmt(format_args!("{}", value)).map(|()| {
-            self.writer.get_num_bytes_written() - start
-        })
+        self.writer
+            .write_fmt(format_args!("{}", value))
+            .map(|()| self.writer.get_num_bytes_written() - start)
     }
 }

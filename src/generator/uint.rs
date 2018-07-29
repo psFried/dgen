@@ -1,9 +1,9 @@
-use super::{DynUnsignedIntGenerator, Generator, DataGenRng};
 use super::constant::ConstantGenerator;
-use writer::DataGenOutput;
+use super::{DataGenRng, DynUnsignedIntGenerator, Generator};
+use failure::Error;
 use rand::Rng;
 use std::fmt;
-use failure::Error;
+use writer::DataGenOutput;
 
 pub const DEFAULT_MAX: u64 = u64::max_value();
 pub const DEFAULT_MIN: u64 = 0;
@@ -15,9 +15,11 @@ pub struct UnsignedIntGenerator {
 }
 
 impl UnsignedIntGenerator {
-
     pub fn with_default() -> DynUnsignedIntGenerator {
-        UnsignedIntGenerator::new(ConstantGenerator::create(DEFAULT_MIN), ConstantGenerator::create(DEFAULT_MAX))
+        UnsignedIntGenerator::new(
+            ConstantGenerator::create(DEFAULT_MIN),
+            ConstantGenerator::create(DEFAULT_MAX),
+        )
     }
 
     #[allow(dead_code)]
@@ -29,7 +31,10 @@ impl UnsignedIntGenerator {
         UnsignedIntGenerator::new(ConstantGenerator::create(DEFAULT_MIN), max)
     }
 
-    pub fn new(min: DynUnsignedIntGenerator, max: DynUnsignedIntGenerator) -> DynUnsignedIntGenerator {
+    pub fn new(
+        min: DynUnsignedIntGenerator,
+        max: DynUnsignedIntGenerator,
+    ) -> DynUnsignedIntGenerator {
         Box::new(UnsignedIntGenerator { min, max, value: 0 })
     }
 }
@@ -51,7 +56,11 @@ impl Generator for UnsignedIntGenerator {
         Ok(Some(&self.value))
     }
 
-    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> Result<u64, Error> {
+    fn write_value(
+        &mut self,
+        rng: &mut DataGenRng,
+        output: &mut DataGenOutput,
+    ) -> Result<u64, Error> {
         if let Some(val) = self.gen_value(rng)? {
             output.write_string(val).map_err(Into::into)
         } else {
@@ -59,10 +68,10 @@ impl Generator for UnsignedIntGenerator {
         }
     }
 
-    fn new_from_prototype(&self) -> Box<Generator<Output=u64>> {
+    fn new_from_prototype(&self) -> Box<Generator<Output = u64>> {
         let min: DynUnsignedIntGenerator = self.min.new_from_prototype();
         let max: DynUnsignedIntGenerator = self.max.new_from_prototype();
-        Box::new(UnsignedIntGenerator {min, max, value: 0})
+        Box::new(UnsignedIntGenerator { min, max, value: 0 })
     }
 }
 

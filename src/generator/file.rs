@@ -1,12 +1,12 @@
-use generator::{DataGenRng, Generator, DynStringGenerator};
-use writer::DataGenOutput;
-use rand::Rng;
 use failure::Error;
+use generator::{DataGenRng, DynStringGenerator, Generator};
+use rand::Rng;
+use writer::DataGenOutput;
 
-use std::fs::File;
-use std::io::{self, Seek, SeekFrom, Read};
-use std::fmt::{self, Display};
 use std::collections::HashMap;
+use std::fmt::{self, Display};
+use std::fs::File;
+use std::io::{self, Read, Seek, SeekFrom};
 
 pub const SELECT_FROM_FILE_FUN_NAME: &'static str = "select_from_file";
 
@@ -30,8 +30,17 @@ impl RandFileReader {
         })
     }
 
-    fn read_random_region<'a>(&mut self, rng: &mut DataGenRng, buffer: &'a mut Vec<u8>) -> Result<&'a str, Error> {
-        let RandFileReader { ref mut file, ref file_len, ref region_offsets, ref delimiter} = *self;
+    fn read_random_region<'a>(
+        &mut self,
+        rng: &mut DataGenRng,
+        buffer: &'a mut Vec<u8>,
+    ) -> Result<&'a str, Error> {
+        let RandFileReader {
+            ref mut file,
+            ref file_len,
+            ref region_offsets,
+            ref delimiter,
+        } = *self;
         let region_idx = rng.gen_range(0, region_offsets.len() + 1);
         let region_start = if region_idx == 0 {
             0
@@ -47,9 +56,8 @@ impl RandFileReader {
             // there's another region after this one, so we'll stop there
             region_offsets[region_idx] - region_start // - delimiter.len() as u64
         } else {
-            *file_len - region_start  // we'll just read to the end of the file
+            *file_len - region_start // we'll just read to the end of the file
         };
-
 
         if (buffer.len() as u64) < nread {
             buffer.resize(nread as usize, 0);
@@ -74,13 +82,13 @@ impl Generator for SelectFromFile {
     type Output = str;
 
     fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&str>, Error> {
-        let SelectFromFile { 
-            ref mut file_path_gen, 
-            ref mut delimiter_gen, 
+        let SelectFromFile {
+            ref mut file_path_gen,
+            ref mut delimiter_gen,
             ref mut read_buffer,
-            ref mut readers 
+            ref mut readers,
         } = *self;
-        
+
         let path = file_path_gen.gen_value(rng)?.ok_or_else(|| {
             format_err!("File path cannot be null for {}", SELECT_FROM_FILE_FUN_NAME)
         })?;
@@ -96,10 +104,16 @@ impl Generator for SelectFromFile {
         }
 
         let reader = readers_by_delimiter.get_mut(delimiter).unwrap();
-        reader.read_random_region(rng, read_buffer).map(|value| Some(value))
+        reader
+            .read_random_region(rng, read_buffer)
+            .map(|value| Some(value))
     }
 
-    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> Result<u64, Error> {
+    fn write_value(
+        &mut self,
+        rng: &mut DataGenRng,
+        output: &mut DataGenOutput,
+    ) -> Result<u64, Error> {
         let value = self.gen_value(rng)?;
         if let Some(s) = value {
             output.write_string(s).map_err(Into::into)
@@ -127,10 +141,13 @@ impl SelectFromFile {
 }
 impl Display for SelectFromFile {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}({}, {})", SELECT_FROM_FILE_FUN_NAME, self.file_path_gen, self.delimiter_gen)
+        write!(
+            f,
+            "{}({}, {})",
+            SELECT_FROM_FILE_FUN_NAME, self.file_path_gen, self.delimiter_gen
+        )
     }
 }
-
 
 fn is_region_start(buffer: &[u8], idx: usize, delimiter: &[u8]) -> bool {
     buffer[idx..].starts_with(delimiter)
@@ -140,8 +157,8 @@ fn do_read<R: Read>(read: &mut R, buf: &mut [u8]) -> io::Result<usize> {
     loop {
         match read.read(buf) {
             Ok(n) => return Ok(n),
-            Err(ref e) if e.kind() == io::ErrorKind::Interrupted => { /* loop around and retry */ },
-            err @ _ => return err
+            Err(ref e) if e.kind() == io::ErrorKind::Interrupted => { /* loop around and retry */ }
+            err @ _ => return err,
         }
     }
 }
@@ -162,7 +179,7 @@ fn find_region_offsets(file: &mut File, delimiter: &str) -> Result<Vec<u64>, io:
         }
 
         let buffer_end = nread - carry_over_len;
-        let mut buffer_idx = 0; 
+        let mut buffer_idx = 0;
         while buffer_idx < buffer_end {
             if is_region_start(&buffer[..], buffer_idx, delimiter_bytes) {
                 let resolved_idx = buffer_idx as u64 + index_adder;
@@ -203,7 +220,10 @@ mod test {
 
         let expected = vec!["foo", "bar", "baz", "", "qux"];
         for _ in 0..20 {
-            let actual = subject.gen_value(&mut rng).expect("failed to gen value").unwrap();
+            let actual = subject
+                .gen_value(&mut rng)
+                .expect("failed to gen value")
+                .unwrap();
             assert!(expected.contains(&actual));
         }
     }
@@ -217,7 +237,10 @@ mod test {
 
         let expected = vec!["foo", "bar", "baz", "", "qux"];
         for _ in 0..20 {
-            let actual = subject.gen_value(&mut rng).expect("failed to gen value").unwrap();
+            let actual = subject
+                .gen_value(&mut rng)
+                .expect("failed to gen value")
+                .unwrap();
             assert!(expected.contains(&actual));
         }
     }

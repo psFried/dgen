@@ -1,16 +1,16 @@
 mod ast;
+pub mod functions;
 mod grammar;
+#[cfg(test)]
+mod parse_test;
 mod parser;
 mod resolve;
-pub mod functions;
-#[cfg(test)] mod parse_test;
 
 use self::functions::FunctionCreator;
-use self::parser::{parse_program, parse_library};
+use self::parser::{parse_library, parse_program};
 use self::resolve::ProgramContext;
-use generator::GeneratorArg;
 use failure::Error;
-
+use generator::GeneratorArg;
 
 pub struct Interpreter {
     context: ProgramContext,

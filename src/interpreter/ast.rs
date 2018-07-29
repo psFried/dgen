@@ -1,5 +1,5 @@
-use std::str::Chars;
 use generator::GeneratorType;
+use std::str::Chars;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct FunctionCall {
@@ -51,7 +51,6 @@ pub struct Program {
     pub expr: Expr,
 }
 
-
 pub fn process_string_escapes(input: &str) -> Result<String, &'static str> {
     let mut result = String::with_capacity(input.len());
 
@@ -77,7 +76,10 @@ pub fn process_string_escapes(input: &str) -> Result<String, &'static str> {
                 'u' => process_unicode_escape(&mut char_iter)?,
                 'U' => process_unicode_escape(&mut char_iter)?,
                 other @ _ => {
-                    eprintln!("Error in string literal, invalid escape sequence '\\{}'", other);
+                    eprintln!(
+                        "Error in string literal, invalid escape sequence '\\{}'",
+                        other
+                    );
                     return Err("invalid escape sequence");
                 }
             };
@@ -85,7 +87,6 @@ pub fn process_string_escapes(input: &str) -> Result<String, &'static str> {
         } else {
             result.push(next_char);
         }
-
     }
     Ok(result)
 }
@@ -96,7 +97,7 @@ fn process_unicode_escape(char_iter: &mut Chars) -> Result<char, &'static str> {
     if l_curly != '{' {
         return Err(ERR_MSG);
     }
-    
+
     let mut sequence = String::with_capacity(6);
     loop {
         let c = char_iter.next().ok_or(ERR_MSG)?;
@@ -116,8 +117,10 @@ fn process_unicode_escape(char_iter: &mut Chars) -> Result<char, &'static str> {
     })?;
 
     ::std::char::from_u32(as_uint).ok_or_else(|| {
-        eprintln!("{}: the value '{}' is not a valid unicode codepoint", ERR_MSG, sequence);
+        eprintln!(
+            "{}: the value '{}' is not a valid unicode codepoint",
+            ERR_MSG, sequence
+        );
         ERR_MSG
     })
 }
-

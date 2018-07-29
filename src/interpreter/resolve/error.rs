@@ -1,6 +1,6 @@
+use super::find_named_functions;
 use generator::GeneratorType;
 use interpreter::functions::FunctionHelp;
-use super::find_named_functions;
 use std::fmt::{self, Display};
 
 #[derive(Debug, Fail)]
@@ -15,15 +15,29 @@ impl ResolveError {
         ResolveError::new("no such function", name, provided_args)
     }
 
-    pub fn mismatched_function_args(name: String, provided_args: Vec<GeneratorType>) -> ResolveError {
+    pub fn mismatched_function_args(
+        name: String,
+        provided_args: Vec<GeneratorType>,
+    ) -> ResolveError {
         ResolveError::new("invalid function arguments", name, provided_args)
     }
 
-    pub fn ambiguous_function_call(name: String, provided_args: Vec<GeneratorType>) -> ResolveError {
-        ResolveError::new("ambiguous call to an overloaded function", name, provided_args)
+    pub fn ambiguous_function_call(
+        name: String,
+        provided_args: Vec<GeneratorType>,
+    ) -> ResolveError {
+        ResolveError::new(
+            "ambiguous call to an overloaded function",
+            name,
+            provided_args,
+        )
     }
 
-    pub fn new(message: &'static str, called_function: String, provided_args: Vec<GeneratorType>) -> ResolveError {
+    pub fn new(
+        message: &'static str,
+        called_function: String,
+        provided_args: Vec<GeneratorType>,
+    ) -> ResolveError {
         ResolveError {
             message,
             called_function,
@@ -34,7 +48,11 @@ impl ResolveError {
 
 impl Display for ResolveError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Resolve Error: {}: called '{}(", self.message, self.called_function)?;
+        write!(
+            f,
+            "Resolve Error: {}: called '{}(",
+            self.message, self.called_function
+        )?;
         let mut first = true;
         for arg in self.provided_args.iter() {
             if !first {
