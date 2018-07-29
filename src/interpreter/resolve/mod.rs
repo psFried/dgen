@@ -1,63 +1,14 @@
+mod error;
+mod interpreted_function_creator;
+
 use generator::{GeneratorArg, GeneratorType};
 use generator::constant::{ConstantGenerator, ConstantStringGenerator};
-use interpreter::ast::{Expr, FunctionCall, MacroDef, Program};
-use interpreter::functions::{FunctionCreator, FunctionHelp, get_builtin_functions};
-use std::fmt::{self, Display};
+use interpreter::ast::{Expr, FunctionCall, FunctionMapper, MacroDef, Program};
+use interpreter::functions::{FunctionCreator, get_builtin_functions};
 use failure::Error;
 
-#[derive(Debug, Fail)]
-pub struct ResolveError {
-    message: &'static str,
-    called_function: String,
-    provided_args: Vec<GeneratorType>,
-}
-
-impl ResolveError {
-    fn no_such_function_name(name: String, provided_args: Vec<GeneratorType>) -> ResolveError {
-        ResolveError::new("no such function", name, provided_args)
-    }
-
-    fn mismatched_function_args(name: String, provided_args: Vec<GeneratorType>) -> ResolveError {
-        ResolveError::new("invalid function arguments", name, provided_args)
-    }
-
-    fn ambiguous_function_call(name: String, provided_args: Vec<GeneratorType>) -> ResolveError {
-        ResolveError::new("ambiguous call to an overloaded function", name, provided_args)
-    }
-
-    fn new(message: &'static str, called_function: String, provided_args: Vec<GeneratorType>) -> ResolveError {
-        ResolveError {
-            message,
-            called_function,
-            provided_args,
-        }
-    }
-}
-
-impl Display for ResolveError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Resolve Error: {}: called '{}(", self.message, self.called_function)?;
-        let mut first = true;
-        for arg in self.provided_args.iter() {
-            if !first {
-                f.write_str(", ")?;
-            } else {
-                first = false;
-            }
-            write!(f, "{}", arg)?;
-        }
-        f.write_str(")'")?;
-        let mut first = true;
-        for matching in find_named_functions(self.called_function.as_str()) {
-            if first {
-                f.write_str("\nother possible functions are: \n")?;
-                first = false;
-            }
-            write!(f, "{}\n", FunctionHelp(matching))?;
-        }
-        Ok(())
-    }
-}
+use self::error::ResolveError;
+use self::interpreted_function_creator::{MacroArgFunctionCreator, MacroDefFunctionCreator};
 
 fn find_named_functions<'a>(name: &'a str) -> impl Iterator<Item=&FunctionCreator> {
     get_builtin_functions().iter().filter(move |f| name == f.get_name()).map(|f| *f)
@@ -142,81 +93,6 @@ impl <'a> FunctionMatch<'a> {
     }
 }
 
-
-pub struct MacroDefFunctionCreator {
-    description: String,
-    macro_def: MacroDef,
-    arg_types: Vec<GeneratorType>,
-}
-
-impl MacroDefFunctionCreator {
-    pub fn new(mut macro_def: MacroDef) -> MacroDefFunctionCreator {
-        let description = if macro_def.doc_comments.is_empty() {
-            "user defined function".to_owned()
-        } else {
-            macro_def.doc_comments.join("\n")
-        };
-        macro_def.doc_comments = Vec::new(); // just to deallocate the memory
-        let arg_types = macro_def.args.iter().map(|a| a.arg_type).collect();
-        MacroDefFunctionCreator {
-            macro_def,
-            arg_types,
-            description,
-        }
-    }
-
-    pub fn bind_arguments(&self, args: Vec<GeneratorArg>) -> Vec<MacroArgFunctionCreator> {
-        args.into_iter().zip(self.macro_def.args.iter()).map(|(value, arg_type)| {
-            MacroArgFunctionCreator::new(arg_type.name.clone(), value)
-        }).collect()
-    }
-}
-
-pub struct MacroArgFunctionCreator {
-    name: String,
-    value: GeneratorArg
-}
-
-impl MacroArgFunctionCreator {
-    pub fn new(name: String, value: GeneratorArg) -> MacroArgFunctionCreator {
-        MacroArgFunctionCreator {name, value}
-    }
-}
-
-impl FunctionCreator for MacroArgFunctionCreator {
-    fn get_name(&self) -> &str {
-        self.name.as_str()
-    }
-    fn get_arg_types(&self) -> (&[GeneratorType], bool) {
-        (&[], false)
-    }
-    fn get_description(&self) -> &str {
-        self.name.as_str()
-    }
-    fn create(&self, _args: Vec<GeneratorArg>, _ctx: &ProgramContext) -> Result<GeneratorArg, Error> {
-        Ok(self.value.clone())
-    }
-}
-
-impl FunctionCreator for MacroDefFunctionCreator {
-    fn get_name(&self) -> &str {
-        self.macro_def.name.as_str()
-    }
-
-    fn get_arg_types(&self) -> (&[GeneratorType], bool) {
-        (self.arg_types.as_slice(), false)
-    }
-
-    fn get_description(&self) -> &str {
-        self.description.as_str()
-    }
-
-    fn create(&self, args: Vec<GeneratorArg>, ctx: &ProgramContext) -> Result<GeneratorArg, Error> {
-        let bound_args = self.bind_arguments(args);
-        ctx.resolve_macro_call(&self.macro_def.body, bound_args)
-    }
-}
-
 pub struct ProgramContext {
     /// stack of scopes
     macros: Vec<Vec<MacroDefFunctionCreator>>,
@@ -230,7 +106,8 @@ impl ProgramContext {
     }
 
     pub fn resolve_macro_call(&self, body: &Expr, args: Vec<MacroArgFunctionCreator>) -> Result<GeneratorArg, Error> {
-        self.resolve_expr_private(body, args.as_slice())
+        let mut scopes = vec![args];
+        self.resolve_expr_private(body, &mut scopes)
     }
 
     pub fn add_lib(&mut self, lib: Vec<MacroDef>) {
@@ -247,7 +124,7 @@ impl ProgramContext {
     }
 
     pub fn resolve_expr(&self, token: &Expr) -> Result<GeneratorArg, Error> {
-        self.resolve_expr_private(token, &[])
+        self.resolve_expr_private(token, &mut Vec::new())
     }
 
     pub fn function_iter(&self) -> impl Iterator<Item = &FunctionCreator> {
@@ -256,7 +133,7 @@ impl ProgramContext {
             .chain(get_builtin_functions().iter().map(|f| *f))
     }
 
-    fn resolve_expr_private(&self, token: &Expr, bound_arguments: &[MacroArgFunctionCreator]) -> Result<GeneratorArg, Error> {
+    fn resolve_expr_private(&self, token: &Expr, bound_arguments: &mut Vec<Vec<MacroArgFunctionCreator>>) -> Result<GeneratorArg, Error> {
         match token {
             Expr::CharLiteral(val) => Ok(GeneratorArg::Char(ConstantGenerator::create(val.clone()))),
             Expr::BooleanLiteral(val) => Ok(GeneratorArg::Bool(ConstantGenerator::create(val.clone()))),
@@ -277,8 +154,10 @@ impl ProgramContext {
             .chain(find_named_functions(f_name))
     }
 
-    fn resolve_function_call(&self, function_call: &FunctionCall, bound_args: &[MacroArgFunctionCreator]) -> Result<GeneratorArg, Error> {
-        let FunctionCall { ref function_name, ref args } = *function_call;
+    fn resolve_function_call(&self, function_call: &FunctionCall, bound_args: &mut Vec<Vec<MacroArgFunctionCreator>>) -> Result<GeneratorArg, Error> {
+        let FunctionCall { ref function_name, ref args, ref mapper } = *function_call;
+
+        // first thing is to resolve all the arguments that were passed into the function call
         let mut resolved_args = Vec::with_capacity(args.len());
         let mut resolved_argument_types: Vec<GeneratorType> = Vec::with_capacity(args.len());
         for token in args.iter() {
@@ -287,15 +166,48 @@ impl ProgramContext {
             resolved_args.push(resolved_arg);
         }
 
-        let matching_arg_functions = bound_args.iter()
-                .filter(|a| a.get_name() == function_name.as_str())
+        let resolved_generator = {
+            self.call_function_creator(function_name.as_str(), resolved_argument_types, resolved_args, bound_args)?
+        };
+
+        if let Some(function_mapper) = mapper {
+            self.resolve_function_mapper(resolved_generator, function_mapper, bound_args)
+        } else {
+            Ok(resolved_generator)
+        }
+    }
+
+    fn resolve_function_mapper(&self, outer: GeneratorArg, mapper: &FunctionMapper, bound_args: &mut Vec<Vec<MacroArgFunctionCreator>>) -> Result<GeneratorArg, Error> {
+        use generator::mapped::{wrap_mapped_gen, create_arg};
+
+        let arg_name = mapper.arg_name.clone();
+        let (closure_arg, resetter) = create_arg(arg_name.clone(), outer);
+        let arg_creator = MacroArgFunctionCreator::new(arg_name, closure_arg);
+        bound_args.push(vec![arg_creator]);
+
+        let result = self.resolve_expr_private(&mapper.mapper_body, bound_args);
+        let _ = bound_args.pop();
+        let expr = result?;
+
+        Ok(wrap_mapped_gen(expr, resetter))
+    }
+
+    // resolves the appropriate function creator and invokes it. returns an error if no function creator can be found
+    // or if the function creator itself returns an error
+    fn call_function_creator(&self, function_name: &str, 
+        resolved_argument_types: Vec<GeneratorType>, 
+        resolved_args: Vec<GeneratorArg>, 
+        bound_args: &mut Vec<Vec<MacroArgFunctionCreator>>) -> Result<GeneratorArg, Error> {
+
+        let matching_arg_functions = bound_args.iter().flat_map(|a| a.iter())
+                .filter(|a| a.get_name() == function_name)
                 .map(|a| a as &FunctionCreator);
 
         // first find all the functions where just the name matches
-        let mut matching_name_functions = matching_arg_functions.chain(self.get_matching_functions(function_name.as_str())).peekable();
+        let mut matching_name_functions = matching_arg_functions.chain(self.get_matching_functions(function_name)).peekable();
         // ensure that there's at least one function somewhere with a name that matches, and return early if not
         if matching_name_functions.peek().is_none() {
-            return Err(ResolveError::no_such_function_name(function_name.clone(), resolved_argument_types).into());
+            return Err(ResolveError::no_such_function_name(function_name.to_owned(), resolved_argument_types).into());
         }
 
         let matching_functions = matching_name_functions.flat_map(|fun| {
@@ -312,13 +224,13 @@ impl ProgramContext {
                 current_best_distance = match_distance;
             } else if match_distance == current_best_distance {
                 // 2 or more functions have the same distance, which means we have to error out
-                return Err(ResolveError::ambiguous_function_call(function_name.clone(), resolved_argument_types.clone()).into());
+                return Err(ResolveError::ambiguous_function_call(function_name.to_owned(), resolved_argument_types.clone()).into());
             }
         }
 
         best_match.ok_or_else(|| {
             // there were no functions that matched both the name and the argument types
-            ResolveError::mismatched_function_args(function_name.clone(), resolved_argument_types.clone()).into()
+            ResolveError::mismatched_function_args(function_name.to_owned(), resolved_argument_types.clone()).into()
         }).and_then(|creator| {
             creator.call.create(resolved_args, self)
         })

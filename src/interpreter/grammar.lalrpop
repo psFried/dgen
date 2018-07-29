@@ -61,8 +61,18 @@ pub Expr: ast::Expr = {
 };
 
 FunctionCall: ast::FunctionCall = {
-    <n:FunctionName>"(" <a:Comma<Expr>> ")" => ast::FunctionCall { function_name: n, args: a },
-    <n:FunctionName> => ast::FunctionCall { function_name: n, args: Vec::new() },
+    <n:FunctionName>"(" <a:Comma<Expr>> ")" => ast::FunctionCall { function_name: n, args: a, mapper: None },
+    <n:FunctionName> => ast::FunctionCall { function_name: n, args: Vec::new(), mapper: None },
+    <n:FunctionName>"(" <a:Comma<Expr>> ")" "{" <ma:FunctionName> "->" <m:Expr> "}" => {
+        ast::FunctionCall {
+            function_name: n, 
+            args: a, 
+            mapper: Some(Box::new(ast::FunctionMapper {
+                arg_name: ma,
+                mapper_body: m,
+            }))
+        }
+    }
 };
 
 FunctionName: String = {

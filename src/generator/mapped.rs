@@ -1,117 +1,151 @@
-use generator::{GeneratorType, GeneratorArg, Generator, DynGenerator, DataGenRng};
+use generator::{GeneratorArg, Generator, DynGenerator, DataGenRng};
 use writer::DataGenOutput;
-use rand::Rng;
 use failure::Error;
 use std::fmt::{self, Display};
 use std::rc::Rc;
 use std::cell::{RefCell, Ref};
 use std::borrow::Borrow;
-use interpreter::functions::FunctionCreator;
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering;
 
-/*
-my_fun(arg1: String, arg2: Uint) = arg1() {str_val => 
-    # str_value here is wrapped in ClosureArgument
-    arg2 { num_val =>
-        concat(
-            // all references to 'str_value' are just clones of the argument
-            repeat(num_val, trailing_newline(str_val)), 
-            repeat(num_val, str_val)
-        )
+#[derive(Clone)]
+pub struct Resetter(Rc<(AtomicBool, AtomicBool)>);
+impl Resetter {
+    fn new() -> Resetter {
+        Resetter(Rc::new((AtomicBool::new(true), AtomicBool::new(true))))
     }
-};
 
-repeat(3, my_fun(one_of("foo", "bar"), uint(3, 5)) { str_val =>
-    # str_value here is wrapped in ClosureArgument, each reference to it is a clone
-    concat(str_val, str_val, str_val)
-})
-*/
+    fn reset(&self) {
+        (self.0).0.store(true, Ordering::Relaxed);
+        (self.0).1.store(true, Ordering::Relaxed);
+    }
+
+    fn is_value_reset(&self) -> bool {
+        (self.0).0.load(Ordering::Relaxed)
+    }
+
+    fn value_set(&self) {
+        (self.0).0.store(false, Ordering::Relaxed)
+    }
+
+    fn is_bytes_reset(&self) -> bool {
+        (self.0).1.load(Ordering::Relaxed)
+    }
+
+    fn bytes_set(&self) {
+        (self.0).1.store(false, Ordering::Relaxed)
+    }
+}
 
 // Holy type constraints, Batman!
-struct ClosureArgumentInner<R: Display + Clone + ?Sized + ToOwned<Owned=T> + 'static, T: Borrow<R> + Display + Clone + ?Sized + 'static> {
+struct ClosureArgumentInner<R: Display + ?Sized + ToOwned<Owned=T> + 'static, T: Borrow<R> + Display + Clone + ?Sized + 'static> {
     name: String,
     wrapped_gen: DynGenerator<R>,
-    usages: usize,
+    resetter: Resetter,
     memoized_value: Option<T>,
     memoized_bytes: Vec<u8>,
 }
 
-impl <R: Display + Clone + ?Sized + ToOwned<Owned=T> + 'static, T: Borrow<R> + Display + Clone + ?Sized + 'static> ClosureArgumentInner<R, T> {
+impl <R: Display + ?Sized + ToOwned<Owned=T> + 'static, T: Borrow<R> + Display + Clone + ?Sized + 'static> ClosureArgumentInner<R, T> {
     fn new(wrapped_gen: DynGenerator<R>, name: String) -> ClosureArgumentInner<R, T> {
         ClosureArgumentInner {
             name,
             wrapped_gen: wrapped_gen,
-            usages: 0,
+            resetter: Resetter::new(),
             memoized_value: None,
             memoized_bytes: Vec::new(),
         }
     }
     fn update_value_if_needed(&mut self, rng: &mut DataGenRng) -> Result<(), Error> {
-        if self.get_usage_count() == 0 {
-            let ClosureArgumentInner {ref mut wrapped_gen, ref mut memoized_value, ..} = *self;
+        if self.resetter.is_value_reset() {
+            let ClosureArgumentInner {ref mut wrapped_gen, ref mut memoized_value, ref resetter, ..} = *self;
             let value = wrapped_gen.gen_value(rng)?.map(|v| v.to_owned());
             *memoized_value = value;
+            resetter.value_set();
         } 
-        self.increment_usages();
         Ok(())
     }
     fn write_bytes(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> Result<u64, Error> {
-        if self.get_usage_count() == 0 {
+        if self.resetter.is_bytes_reset() {
             let ClosureArgumentInner {ref mut wrapped_gen, ref mut memoized_bytes, ..} = *self;
             memoized_bytes.clear();
             let mut writer = DataGenOutput::new(memoized_bytes);
             wrapped_gen.write_value(rng, &mut writer)?;
+            self.resetter.bytes_set();
         } 
-        self.increment_usages();
 
         output.write_bytes(self.memoized_bytes.as_slice()).map_err(Into::into)
     }
 
-    fn get_usage_count(&self) -> usize {
-        *self.usages.borrow()
-    }
-    fn increment_usages(&mut self) {
-        self.usages += 1;
-    }
-
-    fn forget_memoized(&mut self) {
-        self.usages = 0;
-    }
-
-    fn new_from_prototype(&self) -> ClosureArgumentInner<R, T> {
-        let wrapped = self.wrapped_gen.new_from_prototype();
-        let name = self.name.clone();
-        ClosureArgumentInner::new(wrapped, name)
+    fn get_resetter(&self) -> Resetter {
+        self.resetter.clone()
     }
 }
 
-#[derive(Clone)]
-pub struct ClosureArgument<R: Display + Clone + ?Sized + ToOwned<Owned=T> + 'static, T: Borrow<R> + Display + Clone + ?Sized + 'static>(Rc<RefCell<ClosureArgumentInner<R, T>>>);
+pub struct ClosureArgument<R: Display + ?Sized + ToOwned<Owned=T> + 'static, T: Borrow<R> + Display + Clone + ?Sized + 'static>(Rc<RefCell<ClosureArgumentInner<R, T>>>);
 
-impl <R: Display + Clone + ?Sized + ToOwned<Owned=T> + 'static, T: Borrow<R> + Display + Clone + ?Sized + 'static> ClosureArgument<R, T> {
+impl <R: Display + ?Sized + ToOwned<Owned=T> + 'static, T: Borrow<R> + Display + Clone + ?Sized + 'static> Clone for ClosureArgument<R, T> {
+    fn clone(&self) -> Self {
+        let inner = self.0.clone();
+        ClosureArgument(inner)
+    }
+}
+
+pub fn create_arg(name: String, gen: GeneratorArg) -> (GeneratorArg, Resetter) {
+    match gen {
+        GeneratorArg::Bool(g) => {
+            let arg = ClosureArgument::new(g, name);
+            let resetter = arg.get_resetter();
+            (GeneratorArg::Bool(Box::new(arg)), resetter)
+        }
+        GeneratorArg::Char(g) => {
+            let arg = ClosureArgument::new(g, name);
+            let resetter = arg.get_resetter();
+            (GeneratorArg::Char(Box::new(arg)), resetter)
+        }
+        GeneratorArg::SignedInt(g) => {
+            let arg = ClosureArgument::new(g, name);
+            let resetter = arg.get_resetter();
+            (GeneratorArg::SignedInt(Box::new(arg)), resetter)
+        }
+        GeneratorArg::UnsignedInt(g) => {
+            let arg = ClosureArgument::new(g, name);
+            let resetter = arg.get_resetter();
+            (GeneratorArg::UnsignedInt(Box::new(arg)), resetter)
+        }
+        GeneratorArg::Decimal(g) => {
+            let arg = ClosureArgument::new(g, name);
+            let resetter = arg.get_resetter();
+            (GeneratorArg::Decimal(Box::new(arg)), resetter)
+        }
+        GeneratorArg::String(g) => {
+            let arg = ClosureArgument::new(g, name);
+            let resetter = arg.get_resetter();
+            (GeneratorArg::String(Box::new(arg)), resetter)
+        }
+    }
+}
+
+impl <R: Display + ?Sized + ToOwned<Owned=T> + 'static, T: Borrow<R> + Display + Clone + ?Sized + 'static> ClosureArgument<R, T> {
     pub fn new(gen: DynGenerator<R>, name: String) -> ClosureArgument<R, T> {
         let inner = ClosureArgumentInner::new(gen, name);
         ClosureArgument(Rc::new(RefCell::new(inner)))
     }
 
-    fn copy_for_new_use(&self) -> ClosureArgument<R, T> {
-        let inner: Ref<ClosureArgumentInner<R, T>> = (*self.0).borrow();
-        ClosureArgument(Rc::new(RefCell::new(inner.new_from_prototype())))
-    }
-
-    fn reset(&self) {
-        let mut inner = self.0.borrow_mut();
-        inner.forget_memoized();
+    fn get_resetter(&self) -> Resetter {
+        let inner = (*self.0).borrow();
+        inner.get_resetter()
     }
 }
 
-impl <R: Display + Clone + ?Sized + ToOwned<Owned=T> + 'static, T: Borrow<R> + Display + Clone + ?Sized + 'static> Display for ClosureArgument<R, T> {
+impl <R: Display + ?Sized + ToOwned<Owned=T> + 'static, T: Borrow<R> + Display + Clone + ?Sized + 'static> Display for ClosureArgument<R, T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let inner: Ref<ClosureArgumentInner<R, T>> = (*self.0).borrow();
         write!(f, "{}({})", inner.name, inner.wrapped_gen)
     }
 }
 
-impl <R: Display + Clone + ?Sized + ToOwned<Owned=T> + 'static, T: Borrow<R> + Display + Clone + ?Sized + 'static> Generator for ClosureArgument<R, T> {
+impl <R: Display + ?Sized + ToOwned<Owned=T> + 'static, T: Borrow<R> + Display + Clone + ?Sized + 'static> Generator for ClosureArgument<R, T> {
     type Output = R;
 
     fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&R>, Error> {
@@ -130,51 +164,73 @@ impl <R: Display + Clone + ?Sized + ToOwned<Owned=T> + 'static, T: Borrow<R> + D
     }
 
     fn new_from_prototype(&self) -> DynGenerator<R> {
-        panic!("Internal error: Invalid call to new_from_prototype on a closure argument");
+        let inner = self.0.clone();
+        Box::new(ClosureArgument(inner))
     }
 }
 
 
-pub struct MappedGen<R: Display + Clone + ?Sized + ToOwned<Owned=T> + 'static, T: Borrow<R> + Display + Clone + ?Sized + 'static, S: Display + Clone + ?Sized + 'static> {
-    input: ClosureArgument<R, T>,
-    mapper: DynGenerator<S>,
-    create_mapper: Rc<Fn(DynGenerator<R>)->DynGenerator<S> + 'static>,
+pub struct ArgResettingGen<T: Display + ?Sized + 'static> {
+    resetter: Resetter,
+    mapper: DynGenerator<T>,
 }
 
-impl <R: Display + Clone + ?Sized + ToOwned<Owned=T> + 'static, T: Borrow<R> + Display + Clone + ?Sized + 'static, S: Display + Clone + ?Sized + 'static> MappedGen<R, T, S> {
-
-    pub fn new<F>(outer: DynGenerator<R>, arg_name: String, create_mapper: Rc<Fn(DynGenerator<R>)->DynGenerator<S> + 'static>) -> MappedGen<R, T, S> {
-        let input = ClosureArgument::new(outer, arg_name);
-        let boxed_input = Box::new(input.clone());
-        let mapper = create_mapper(boxed_input);
-        MappedGen { input, mapper, create_mapper }
+impl <T: Display + ?Sized + 'static> ArgResettingGen<T> {
+    pub fn new(mapper: DynGenerator<T>, resetter: Resetter) -> DynGenerator<T> {
+        Box::new(ArgResettingGen{ mapper, resetter })
     }
 }
 
-impl <R: Display + Clone + ?Sized + ToOwned<Owned=T> + 'static, T: Borrow<R> + Display + Clone + ?Sized + 'static, S: Display + Clone + ?Sized + 'static> Generator for MappedGen<R, T, S> {
-    type Output = S;
+pub fn wrap_mapped_gen(gen: GeneratorArg, resetter: Resetter) -> GeneratorArg {
+    match gen {
+        GeneratorArg::UnsignedInt(g) => {
+            let wrapped = ArgResettingGen::new(g, resetter);
+            GeneratorArg::UnsignedInt(wrapped)
+        }
+        GeneratorArg::SignedInt(g) => {
+            let wrapped = ArgResettingGen::new(g, resetter);
+            GeneratorArg::SignedInt(wrapped)
+        }
+        GeneratorArg::Decimal(g) => {
+            let wrapped = ArgResettingGen::new(g, resetter);
+            GeneratorArg::Decimal(wrapped)
+        }
+        GeneratorArg::Char(g) => {
+            let wrapped = ArgResettingGen::new(g, resetter);
+            GeneratorArg::Char(wrapped)
+        }
+        GeneratorArg::String(g) => {
+            let wrapped = ArgResettingGen::new(g, resetter);
+            GeneratorArg::String(wrapped)
+        }
+        GeneratorArg::Bool(g) => {
+            let wrapped = ArgResettingGen::new(g, resetter);
+            GeneratorArg::Bool(wrapped)
+        }
+    }
+}
 
-    fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&S>, Error> {
-        self.input.reset();
+impl <T: Display + ?Sized + 'static> Display for ArgResettingGen<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.mapper)
+    }
+}
+
+impl <T: Display + ?Sized + 'static> Generator for ArgResettingGen<T> {
+    type Output = T;
+
+    fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&T>, Error> {
+        self.resetter.reset();
         self.mapper.gen_value(rng)
     }
 
     fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> Result<u64, Error> {
-        self.input.reset();
+        self.resetter.reset();
         self.mapper.write_value(rng, output)
     }
 
-    fn new_from_prototype(&self) -> DynGenerator<S> {
-        let input = self.input.copy_for_new_use();
-        let create_mapper = self.create_mapper.clone();
-        let mapper = create_mapper(Box::new(input.clone()));
-        Box::new(MappedGen {input, create_mapper, mapper })
-    }
-}
-
-impl <R: Display + Clone + ?Sized + ToOwned<Owned=T> + 'static, T: Borrow<R> + Display + Clone + ?Sized + 'static, S: Display + Clone + ?Sized + 'static>  Display for MappedGen<R, T, S> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}{{ {} }}", self.input, self.mapper)
+    fn new_from_prototype(&self) -> DynGenerator<T> {
+        unimplemented!();
     }
 }
 

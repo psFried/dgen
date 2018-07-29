@@ -4,7 +4,14 @@ use generator::GeneratorType;
 #[derive(Debug, Clone, PartialEq)]
 pub struct FunctionCall {
     pub function_name: String,
-    pub args: Vec<Expr>
+    pub args: Vec<Expr>,
+    pub mapper: Option<Box<FunctionMapper>>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct FunctionMapper {
+    pub arg_name: String,
+    pub mapper_body: Expr,
 }
 
 #[derive(Debug, Clone, PartialEq)]

@@ -57,6 +57,23 @@ fn use_std_boolean_function() {
     test_program_success(3, input, expected_output);
 }
 
+#[test]
+fn declare_and_use_function_with_mapper() {
+    let input = r#"
+        def repeat_words(times: Uint) = times() { num ->
+            concat(num, " : ", repeat(num, words() { word ->
+                repeat(num, trailing_newline(word))
+            }))
+        };
+
+        def count() = uint(2, 5);
+
+        concat(repeat_words(count), repeat_words(count))
+    "#;
+    let expected = "2 : abbotcy\nabbotcy\ntelophase\ntelophase\n4 : putanism\nputanism\nputanism\nputanism\nphonography\nphonography\nphonography\nphonography\noophoron\noophoron\noophoron\noophoron\nfoujdar\nfoujdar\nfoujdar\nfoujdar\n";
+    test_program_success(1, input, expected);
+}
+
 const RAND_SEED: &[u8; 16] = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 
 fn run_program(iterations: u64, program: &str) -> Result<Vec<u8>, Error> {
