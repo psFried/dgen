@@ -76,7 +76,7 @@ FunctionCall: ast::FunctionCall = {
 };
 
 FunctionName: String = {
-    <s:r"[a-zA-Z]+\w+"> => s.to_owned()
+    <s:r"[a-zA-Z]+\w*"> => s.to_owned()
 };
 
 GenType: GeneratorType = {
