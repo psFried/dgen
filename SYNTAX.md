@@ -19,6 +19,7 @@ Literals are the simplest type of expression there is. Each literal represents a
 
 A function call takes the form of `function_name(argument1, argument2, ..., argumentN)`. Functions that take no arguments may either be called with empty parenstheses or with none at all. There is no difference. For example, to generate random unsigned integers, you can call the `uint()` function (just `uint` is also valid). Alternatively, to generate random unsigned integers within a given range, you can call `uint(7, 33)`. Passing arguments to a function will always require parentheses.
 
+
 Expressions can be arbitrarily nested. For example, to generate random alphanumeric strings or varying lengths with double quotes around them, you could use `double_quote(alphanumeric_string(uint(3, 40)))`. This will generate strings between 3 and 40 characters long and put quotes around them.
 
 ## Function definitions
@@ -46,3 +47,30 @@ hello_world(4, 7)
 
 Notice that the example also contains comments, which begin with a `#` character.
 
+## Mapped Functions
+
+Any function may optionally use a mapper by using the syntax:
+
+```
+function_name(arg1, ..., argn) { mapper_argument ->
+    <Expression>
+}
+```
+
+In a mapped function, the value of the mapper argument will always be the same within the scope of the curly braces. This allows you to reuse the same value in multiple places instead of always generating a new one. For example, the following expression will print the an unsigned integer followed by a string of that length:
+
+```
+uint(1, 10) { string_length ->
+    concat("printing a string with ", string_length, " ascii characters: ", alphanumeric_string(string_length))
+}
+```
+
+Mapped functions can be used anywhere a function is called, including in the body of function definitions. For example, the following program is equivalent to the previous one:
+
+```
+def my_string(len: Uint) = len() { string_length ->
+    concat("printing a string with ", string_length, " ascii characters: ", alphanumeric_string(string_length))
+};
+
+my_string(uint(1, 10))
+```
