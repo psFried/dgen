@@ -13,15 +13,15 @@ mod generator;
 mod interpreter;
 mod libraries;
 mod writer;
+mod program;
 
+use self::program::{Program, Source};
 use self::cli_opts::{CliOptions, SubCommand};
-use self::generator::DataGenRng;
 use self::interpreter::functions::{FunctionCreator, FunctionHelp};
 use self::interpreter::Interpreter;
-use self::writer::DataGenOutput;
-use failure::Error;
+use self::generator::DataGenRng;
 use rand::FromEntropy;
-use std::io::{self, Read};
+use failure::Error;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -60,45 +60,58 @@ fn main() {
             iteration_count,
             program_file,
             stdin,
+            libraries,
         } => {
-            let source = parse_program(program, program_file, stdin).or_bail(verbosity);
-            run_program(verbosity, iteration_count, source).or_bail(verbosity)
+            let source = get_program_source(program, program_file, stdin).or_bail(verbosity);
+            let rng = create_rng();
+            let program = create_program(source, verbosity, iteration_count, libraries, rng, true).or_bail(verbosity);
+            run_program(program).or_bail(verbosity)
         }
     }
 }
 
-fn parse_program(
-    program: Option<String>,
+// TODO: allow passing in the seed used in the rng
+fn create_rng() -> DataGenRng {
+    DataGenRng::from_entropy()
+}
+
+fn get_program_source(
+    program_string: Option<String>,
     program_file: Option<PathBuf>,
     stdin: bool,
-) -> Result<String, Error> {
-    let mut program_string: Option<String> = None;
-
-    if stdin {
-        program_string = Some(read_from_stdin()?);
-    } else if program.is_some() {
-        program_string = program;
+) -> Result<Source, Error> {
+    let maybe_source = if stdin {
+        Some(Source::stdin())
+    } else if program_string.is_some() {
+        program_string.map(Into::into)
     } else if program_file.is_some() {
-        program_string = Some(read_from_file(program_file.unwrap())?);
+        program_file.map(Into::into)
+    } else {
+        None
+    };
+
+    maybe_source.ok_or_else(|| {
+        format_err!("Must specify one of program, program-file, or stdin")
+    })
+}
+
+fn create_program(
+    program_source: Source, 
+    verbosity: u64, 
+    iterations: u64, 
+    libraries: Vec<PathBuf>,
+    rng: DataGenRng,
+    add_std_lib: bool) -> Result<Program, Error> {
+
+    let mut program = Program::new(verbosity, iterations, program_source, rng);
+
+    if add_std_lib {
+        program.add_library(self::libraries::STANDARD_LIB)?;
     }
-
-    program_string.ok_or_else(|| format_err!("Must specify one of program, program-file, or stdin"))
-}
-
-fn read_from_file(file: PathBuf) -> io::Result<String> {
-    use std::fs::OpenOptions;
-
-    let mut handle = OpenOptions::new().read(true).open(&file)?;
-    let mut s = String::with_capacity(256);
-    handle.read_to_string(&mut s)?;
-    Ok(s)
-}
-
-fn read_from_stdin() -> io::Result<String> {
-    let mut s = String::with_capacity(256);
-    let mut sin = io::stdin();
-    sin.read_to_string(&mut s)?;
-    Ok(s)
+    for lib in libraries {
+        program.add_library(Source::file(lib))?;
+    }
+    Ok(program)
 }
 
 fn print_backtraces(verbosity: u64) -> bool {
@@ -131,14 +144,13 @@ fn list_functions(name: Option<String>) {
     }
 }
 
-fn run_program(verbosity: u64, iterations: u64, program: String) -> Result<(), Error> {
+fn run_program(program: Program) -> Result<(), Error> {
     let sout = std::io::stdout();
     // lock stdout once at the beginning so we don't have to keep locking/unlocking it
     let mut lock = sout.lock();
-    let output = self::writer::DataGenOutput::new(&mut lock);
+    let mut output = self::writer::DataGenOutput::new(&mut lock);
 
-    let program = Program::with_new_rng(verbosity, iterations, program, output);
-    program.run()
+    program.run(&mut output)
 }
 
 fn print_function_help(fun: &FunctionCreator) {
@@ -146,62 +158,3 @@ fn print_function_help(fun: &FunctionCreator) {
     println!("{}", help);
 }
 
-pub struct Program<'a> {
-    iterations: u64,
-    source: String,
-    rng: DataGenRng,
-    output: DataGenOutput<'a>,
-    interpreter: Interpreter,
-}
-
-impl<'a> Program<'a> {
-    pub fn with_new_rng(
-        verbosity: u64,
-        iterations: u64,
-        source: String,
-        out: DataGenOutput<'a>,
-    ) -> Program<'a> {
-        Program::new(
-            verbosity,
-            iterations,
-            source,
-            DataGenRng::from_entropy(),
-            out,
-        )
-    }
-
-    pub fn new(
-        verbosity: u64,
-        iterations: u64,
-        source: String,
-        rng: DataGenRng,
-        output: DataGenOutput<'a>,
-    ) -> Program<'a> {
-        Program {
-            iterations,
-            source,
-            rng,
-            output,
-            interpreter: Interpreter::new(verbosity),
-        }
-    }
-
-    pub fn run(self) -> Result<(), Error> {
-        let Program {
-            iterations,
-            source,
-            mut rng,
-            mut output,
-            mut interpreter,
-            ..
-        } = self;
-        interpreter.eval_library(libraries::STANDARD_LIB)?;
-
-        let mut generator = interpreter.eval_program(source.as_str())?;
-
-        for _ in 0..iterations {
-            generator.write_value(&mut rng, &mut output)?;
-        }
-        Ok(())
-    }
-}

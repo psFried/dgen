@@ -54,4 +54,8 @@ impl<'a> DataGenOutput<'a> {
             .write_fmt(format_args!("{}", value))
             .map(|()| self.writer.get_num_bytes_written() - start)
     }
+
+    pub fn flush(&mut self) -> io::Result<()> {
+        self.writer.flush()
+    }
 }

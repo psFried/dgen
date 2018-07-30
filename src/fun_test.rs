@@ -106,9 +106,10 @@ fn run_program(iterations: u64, program: &str) -> Result<Vec<u8>, Error> {
 
     let mut out = Vec::new();
     {
-        let output = DataGenOutput::new(&mut out);
-        let prog = Program::new(2, iterations, program.to_owned(), rng, output);
-        prog.run()?;
+        let mut output = DataGenOutput::new(&mut out);
+        let mut prog = Program::new(2, iterations, program.to_owned(), rng);
+        prog.add_library(::libraries::STANDARD_LIB).expect("failed to eval std library");
+        prog.run(&mut output)?;
     }
 
     Ok(out)
