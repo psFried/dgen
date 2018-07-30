@@ -56,5 +56,10 @@ pub enum SubCommand {
         /// be evaluated prior to evaluating the program. The standard library is always evaluated and in scope.
         #[structopt(short = "l", long = "lib", parse(from_os_str))]
         libraries: Vec<PathBuf>,
+
+        /// Do not use the standard library. Useful if you don't use standard library functions and want to keep them out of the
+        /// global scope. Note that builtin functions will always be in the global scope.
+        #[structopt(long = "no-std")]
+        no_std_lib: bool
     },
 }

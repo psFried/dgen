@@ -61,10 +61,11 @@ fn main() {
             program_file,
             stdin,
             libraries,
+            no_std_lib,
         } => {
             let source = get_program_source(program, program_file, stdin).or_bail(verbosity);
             let rng = create_rng();
-            let program = create_program(source, verbosity, iteration_count, libraries, rng, true).or_bail(verbosity);
+            let program = create_program(source, verbosity, iteration_count, libraries, rng, !no_std_lib).or_bail(verbosity);
             run_program(program).or_bail(verbosity)
         }
     }
