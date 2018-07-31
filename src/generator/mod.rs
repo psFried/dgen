@@ -8,6 +8,7 @@ pub mod one_of;
 pub mod repeat;
 pub mod string;
 pub mod uint;
+pub mod stable_select;
 
 use failure::Error;
 use std::clone::Clone;

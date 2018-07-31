@@ -1,4 +1,4 @@
-use super::FunctionCreator;
+use super::{FunctionCreator, get_bottom_argument_type};
 use failure::Error;
 use generator::one_of::OneOfGenerator;
 use generator::{GeneratorArg, GeneratorType};
@@ -52,15 +52,7 @@ impl FunctionCreator for OneOfString {
 }
 
 fn create_one_of(args: Vec<GeneratorArg>) -> Result<GeneratorArg, Error> {
-    let initial_type = args[0].get_type();
-    let target_type = args.iter().fold(initial_type, |target_type, arg| {
-        let arg_type = arg.get_type();
-        if arg_type == target_type {
-            target_type
-        } else {
-            GeneratorType::String
-        }
-    });
+    let target_type = get_bottom_argument_type(args.as_slice());
 
     match target_type {
         GeneratorType::UnsignedInt => {
@@ -68,6 +60,24 @@ fn create_one_of(args: Vec<GeneratorArg>) -> Result<GeneratorArg, Error> {
                 .map(|a| a.as_uint().unwrap())
                 .collect::<Vec<_>>();
             Ok(GeneratorArg::UnsignedInt(OneOfGenerator::new(generators)))
+        }
+        GeneratorType::SignedInt => {
+            let gens = args.into_iter()
+                .map(|a| a.as_signed_int().unwrap())
+                .collect::<Vec<_>>();
+            Ok(GeneratorArg::SignedInt(OneOfGenerator::new(gens)))
+        }
+        GeneratorType::Decimal => {
+            let gens = args.into_iter()
+                .map(|a| a.as_decimal().unwrap())
+                .collect::<Vec<_>>();
+            Ok(GeneratorArg::Decimal(OneOfGenerator::new(gens)))
+        }
+        GeneratorType::Boolean => {
+            let gens = args.into_iter()
+                .map(|a| a.as_bool().unwrap())
+                .collect::<Vec<_>>();
+            Ok(GeneratorArg::Bool(OneOfGenerator::new(gens)))
         }
         GeneratorType::String => {
             let generators = args.into_iter().map(|a| a.as_string()).collect::<Vec<_>>();
@@ -78,9 +88,6 @@ fn create_one_of(args: Vec<GeneratorArg>) -> Result<GeneratorArg, Error> {
                 .map(|a| a.as_char().unwrap())
                 .collect::<Vec<_>>();
             Ok(GeneratorArg::Char(OneOfGenerator::new(gens)))
-        }
-        _ => {
-            unimplemented!();
         }
     }
 }

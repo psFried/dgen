@@ -5,6 +5,7 @@ mod file;
 mod one_of;
 mod repeat;
 mod unsigned_int;
+mod stable_select;
 
 use failure::Error;
 use generator::{GeneratorArg, GeneratorType};
@@ -35,6 +36,7 @@ const BUILTIN_FUNCTIONS: &[&FunctionCreator] = &[
     &self::repeat::RepeatDelimitedFun as &FunctionCreator,
     &self::file::SelectFromFileFun as &FunctionCreator,
     &self::file::WordsFunction as &FunctionCreator,
+    &self::stable_select::StableSelectFun as &FunctionCreator,
 ];
 
 pub fn get_builtin_functions() -> &'static [&'static FunctionCreator] {
@@ -60,4 +62,17 @@ impl<'a> fmt::Display for FunctionHelp<'a> {
 
         write!(f, ") - {}", self.0.get_description())
     }
+}
+
+/// returns the bottom type of the generator args. Panics if the args slice is empty
+fn get_bottom_argument_type(args: &[GeneratorArg]) -> GeneratorType {
+    let initial_type = args[0].get_type();
+    args.iter().fold(initial_type, |target_type, arg| {
+        let arg_type = arg.get_type();
+        if arg_type == target_type {
+            target_type
+        } else {
+            GeneratorType::String
+        }
+    })
 }
