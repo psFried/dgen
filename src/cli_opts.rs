@@ -45,8 +45,8 @@ pub enum SubCommand {
         program_file: Option<PathBuf>,
 
         // read the generator program from stdin
-        #[structopt(short = "s", long = "stdin")]
-        stdin: bool,
+        #[structopt(long = "stdin")]
+        stdin: bool, 
 
         /// number of iterations to print
         #[structopt(short = "n", long = "iterations", default_value = "1")]
@@ -60,6 +60,11 @@ pub enum SubCommand {
         /// Do not use the standard library. Useful if you don't use standard library functions and want to keep them out of the
         /// global scope. Note that builtin functions will always be in the global scope.
         #[structopt(long = "no-std")]
-        no_std_lib: bool
+        no_std_lib: bool,
+
+        /// specifies the seed used for the random number generator. For an identical program, the same seed will always produce
+        /// exactly the same results. This is NOT guaranteed to be true for different versions of pgen, though.
+        #[structopt(short = "s", long = "seed")]
+        seed: Option<String>,
     },
 }

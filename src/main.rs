@@ -20,7 +20,6 @@ use self::cli_opts::{CliOptions, SubCommand};
 use self::interpreter::functions::{FunctionCreator, FunctionHelp};
 use self::interpreter::Interpreter;
 use self::generator::DataGenRng;
-use rand::FromEntropy;
 use failure::Error;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -62,18 +61,33 @@ fn main() {
             stdin,
             libraries,
             no_std_lib,
+            seed,
         } => {
             let source = get_program_source(program, program_file, stdin).or_bail(verbosity);
-            let rng = create_rng();
+            let rng = create_rng(seed);
             let program = create_program(source, verbosity, iteration_count, libraries, rng, !no_std_lib).or_bail(verbosity);
             run_program(program).or_bail(verbosity)
         }
     }
 }
 
-// TODO: allow passing in the seed used in the rng
-fn create_rng() -> DataGenRng {
-    DataGenRng::from_entropy()
+fn create_rng(seed: Option<String>) -> DataGenRng {
+    use rand::{FromEntropy, SeedableRng};
+
+    seed.map(|s| {
+        let resolved_seed = string_to_byte_array(s);
+        DataGenRng::from_seed(resolved_seed)
+    }).unwrap_or_else(|| {
+        DataGenRng::from_entropy()
+    })
+}
+
+fn string_to_byte_array(string: String) -> [u8;16] {
+    let mut result = [0u8; 16];
+    for (i, byte) in string.as_bytes().iter().enumerate().take(16) {
+        result[i] = *byte;
+    }
+    result
 }
 
 fn get_program_source(
