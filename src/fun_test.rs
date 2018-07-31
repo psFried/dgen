@@ -60,7 +60,7 @@ fn use_std_boolean_function() {
 fn declare_and_use_function_with_mapper() {
     let input = r#"
         def repeat_words(times: Uint) = times() { num ->
-            concat(num, " : ", repeat(num, words() { word ->
+            concat(num, " : ", repeat(num, alphanumeric_string(5) { word ->
                 repeat(num, trailing_newline(word))
             }))
         };
@@ -69,7 +69,7 @@ fn declare_and_use_function_with_mapper() {
 
         concat(repeat_words(count), repeat_words(count))
     "#;
-    let expected = "2 : abbotcy\nabbotcy\ntelophase\ntelophase\n4 : putanism\nputanism\nputanism\nputanism\nphonography\nphonography\nphonography\nphonography\noophoron\noophoron\noophoron\noophoron\nfoujdar\nfoujdar\nfoujdar\nfoujdar\n";
+    let expected = "2 : aADCI\naADCI\n2Crrn\n2Crrn\n3 : OTboe\nOTboe\nOTboe\ndJsRy\ndJsRy\ndJsRy\nC2F59\nC2F59\nC2F59\n";
     test_program_success(1, input, expected);
 }
 
