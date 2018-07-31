@@ -1,0 +1,22 @@
+sudo: false
+language: rust
+cache: cargo
+env:
+  global:
+    - RUST_BACKTRACE=1
+rust:
+  - stable
+  - beta
+  - nightly
+os:
+  - linux
+  - osx
+matrix:
+  allow_failures:
+    - rust: nightly
+  exclude:
+    - rust: beta
+      os: osx
+    - rust: nightly
+      os: osx
+script: cargo test --all
