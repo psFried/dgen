@@ -1,8 +1,10 @@
 # pgen
 
+[![Build Status](https://travis-ci.com/psFried/pgen.svg?branch=master)](https://travis-ci.com/psFried/pgen)
+
 Generate evil test data
 
-pgen is a CLI tool for generating pseudorandom data in arbitrary formats. The goal is to have a tool that works equally well for both textual and binary formats, although textual formats are the only ones supported at the moment. Pgen is really just an interpreter for a simple domain-specific language. The syntax is documented [here](SYNTAX.md).
+pgen is a CLI tool for generating pseudorandom data in arbitrary formats. The goal is to have a tool that works equally well for both textual and binary formats, although textual formats are the only ones supported at the moment. Pgen is really just an interpreter for a simple domain-specific functional language. The syntax is documented [here](SYNTAX.md).
 
 # Example
 
@@ -34,7 +36,7 @@ PGen has a bunch of builtin functions, too. You can list the builtin functions b
 
 ### Build
 
-pgen is built with [Rust](https://www.rust-lang.org/), and requires version 1.26 or later. Just a simple `cargo build --release` is all it takes to get a release binary. 
+pgen is built with [Rust](https://www.rust-lang.org/), and requires version 1.26 or later. Just a simple `cargo build --release` is all it takes to get a release binary. The build is currently tested only on OSX and GNU/Linux, but the intent is to start testing on Windows as well soon™️.
 
 ### Stability
 
