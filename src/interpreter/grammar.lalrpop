@@ -73,6 +73,16 @@ FunctionCall: ast::FunctionCall = {
                 mapper_body: m,
             }))
         }
+    },
+    <n:FunctionName> "{" <ma:FunctionName> "->" <m:Expr> "}" => {
+        ast::FunctionCall {
+            function_name: n, 
+            args: Vec::new(), 
+            mapper: Some(Box::new(ast::FunctionMapper {
+                arg_name: ma,
+                mapper_body: m,
+            }))
+        }
     }
 };
 

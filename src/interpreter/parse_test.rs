@@ -139,6 +139,25 @@ fn parses_mapped_function_call() {
 }
 
 #[test]
+fn parses_mapped_function_call_withou_args() {
+    let input = r#"fun1 {mapper_arg ->
+        inner(mapper_arg, mapper_arg)
+    }"#;
+    let result = ExprParser::new().parse(input);
+    let expected = mfun(
+        "fun1",
+        Vec::new(),
+        "mapper_arg",
+        fun(
+            "inner",
+            vec![fun("mapper_arg", Vec::new()), fun("mapper_arg", Vec::new())],
+        ),
+    );
+    assert_eq!(Ok(expected), result);
+
+}
+
+#[test]
 fn parses_program_with_macro_definitions() {
     let input = r#"
     #   comment 1    
