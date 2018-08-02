@@ -1,9 +1,9 @@
-use generator::{Generator, DataGenRng, DynGenerator};
-use writer::DataGenOutput;
+use generator::{DataGenRng, DynGenerator, Generator};
 use rand::Rng;
+use writer::DataGenOutput;
 
-use std::fmt::{self, Display};
 use failure::Error;
+use std::fmt::{self, Display};
 
 pub const STABLE_SELECT_FUN_NAME: &'static str = "stable_select";
 
@@ -12,11 +12,11 @@ pub struct StableSelect<T: Display + ?Sized + 'static> {
     index: Option<usize>,
 }
 
-impl <T: Display + ?Sized + 'static> StableSelect<T> {
+impl<T: Display + ?Sized + 'static> StableSelect<T> {
     pub fn create(wrapped: Vec<DynGenerator<T>>) -> DynGenerator<T> {
-        Box::new(StableSelect{
+        Box::new(StableSelect {
             wrapped,
-            index: None
+            index: None,
         })
     }
 
@@ -30,7 +30,7 @@ impl <T: Display + ?Sized + 'static> StableSelect<T> {
     }
 }
 
-impl <T: Display + ?Sized + 'static> Generator for StableSelect<T> {
+impl<T: Display + ?Sized + 'static> Generator for StableSelect<T> {
     type Output = T;
 
     fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&T>, Error> {
@@ -38,18 +38,25 @@ impl <T: Display + ?Sized + 'static> Generator for StableSelect<T> {
         gen.gen_value(rng)
     }
 
-    fn write_value(&mut self, rng: &mut DataGenRng, output: &mut DataGenOutput) -> Result<u64, Error> {
+    fn write_value(
+        &mut self,
+        rng: &mut DataGenRng,
+        output: &mut DataGenOutput,
+    ) -> Result<u64, Error> {
         let gen = self.get_gen(rng);
         gen.write_value(rng, output)
     }
 
     fn new_from_prototype(&self) -> DynGenerator<T> {
-        let new_wrapped = self.wrapped.iter().map(|g| g.new_from_prototype()).collect();
+        let new_wrapped = self.wrapped
+            .iter()
+            .map(|g| g.new_from_prototype())
+            .collect();
         StableSelect::create(new_wrapped)
     }
 }
 
-impl <T: Display + ?Sized + 'static> Display for StableSelect<T> {
+impl<T: Display + ?Sized + 'static> Display for StableSelect<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}(", STABLE_SELECT_FUN_NAME)?;
         let mut first = true;

@@ -1,7 +1,7 @@
-use interpreter::functions::{FunctionCreator, get_bottom_argument_type};
-use interpreter::resolve::ProgramContext;
-use generator::{GeneratorArg, GeneratorType};
 use generator::stable_select::{StableSelect, STABLE_SELECT_FUN_NAME};
+use generator::{GeneratorArg, GeneratorType};
+use interpreter::functions::{get_bottom_argument_type, FunctionCreator};
+use interpreter::resolve::ProgramContext;
 
 use failure::Error;
 
@@ -17,7 +17,11 @@ impl FunctionCreator for StableSelectFun {
         "Randomly selects one of it's inputs, and then continues to select the same one forever. Note that whichever input is selected may still generate different values."
     }
 
-    fn create(&self, args: Vec<GeneratorArg>, _ctx: &ProgramContext) -> Result<GeneratorArg, Error> {
+    fn create(
+        &self,
+        args: Vec<GeneratorArg>,
+        _ctx: &ProgramContext,
+    ) -> Result<GeneratorArg, Error> {
         let target_type = get_bottom_argument_type(args.as_slice());
         match target_type {
             GeneratorType::UnsignedInt => {

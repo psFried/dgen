@@ -46,13 +46,13 @@ pub enum SubCommand {
 
         // read the generator program from stdin
         #[structopt(long = "stdin")]
-        stdin: bool, 
+        stdin: bool,
 
         /// number of iterations to print
         #[structopt(short = "n", long = "iterations", default_value = "1")]
         iteration_count: u64,
 
-        /// Add the given library file to the program scope. Libraries are evaluated in the order given, and all libraries will 
+        /// Add the given library file to the program scope. Libraries are evaluated in the order given, and all libraries will
         /// be evaluated prior to evaluating the program. The standard library is always evaluated and in scope.
         #[structopt(short = "l", long = "lib", parse(from_os_str))]
         libraries: Vec<PathBuf>,

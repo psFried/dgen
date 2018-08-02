@@ -1,6 +1,9 @@
 use super::FunctionCreator;
 use failure::Error;
-use generator::string::{AsciiAlphanumeric, UnicodeScalar, UnicodeBmp, CharGenType, default_string_length_generator, StringGenerator};
+use generator::string::{
+    default_string_length_generator, AsciiAlphanumeric, CharGenType, StringGenerator, UnicodeBmp,
+    UnicodeScalar,
+};
 use generator::{GeneratorArg, GeneratorType};
 use interpreter::resolve::ProgramContext;
 
@@ -122,11 +125,12 @@ impl FunctionCreator for UnicodeBmpStringFun1 {
         _ctx: &ProgramContext,
     ) -> Result<GeneratorArg, Error> {
         let len = args.pop().unwrap().as_uint().unwrap();
-        Ok(GeneratorArg::String(StringGenerator::new(len, UnicodeBmp::create())))
+        Ok(GeneratorArg::String(StringGenerator::new(
+            len,
+            UnicodeBmp::create(),
+        )))
     }
 }
-
-
 
 pub struct AlphaNumericChar;
 impl FunctionCreator for AlphaNumericChar {

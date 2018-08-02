@@ -1,11 +1,11 @@
-use interpreter::Interpreter;
-use generator::DataGenRng;
-use writer::DataGenOutput;
 use failure::Error;
+use generator::DataGenRng;
+use interpreter::Interpreter;
+use writer::DataGenOutput;
 
-use std::path::PathBuf;
-use std::io::{self, Read};
 use std::borrow::Cow;
+use std::io::{self, Read};
+use std::path::PathBuf;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Source {
@@ -16,7 +16,7 @@ pub enum Source {
     /// used for the standard lib, which is included in the binary
     Builtin(&'static str),
     /// source will be read dynamically from stdin. It is an error to have more than one sourceType that uses stdin
-    Stdin
+    Stdin,
 }
 
 impl Source {
@@ -63,7 +63,7 @@ impl From<&'static str> for Source {
 }
 
 use std::path::Path;
-impl <'a> From<&'a Path> for Source {
+impl<'a> From<&'a Path> for Source {
     fn from(p: &'a Path) -> Source {
         Source::file(p)
     }
@@ -83,7 +83,6 @@ pub struct Program {
 }
 
 impl Program {
-
     pub fn new<T: Into<Source>>(
         verbosity: u64,
         iterations: u64,

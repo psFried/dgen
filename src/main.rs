@@ -12,14 +12,14 @@ mod fun_test;
 mod generator;
 mod interpreter;
 mod libraries;
-mod writer;
 mod program;
+mod writer;
 
-use self::program::{Program, Source};
 use self::cli_opts::{CliOptions, SubCommand};
+use self::generator::DataGenRng;
 use self::interpreter::functions::{FunctionCreator, FunctionHelp};
 use self::interpreter::Interpreter;
-use self::generator::DataGenRng;
+use self::program::{Program, Source};
 use failure::Error;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -65,7 +65,14 @@ fn main() {
         } => {
             let source = get_program_source(program, program_file, stdin).or_bail(verbosity);
             let rng = create_rng(seed);
-            let program = create_program(source, verbosity, iteration_count, libraries, rng, !no_std_lib).or_bail(verbosity);
+            let program = create_program(
+                source,
+                verbosity,
+                iteration_count,
+                libraries,
+                rng,
+                !no_std_lib,
+            ).or_bail(verbosity);
             run_program(program).or_bail(verbosity)
         }
     }
@@ -77,12 +84,10 @@ fn create_rng(seed: Option<String>) -> DataGenRng {
     seed.map(|s| {
         let resolved_seed = string_to_byte_array(s);
         DataGenRng::from_seed(resolved_seed)
-    }).unwrap_or_else(|| {
-        DataGenRng::from_entropy()
-    })
+    }).unwrap_or_else(|| DataGenRng::from_entropy())
 }
 
-fn string_to_byte_array(string: String) -> [u8;16] {
+fn string_to_byte_array(string: String) -> [u8; 16] {
     let mut result = [0u8; 16];
     for (i, byte) in string.as_bytes().iter().enumerate().take(16) {
         result[i] = *byte;
@@ -105,19 +110,17 @@ fn get_program_source(
         None
     };
 
-    maybe_source.ok_or_else(|| {
-        format_err!("Must specify one of program, program-file, or stdin")
-    })
+    maybe_source.ok_or_else(|| format_err!("Must specify one of program, program-file, or stdin"))
 }
 
 fn create_program(
-    program_source: Source, 
-    verbosity: u64, 
-    iterations: u64, 
+    program_source: Source,
+    verbosity: u64,
+    iterations: u64,
     libraries: Vec<PathBuf>,
     rng: DataGenRng,
-    add_std_lib: bool) -> Result<Program, Error> {
-
+    add_std_lib: bool,
+) -> Result<Program, Error> {
     let mut program = Program::new(verbosity, iterations, program_source, rng);
 
     if add_std_lib {
@@ -172,4 +175,3 @@ fn print_function_help(fun: &FunctionCreator) {
     let help = FunctionHelp(fun);
     println!("{}", help);
 }
-

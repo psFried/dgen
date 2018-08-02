@@ -6,9 +6,9 @@ pub mod mapped;
 pub mod nullable;
 pub mod one_of;
 pub mod repeat;
+pub mod stable_select;
 pub mod string;
 pub mod uint;
-pub mod stable_select;
 
 use failure::Error;
 use std::clone::Clone;

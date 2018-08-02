@@ -18,7 +18,6 @@ fn generate_unicode_strings() {
     test_program_success(4, input, expected_output);
 }
 
-
 #[test]
 fn declare_and_use_macros() {
     let expected_output = "DPaADCI2CrrnGjOTboedJ";
@@ -116,7 +115,8 @@ fn run_program(iterations: u64, program: &str) -> Result<Vec<u8>, Error> {
     {
         let mut output = DataGenOutput::new(&mut out);
         let mut prog = Program::new(2, iterations, program.to_owned(), rng);
-        prog.add_library(::libraries::STANDARD_LIB).expect("failed to eval std library");
+        prog.add_library(::libraries::STANDARD_LIB)
+            .expect("failed to eval std library");
         prog.run(&mut output)?;
     }
 
@@ -127,6 +127,9 @@ fn test_program_success(iterations: u64, input: &str, expected_output: &str) {
     let results = run_program(iterations, input).expect("Failed to run program");
     let as_str = String::from_utf8(results).expect("program results were not valid utf8");
     if expected_output != as_str.as_str() {
-        panic!("Incorrect program output, expected: '{}', actual: '{}', actual_debug: '{:?}'", expected_output, as_str, as_str);
+        panic!(
+            "Incorrect program output, expected: '{}', actual: '{}', actual_debug: '{:?}'",
+            expected_output, as_str, as_str
+        );
     }
 }

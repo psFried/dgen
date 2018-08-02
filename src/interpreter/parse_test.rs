@@ -154,7 +154,6 @@ fn parses_mapped_function_call_withou_args() {
         ),
     );
     assert_eq!(Ok(expected), result);
-
 }
 
 #[test]

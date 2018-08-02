@@ -1,11 +1,11 @@
-mod strings;
 mod concat;
 mod either;
 mod file;
 mod one_of;
 mod repeat;
-mod unsigned_int;
 mod stable_select;
+mod strings;
+mod unsigned_int;
 
 use failure::Error;
 use generator::{GeneratorArg, GeneratorType};

@@ -1,4 +1,4 @@
-use super::{FunctionCreator, get_bottom_argument_type};
+use super::{get_bottom_argument_type, FunctionCreator};
 use failure::Error;
 use generator::one_of::OneOfGenerator;
 use generator::{GeneratorArg, GeneratorType};

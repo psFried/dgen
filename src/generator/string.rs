@@ -44,9 +44,8 @@ impl CharGenType for UnicodeBmp {
     }
     fn gen_char(rng: &mut DataGenRng) -> char {
         ::std::char::from_u32(rng.gen_range(1u32, 65536u32)).unwrap()
-    } 
+    }
 }
-
 
 #[derive(Clone)]
 pub struct CharGenerator<T: CharGenType + 'static> {
@@ -54,23 +53,22 @@ pub struct CharGenerator<T: CharGenType + 'static> {
     _type: PhantomData<T>,
 }
 
-impl <T: CharGenType + 'static> CharGenerator<T> {
+impl<T: CharGenType + 'static> CharGenerator<T> {
     pub fn new<E: CharGenType>() -> CharGenerator<E> {
         CharGenerator {
             value: 'x',
-            _type: PhantomData
+            _type: PhantomData,
         }
     }
-
 }
 
-impl <T: CharGenType + 'static> Display for CharGenerator<T> {
+impl<T: CharGenType + 'static> Display for CharGenerator<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", T::get_name())
     }
 }
 
-impl <T: CharGenType + 'static> Generator for CharGenerator<T> {
+impl<T: CharGenType + 'static> Generator for CharGenerator<T> {
     type Output = char;
 
     fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&char>, Error> {
@@ -93,12 +91,11 @@ impl <T: CharGenType + 'static> Generator for CharGenerator<T> {
     fn new_from_prototype(&self) -> Box<Generator<Output = char>> {
         let n: CharGenerator<T> = CharGenerator {
             value: 'x',
-            _type: PhantomData
+            _type: PhantomData,
         };
         Box::new(n)
     }
 }
-
 
 pub struct StringGenerator {
     char_gen: Box<Generator<Output = char>>,
@@ -133,7 +130,6 @@ impl StringGenerator {
         Ok(())
     }
 }
-
 
 pub fn default_string_length_generator() -> Box<Generator<Output = u64>> {
     // TODO: replace the default with a range
