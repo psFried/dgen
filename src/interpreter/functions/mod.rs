@@ -1,4 +1,4 @@
-mod ascii_string;
+mod strings;
 mod concat;
 mod either;
 mod file;
@@ -19,10 +19,10 @@ pub trait FunctionCreator: 'static {
 }
 
 const BUILTIN_FUNCTIONS: &[&FunctionCreator] = &[
-    &self::ascii_string::AlphaNumericChar as &FunctionCreator,
-    &self::ascii_string::AlphanumericString0 as &FunctionCreator,
-    &self::ascii_string::AlphanumericString1 as &FunctionCreator,
-    &self::ascii_string::StringFunction as &FunctionCreator,
+    &self::strings::AlphaNumericChar as &FunctionCreator,
+    &self::strings::AlphanumericString0 as &FunctionCreator,
+    &self::strings::AlphanumericString1 as &FunctionCreator,
+    &self::strings::StringFunction as &FunctionCreator,
     &self::unsigned_int::UnsignedInt0 as &FunctionCreator,
     &self::unsigned_int::UnsignedInt1 as &FunctionCreator,
     &self::unsigned_int::UnsignedInt2 as &FunctionCreator,
