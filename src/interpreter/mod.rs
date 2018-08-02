@@ -6,11 +6,12 @@ mod parse_test;
 mod parser;
 mod resolve;
 
-use self::functions::FunctionCreator;
 use self::parser::{parse_library, parse_program};
-use self::resolve::ProgramContext;
 use failure::Error;
-use generator::GeneratorArg;
+use generator::{GeneratorArg, GeneratorType};
+
+pub use self::functions::FunctionCreator;
+pub use self::resolve::ProgramContext;
 
 pub struct Interpreter {
     context: ProgramContext,
@@ -46,4 +47,17 @@ impl Interpreter {
     pub fn function_iter(&self) -> impl Iterator<Item = &FunctionCreator> {
         self.context.function_iter()
     }
+}
+
+/// returns the bottom type of the generator args. Panics if the args slice is empty
+pub fn get_bottom_argument_type(args: &[GeneratorArg]) -> GeneratorType {
+    let initial_type = args[0].get_type();
+    args.iter().fold(initial_type, |target_type, arg| {
+        let arg_type = arg.get_type();
+        if arg_type == target_type {
+            target_type
+        } else {
+            GeneratorType::String
+        }
+    })
 }

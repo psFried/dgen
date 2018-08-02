@@ -1,14 +1,5 @@
-mod concat;
-mod either;
-mod file;
-mod one_of;
-mod repeat;
-mod stable_select;
-mod strings;
-mod unsigned_int;
-
 use failure::Error;
-use generator::{GeneratorArg, GeneratorType};
+use generator::{self, GeneratorArg, GeneratorType};
 use interpreter::resolve::ProgramContext;
 
 pub trait FunctionCreator: 'static {
@@ -19,27 +10,27 @@ pub trait FunctionCreator: 'static {
 }
 
 const BUILTIN_FUNCTIONS: &[&FunctionCreator] = &[
-    &self::strings::AlphaNumericChar as &FunctionCreator,
-    &self::strings::AlphanumericString0 as &FunctionCreator,
-    &self::strings::AlphanumericString1 as &FunctionCreator,
-    &self::strings::UnicodeBmpFun as &FunctionCreator,
-    &self::strings::UnicodeScalarFun as &FunctionCreator,
-    &self::strings::UnicodeBmpStringFun1 as &FunctionCreator,
-    &self::strings::StringFunction as &FunctionCreator,
-    &self::unsigned_int::UnsignedInt0 as &FunctionCreator,
-    &self::unsigned_int::UnsignedInt1 as &FunctionCreator,
-    &self::unsigned_int::UnsignedInt2 as &FunctionCreator,
-    &self::one_of::OneOfUint as &FunctionCreator,
-    &self::one_of::OneOfString as &FunctionCreator,
-    &self::either::EitherFun as &FunctionCreator,
-    &self::either::EitherFreqFun as &FunctionCreator,
-    &self::concat::SimpleConcat as &FunctionCreator,
-    &self::concat::ConcatDelimitedFun as &FunctionCreator,
-    &self::repeat::RepeatFun as &FunctionCreator,
-    &self::repeat::RepeatDelimitedFun as &FunctionCreator,
-    &self::file::SelectFromFileFun as &FunctionCreator,
-    &self::file::WordsFunction as &FunctionCreator,
-    &self::stable_select::StableSelectFun as &FunctionCreator,
+    &generator::chars::AlphaNumericChar as &FunctionCreator,
+    &generator::chars::UnicodeScalarFun as &FunctionCreator,
+    &generator::chars::UnicodeBmpFun as &FunctionCreator,
+    &generator::string::AlphanumericString0 as &FunctionCreator,
+    &generator::string::AlphanumericString1 as &FunctionCreator,
+    &generator::string::UnicodeBmpStringFun1 as &FunctionCreator,
+    &generator::string::StringFunction as &FunctionCreator,
+    &generator::uint::UnsignedInt0 as &FunctionCreator,
+    &generator::uint::UnsignedInt1 as &FunctionCreator,
+    &generator::uint::UnsignedInt2 as &FunctionCreator,
+    &generator::one_of::OneOfUint as &FunctionCreator,
+    &generator::one_of::OneOfString as &FunctionCreator,
+    &generator::either::EitherFun as &FunctionCreator,
+    &generator::either::EitherFreqFun as &FunctionCreator,
+    &generator::concat::SimpleConcat as &FunctionCreator,
+    &generator::concat::ConcatDelimitedFun as &FunctionCreator,
+    &generator::repeat::RepeatFun as &FunctionCreator,
+    &generator::repeat::RepeatDelimitedFun as &FunctionCreator,
+    &generator::file::SelectFromFileFun as &FunctionCreator,
+    &generator::file::WordsFunction as &FunctionCreator,
+    &generator::stable_select::StableSelectFun as &FunctionCreator,
 ];
 
 pub fn get_builtin_functions() -> &'static [&'static FunctionCreator] {
@@ -65,17 +56,4 @@ impl<'a> fmt::Display for FunctionHelp<'a> {
 
         write!(f, ") - {}", self.0.get_description())
     }
-}
-
-/// returns the bottom type of the generator args. Panics if the args slice is empty
-fn get_bottom_argument_type(args: &[GeneratorArg]) -> GeneratorType {
-    let initial_type = args[0].get_type();
-    args.iter().fold(initial_type, |target_type, arg| {
-        let arg_type = arg.get_type();
-        if arg_type == target_type {
-            target_type
-        } else {
-            GeneratorType::String
-        }
-    })
 }

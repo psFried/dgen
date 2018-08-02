@@ -1,3 +1,4 @@
+pub mod chars;
 pub mod concat;
 pub mod constant;
 pub mod either;

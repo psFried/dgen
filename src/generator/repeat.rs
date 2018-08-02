@@ -1,4 +1,8 @@
-use generator::{DataGenRng, DynGenerator, DynStringGenerator, DynUnsignedIntGenerator, Generator};
+use generator::{
+    DataGenRng, DynGenerator, DynStringGenerator, DynUnsignedIntGenerator, Generator, GeneratorArg,
+    GeneratorType,
+};
+use interpreter::{FunctionCreator, ProgramContext};
 use writer::DataGenOutput;
 
 use failure::Error;
@@ -159,5 +163,61 @@ impl<T: Display + ?Sized + 'static> Generator for Repeat<T> {
 impl<T: Display + ?Sized + 'static> Display for Repeat<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}({}, {})", REPEAT_FUN_NAME, self.count, self.repeat)
+    }
+}
+
+pub struct RepeatFun;
+impl FunctionCreator for RepeatFun {
+    fn get_name(&self) -> &str {
+        REPEAT_FUN_NAME
+    }
+    fn get_arg_types(&self) -> (&[GeneratorType], bool) {
+        (&[GeneratorType::UnsignedInt, GeneratorType::String], false)
+    }
+    fn get_description(&self) -> &str {
+        "repeats the given generator the given number of times"
+    }
+    fn create(
+        &self,
+        mut args: Vec<GeneratorArg>,
+        _ctx: &ProgramContext,
+    ) -> Result<GeneratorArg, Error> {
+        let wrapped = args.pop().unwrap().as_string();
+        let count = args.pop().unwrap().as_uint().unwrap();
+        Ok(GeneratorArg::String(Repeat::new(count, wrapped)))
+    }
+}
+
+pub struct RepeatDelimitedFun;
+impl FunctionCreator for RepeatDelimitedFun {
+    fn get_name(&self) -> &str {
+        REPEAT_DELIMITED_FUN_NAME
+    }
+    fn get_arg_types(&self) -> (&[GeneratorType], bool) {
+        (
+            &[
+                GeneratorType::UnsignedInt,
+                GeneratorType::String,
+                GeneratorType::String,
+            ],
+            false,
+        )
+    }
+
+    fn get_description(&self) -> &str {
+        "repeats the given generator the given number of times"
+    }
+
+    fn create(
+        &self,
+        mut args: Vec<GeneratorArg>,
+        _ctx: &ProgramContext,
+    ) -> Result<GeneratorArg, Error> {
+        let delimiter = args.pop().unwrap().as_string();
+        let wrapped = args.pop().unwrap().as_string();
+        let count = args.pop().unwrap().as_uint().unwrap();
+        Ok(GeneratorArg::String(RepeatDelimited::new(
+            count, wrapped, delimiter,
+        )))
     }
 }
