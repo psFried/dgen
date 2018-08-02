@@ -31,6 +31,13 @@ fn declare_and_use_macros() {
 }
 
 #[test]
+fn stable_select_a_generator() {
+    let input = "stable_select(boolean(), uint())";
+    let expected_output = "truetruefalsefalsefalsefalsefalsetruefalsetrue";
+    test_program_success(10, input, expected_output);
+}
+
+#[test]
 fn use_custom_string_function() {
     let input = r#"
         def consonants() = one_of('b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 

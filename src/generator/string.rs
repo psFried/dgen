@@ -43,7 +43,13 @@ impl CharGenType for UnicodeBmp {
         "unicode_bmp"
     }
     fn gen_char(rng: &mut DataGenRng) -> char {
-        ::std::char::from_u32(rng.gen_range(1u32, 65536u32)).unwrap()
+        // TODO: look up the actual boundaries of the BMP range so we don't have to do this loop
+        loop {
+            let as_u32 = rng.gen_range(1u32, 65536u32);
+            if let Some(c) = ::std::char::from_u32(as_u32) {
+                return c;
+            }
+        }
     }
 }
 
