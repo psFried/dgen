@@ -1,6 +1,6 @@
 use super::FunctionCreator;
 use failure::Error;
-use generator::string::{default_charset, default_string_length_generator, StringGenerator};
+use generator::string::{AsciiAlphanumeric, UnicodeScalar, UnicodeBmp, CharGenType, default_string_length_generator, StringGenerator};
 use generator::{GeneratorArg, GeneratorType};
 use interpreter::resolve::ProgramContext;
 
@@ -51,10 +51,82 @@ impl FunctionCreator for AlphanumericString0 {
     ) -> Result<GeneratorArg, Error> {
         Ok(GeneratorArg::String(StringGenerator::new(
             default_string_length_generator(),
-            default_charset(),
+            AsciiAlphanumeric::create(),
         )))
     }
 }
+
+pub struct UnicodeScalarFun;
+impl FunctionCreator for UnicodeScalarFun {
+    fn get_name(&self) -> &'static str {
+        UnicodeScalar::get_name()
+    }
+
+    fn get_arg_types(&self) -> (&'static [GeneratorType], bool) {
+        (&[], false)
+    }
+
+    fn get_description(&self) -> &'static str {
+        "Generates a random Unicode scalar value. This can be any unicode code point, except for high/low surrogate code points"
+    }
+
+    fn create(
+        &self,
+        _args: Vec<GeneratorArg>,
+        _ctx: &ProgramContext,
+    ) -> Result<GeneratorArg, Error> {
+        Ok(GeneratorArg::Char(UnicodeScalar::create()))
+    }
+}
+
+pub struct UnicodeBmpFun;
+impl FunctionCreator for UnicodeBmpFun {
+    fn get_name(&self) -> &'static str {
+        UnicodeBmp::get_name()
+    }
+
+    fn get_arg_types(&self) -> (&'static [GeneratorType], bool) {
+        (&[], false)
+    }
+
+    fn get_description(&self) -> &'static str {
+        "Generates a random character from the unicode basic multilingual plane"
+    }
+
+    fn create(
+        &self,
+        _args: Vec<GeneratorArg>,
+        _ctx: &ProgramContext,
+    ) -> Result<GeneratorArg, Error> {
+        Ok(GeneratorArg::Char(UnicodeBmp::create()))
+    }
+}
+
+pub struct UnicodeBmpStringFun1;
+impl FunctionCreator for UnicodeBmpStringFun1 {
+    fn get_name(&self) -> &'static str {
+        "bmp_string"
+    }
+
+    fn get_arg_types(&self) -> (&'static [GeneratorType], bool) {
+        (&[GeneratorType::UnsignedInt], false)
+    }
+
+    fn get_description(&self) -> &'static str {
+        "Generates a string of random characters from the unicode basic multilingual plane"
+    }
+
+    fn create(
+        &self,
+        mut args: Vec<GeneratorArg>,
+        _ctx: &ProgramContext,
+    ) -> Result<GeneratorArg, Error> {
+        let len = args.pop().unwrap().as_uint().unwrap();
+        Ok(GeneratorArg::String(StringGenerator::new(len, UnicodeBmp::create())))
+    }
+}
+
+
 
 pub struct AlphaNumericChar;
 impl FunctionCreator for AlphaNumericChar {
@@ -75,7 +147,7 @@ impl FunctionCreator for AlphaNumericChar {
         _args: Vec<GeneratorArg>,
         _ctx: &ProgramContext,
     ) -> Result<GeneratorArg, Error> {
-        Ok(GeneratorArg::Char(default_charset()))
+        Ok(GeneratorArg::Char(AsciiAlphanumeric::create()))
     }
 }
 

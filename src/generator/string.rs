@@ -3,23 +3,79 @@ use failure::Error;
 use rand::distributions::Alphanumeric;
 use rand::prelude::Rng;
 use std::fmt::{self, Display};
+use std::marker::PhantomData;
 use writer::DataGenOutput;
 
-#[derive(Clone)]
-pub struct AsciiChar(char);
+// TODO: fill in character generators for other common ranges of unicode code points
 
-impl AsciiChar {
-    pub fn new() -> AsciiChar {
-        AsciiChar('x') // initial char doesn't matter, as it's just a tiny buffer that gets reused
+pub trait CharGenType: Sized + 'static {
+    fn get_name() -> &'static str;
+    fn gen_char(rng: &mut DataGenRng) -> char;
+    fn create() -> DynCharGenerator {
+        let g: CharGenerator<Self> = CharGenerator::<Self>::new();
+        Box::new(g)
     }
 }
 
-impl Generator for AsciiChar {
+pub struct AsciiAlphanumeric;
+impl CharGenType for AsciiAlphanumeric {
+    fn get_name() -> &'static str {
+        "alphanumeric"
+    }
+    fn gen_char(rng: &mut DataGenRng) -> char {
+        rng.sample(Alphanumeric)
+    }
+}
+
+pub struct UnicodeScalar;
+impl CharGenType for UnicodeScalar {
+    fn get_name() -> &'static str {
+        "unicode_scalar"
+    }
+    fn gen_char(rng: &mut DataGenRng) -> char {
+        rng.gen()
+    }
+}
+
+pub struct UnicodeBmp;
+impl CharGenType for UnicodeBmp {
+    fn get_name() -> &'static str {
+        "unicode_bmp"
+    }
+    fn gen_char(rng: &mut DataGenRng) -> char {
+        ::std::char::from_u32(rng.gen_range(1u32, 65536u32)).unwrap()
+    } 
+}
+
+
+#[derive(Clone)]
+pub struct CharGenerator<T: CharGenType + 'static> {
+    value: char,
+    _type: PhantomData<T>,
+}
+
+impl <T: CharGenType + 'static> CharGenerator<T> {
+    pub fn new<E: CharGenType>() -> CharGenerator<E> {
+        CharGenerator {
+            value: 'x',
+            _type: PhantomData
+        }
+    }
+
+}
+
+impl <T: CharGenType + 'static> Display for CharGenerator<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", T::get_name())
+    }
+}
+
+impl <T: CharGenType + 'static> Generator for CharGenerator<T> {
     type Output = char;
 
     fn gen_value(&mut self, rng: &mut DataGenRng) -> Result<Option<&char>, Error> {
-        self.0 = rng.sample(Alphanumeric);
-        Ok(Some(&self.0))
+        self.value = T::gen_char(rng);
+        Ok(Some(&self.value))
     }
 
     fn write_value(
@@ -35,15 +91,14 @@ impl Generator for AsciiChar {
     }
 
     fn new_from_prototype(&self) -> Box<Generator<Output = char>> {
-        Box::new(self.clone())
+        let n: CharGenerator<T> = CharGenerator {
+            value: 'x',
+            _type: PhantomData
+        };
+        Box::new(n)
     }
 }
 
-impl Display for AsciiChar {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str("ascii()")
-    }
-}
 
 pub struct StringGenerator {
     char_gen: Box<Generator<Output = char>>,
@@ -53,7 +108,7 @@ pub struct StringGenerator {
 
 impl StringGenerator {
     pub fn with_length(length_gen: DynUnsignedIntGenerator) -> DynStringGenerator {
-        StringGenerator::new(length_gen, default_charset())
+        StringGenerator::new(length_gen, AsciiAlphanumeric::create())
     }
 
     pub fn new(
@@ -79,9 +134,6 @@ impl StringGenerator {
     }
 }
 
-pub fn default_charset() -> Box<Generator<Output = char>> {
-    Box::new(AsciiChar::new())
-}
 
 pub fn default_string_length_generator() -> Box<Generator<Output = u64>> {
     // TODO: replace the default with a range

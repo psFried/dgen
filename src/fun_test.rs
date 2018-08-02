@@ -12,6 +12,14 @@ fn generate_ascii_strings() {
 }
 
 #[test]
+fn generate_unicode_strings() {
+    let expected_output = "栈 \u{8cc}겙\u{fd4f}긧ﶩ鵝ᣧ蹈澨ꇦ笲";
+    let input = "bmp_string(uint(0, 10))";
+    test_program_success(4, input, expected_output);
+}
+
+
+#[test]
 fn declare_and_use_macros() {
     let expected_output = "DPaADCI2CrrnGjOTboedJ";
     let input = r#"
@@ -118,5 +126,7 @@ fn run_program(iterations: u64, program: &str) -> Result<Vec<u8>, Error> {
 fn test_program_success(iterations: u64, input: &str, expected_output: &str) {
     let results = run_program(iterations, input).expect("Failed to run program");
     let as_str = String::from_utf8(results).expect("program results were not valid utf8");
-    assert_eq!(expected_output, as_str.as_str());
+    if expected_output != as_str.as_str() {
+        panic!("Incorrect program output, expected: '{}', actual: '{}', actual_debug: '{:?}'", expected_output, as_str, as_str);
+    }
 }
