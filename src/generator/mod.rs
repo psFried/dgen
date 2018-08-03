@@ -3,6 +3,7 @@ pub mod concat;
 pub mod constant;
 pub mod either;
 pub mod file;
+pub mod int;
 pub mod mapped;
 pub mod nullable;
 pub mod one_of;

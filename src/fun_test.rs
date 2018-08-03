@@ -19,6 +19,13 @@ fn generate_unicode_strings() {
 }
 
 #[test]
+fn signed_integer_functions() {
+    let input = r#"concat_delimited("", ", ", "", int(), int(-9, +7), min_int, max_int)"#;
+    let expected_output = "-4897931037155257082, -9, -9223372036854775808, 9223372036854775807";
+    test_program_success(1, input, expected_output);
+}
+
+#[test]
 fn declare_and_use_macros() {
     let expected_output = "DPaADCI2CrrnGjOTboedJ";
     let input = r#"

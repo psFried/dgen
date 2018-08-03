@@ -10,27 +10,38 @@ pub trait FunctionCreator: 'static {
 }
 
 const BUILTIN_FUNCTIONS: &[&FunctionCreator] = &[
+    // char generators
     &generator::chars::AlphaNumericChar as &FunctionCreator,
     &generator::chars::UnicodeScalarFun as &FunctionCreator,
     &generator::chars::UnicodeBmpFun as &FunctionCreator,
+    // string generators
     &generator::string::AlphanumericString0 as &FunctionCreator,
     &generator::string::AlphanumericString1 as &FunctionCreator,
     &generator::string::UnicodeBmpStringFun1 as &FunctionCreator,
     &generator::string::StringFunction as &FunctionCreator,
+    // unsigned integers
     &generator::uint::UnsignedInt0 as &FunctionCreator,
     &generator::uint::UnsignedInt1 as &FunctionCreator,
     &generator::uint::UnsignedInt2 as &FunctionCreator,
+    // Signed integers
+    &generator::int::SignedIntFun0 as &FunctionCreator,
+    &generator::int::SignedIntFun2 as &FunctionCreator,
+    &generator::int::SignedIntMin as &FunctionCreator,
+    &generator::int::SignedIntMax as &FunctionCreator,
+    // various generators that select from among their arguments
     &generator::one_of::OneOfUint as &FunctionCreator,
     &generator::one_of::OneOfString as &FunctionCreator,
     &generator::either::EitherFun as &FunctionCreator,
     &generator::either::EitherFreqFun as &FunctionCreator,
+    &generator::stable_select::StableSelectFun as &FunctionCreator,
+    // generators that compose their arguments
     &generator::concat::SimpleConcat as &FunctionCreator,
     &generator::concat::ConcatDelimitedFun as &FunctionCreator,
     &generator::repeat::RepeatFun as &FunctionCreator,
     &generator::repeat::RepeatDelimitedFun as &FunctionCreator,
+    // selecting from files
     &generator::file::SelectFromFileFun as &FunctionCreator,
     &generator::file::WordsFunction as &FunctionCreator,
-    &generator::stable_select::StableSelectFun as &FunctionCreator,
 ];
 
 pub fn get_builtin_functions() -> &'static [&'static FunctionCreator] {
