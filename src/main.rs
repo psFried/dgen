@@ -2,9 +2,12 @@
 extern crate structopt;
 #[macro_use]
 extern crate failure;
+#[macro_use]
+extern crate lazy_static;
 extern crate lalrpop_util;
 extern crate rand;
 extern crate regex;
+extern crate string_cache;
 
 mod cli_opts;
 #[cfg(test)]
@@ -23,6 +26,8 @@ use self::program::{Program, Source};
 use failure::Error;
 use std::path::PathBuf;
 use structopt::StructOpt;
+
+pub type IString = string_cache::DefaultAtom;
 
 trait OrBail<T> {
     fn or_bail(self, verbosity: u64) -> T;
@@ -53,7 +58,7 @@ fn main() {
         std::env::set_var("RUST_BACKTRACE", "1")
     }
     match args.subcommand {
-        SubCommand::ListFunctions { name } => list_functions(name),
+        SubCommand::ListFunctions { name } => list_functions(name, verbosity),
         SubCommand::RunProgram {
             program,
             iteration_count,
@@ -136,27 +141,27 @@ fn print_backtraces(verbosity: u64) -> bool {
     verbosity >= 2
 }
 
-fn list_functions(name: Option<String>) {
+fn list_functions(name: Option<String>, verbosity: u64) {
+    use failure::ResultExt;
+    use interpreter::functions::FunctionNameFilter;
     use regex::Regex;
-    let name_filter = name.and_then(|n| {
-        let trimmed = n.trim();
-        Regex::new(trimmed)
-            .map_err(|_err| {
-                eprintln!("Cannot parse filter '{}' as a regex", trimmed);
-                ()
-            })
-            .ok()
-    });
+    let name_filter =
+        name.map(|n| {
+            let trimmed = n.trim();
+            let regex = Regex::new(trimmed)
+                .context(format!("Cannot parse filter '{}' as a regex", trimmed))
+                .map_err(|e| e.into())
+                .or_bail(verbosity);
+            FunctionNameFilter::Regex(regex)
+        }).unwrap_or(FunctionNameFilter::All);
 
     let mut interpreter = Interpreter::new(0);
     interpreter.eval_library(libraries::STANDARD_LIB).unwrap();
 
+    println!("Standard library functions:\n");
+
     for fun in interpreter.function_iter() {
-        if name_filter
-            .as_ref()
-            .map(|filter| filter.is_match(fun.get_name()))
-            .unwrap_or(true)
-        {
+        if name_filter.matches(fun.get_name()) {
             print_function_help(fun);
         }
     }

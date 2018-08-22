@@ -1,6 +1,6 @@
 use failure::Error;
 use generator::{DataGenRng, DynStringGenerator, Generator, GeneratorArg, GeneratorType};
-use interpreter::{FunctionCreator, ProgramContext};
+use interpreter::{ArgsBuilder, BuiltinFunctionCreator, FunctionArgs, ProgramContext};
 use rand::Rng;
 use writer::DataGenOutput;
 
@@ -204,63 +204,52 @@ fn find_region_offsets(file: &mut File, delimiter: &str) -> Result<Vec<u64>, io:
     Ok(result)
 }
 
-pub struct SelectFromFileFun;
-impl FunctionCreator for SelectFromFileFun {
-    fn get_name(&self) -> &str {
-        SELECT_FROM_FILE_FUN_NAME
+pub fn select_from_file_fun() -> BuiltinFunctionCreator {
+    let args = ArgsBuilder::new()
+        .arg("delimiter", GeneratorType::String)
+        .arg("file_path", GeneratorType::String)
+        .build();
+    BuiltinFunctionCreator {
+        name: SELECT_FROM_FILE_FUN_NAME.into(),
+        description: "Selects random regions from the given file, using the given delimiter (most commonly a newline)",
+        args,
+        create_fn: &create_select
     }
-    fn get_arg_types(&self) -> (&[GeneratorType], bool) {
-        (&[GeneratorType::String, GeneratorType::String], false)
-    }
-    fn get_description(&self) -> &str {
-        "Selects random regions from the given file, using the given delimiter (most commonly a newline)"
-    }
-    fn create(
-        &self,
-        mut args: Vec<GeneratorArg>,
-        _ctx: &ProgramContext,
-    ) -> Result<GeneratorArg, Error> {
-        let delimiter = args.pop().unwrap().as_string();
-        let path = args.pop().unwrap().as_string();
-        Ok(GeneratorArg::String(SelectFromFile::new(path, delimiter)))
+}
+fn create_select(mut args: Vec<GeneratorArg>, _: &ProgramContext) -> Result<GeneratorArg, Error> {
+    let delimiter = args.pop().unwrap().as_string();
+    let path = args.pop().unwrap().as_string();
+    Ok(GeneratorArg::String(SelectFromFile::new(path, delimiter)))
+}
+
+pub fn words_fun() -> BuiltinFunctionCreator {
+    BuiltinFunctionCreator {
+        name: "words".into(),
+        description: "Selects a random word from the unix words file (/usr/share/dict/words or /usr/dict/words)",
+        args: FunctionArgs::empty(),
+        create_fn: &create_words_fun
     }
 }
 
-pub struct WordsFunction;
-impl FunctionCreator for WordsFunction {
-    fn get_name(&self) -> &str {
-        "words"
-    }
-    fn get_arg_types(&self) -> (&[GeneratorType], bool) {
-        (&[], false)
-    }
-    fn get_description(&self) -> &str {
-        "Selects a random word from the unix words file (/usr/share/dict/words or /usr/dict/words)"
-    }
-    fn create(
-        &self,
-        _args: Vec<GeneratorArg>,
-        _ctx: &ProgramContext,
-    ) -> Result<GeneratorArg, Error> {
-        use generator::constant::ConstantStringGenerator;
-        use std::path::Path;
+fn create_words_fun(_: Vec<GeneratorArg>, _: &ProgramContext) -> Result<GeneratorArg, Error> {
+    use generator::constant::ConstantStringGenerator;
+    use std::path::Path;
 
-        let words_paths = ["/usr/share/dict/words", "/usr/dict/words"];
-        let path = words_paths
-            .iter()
-            .filter(|path| Path::new(path).is_file())
-            .next()
-            .map(|path| ConstantStringGenerator::new(*path))
-            .ok_or_else(|| {
-                format_err!(
-                    "Could not find a words file in the usual places: {:?}",
-                    words_paths
-                )
-            })?;
-        let delimiter = ConstantStringGenerator::new("\n");
+    let words_paths = ["/usr/share/dict/words", "/usr/dict/words"];
+    let path = words_paths
+        .iter()
+        .filter(|path| Path::new(path).is_file())
+        .next()
+        .map(|path| ConstantStringGenerator::new(*path))
+        .ok_or_else(|| {
+            format_err!(
+                "Could not find a words file in the usual places: {:?}",
+                words_paths
+            )
+        })?;
+    let delimiter = ConstantStringGenerator::new("\n");
 
-        Ok(GeneratorArg::String(SelectFromFile::new(path, delimiter)))
-    }
+    Ok(GeneratorArg::String(SelectFromFile::new(path, delimiter)))
 }
 
 #[cfg(test)]

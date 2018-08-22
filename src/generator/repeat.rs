@@ -2,7 +2,7 @@ use generator::{
     DataGenRng, DynGenerator, DynStringGenerator, DynUnsignedIntGenerator, Generator, GeneratorArg,
     GeneratorType,
 };
-use interpreter::{FunctionCreator, ProgramContext};
+use interpreter::{ProgramContext, BuiltinFunctionCreator, ArgsBuilder};
 use writer::DataGenOutput;
 
 use failure::Error;
@@ -166,58 +166,43 @@ impl<T: Display + ?Sized + 'static> Display for Repeat<T> {
     }
 }
 
-pub struct RepeatFun;
-impl FunctionCreator for RepeatFun {
-    fn get_name(&self) -> &str {
-        REPEAT_FUN_NAME
-    }
-    fn get_arg_types(&self) -> (&[GeneratorType], bool) {
-        (&[GeneratorType::UnsignedInt, GeneratorType::String], false)
-    }
-    fn get_description(&self) -> &str {
-        "repeats the given generator the given number of times"
-    }
-    fn create(
-        &self,
-        mut args: Vec<GeneratorArg>,
-        _ctx: &ProgramContext,
-    ) -> Result<GeneratorArg, Error> {
-        let wrapped = args.pop().unwrap().as_string();
-        let count = args.pop().unwrap().as_uint().unwrap();
-        Ok(GeneratorArg::String(Repeat::new(count, wrapped)))
+pub fn repeat_fun() -> BuiltinFunctionCreator {
+    let args = ArgsBuilder::new()
+        .arg("times", GeneratorType::UnsignedInt)
+        .arg("gen", GeneratorType::String)
+        .build();
+    BuiltinFunctionCreator {
+        name: REPEAT_FUN_NAME.into(),
+        description: "repeats the given generator the given number of times",
+        args,
+        create_fn: &create_repeat
     }
 }
+fn create_repeat(mut args: Vec<GeneratorArg>, _: &ProgramContext) -> Result<GeneratorArg, Error> {
+    let wrapped = args.pop().unwrap().as_string();
+    let count = args.pop().unwrap().as_uint().unwrap();
+    Ok(GeneratorArg::String(Repeat::new(count, wrapped)))
+}
 
-pub struct RepeatDelimitedFun;
-impl FunctionCreator for RepeatDelimitedFun {
-    fn get_name(&self) -> &str {
-        REPEAT_DELIMITED_FUN_NAME
-    }
-    fn get_arg_types(&self) -> (&[GeneratorType], bool) {
-        (
-            &[
-                GeneratorType::UnsignedInt,
-                GeneratorType::String,
-                GeneratorType::String,
-            ],
-            false,
-        )
-    }
 
-    fn get_description(&self) -> &str {
-        "repeats the given generator the given number of times"
+pub fn repeat_delimited_fun() -> BuiltinFunctionCreator {
+    let args = ArgsBuilder::new()
+        .arg("times", GeneratorType::UnsignedInt)
+        .arg("gen", GeneratorType::String)
+        .arg("delimiter", GeneratorType::String)
+        .build();
+    BuiltinFunctionCreator {
+        name: REPEAT_DELIMITED_FUN_NAME.into(),
+        description: "repeats the given generator the given number of times, with the given delimiter in between",
+        args,
+        create_fn: &create_repeat_delim
     }
-
-    fn create(
-        &self,
-        mut args: Vec<GeneratorArg>,
-        _ctx: &ProgramContext,
-    ) -> Result<GeneratorArg, Error> {
-        let delimiter = args.pop().unwrap().as_string();
-        let wrapped = args.pop().unwrap().as_string();
-        let count = args.pop().unwrap().as_uint().unwrap();
-        Ok(GeneratorArg::String(RepeatDelimited::new(
-            count, wrapped, delimiter,
-        )))
-    }
+}
+fn create_repeat_delim(mut args: Vec<GeneratorArg>, _: &ProgramContext) -> Result<GeneratorArg, Error> {
+    let delimiter = args.pop().unwrap().as_string();
+    let wrapped = args.pop().unwrap().as_string();
+    let count = args.pop().unwrap().as_uint().unwrap();
+    Ok(GeneratorArg::String(RepeatDelimited::new(
+        count, wrapped, delimiter,
+    )))
 }

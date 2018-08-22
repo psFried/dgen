@@ -1,5 +1,8 @@
 use generator::{DataGenRng, DynGenerator, Generator, GeneratorArg, GeneratorType};
-use interpreter::{get_bottom_argument_type, FunctionCreator, ProgramContext};
+use interpreter::{
+    get_bottom_argument_type, ArgsBuilder, BuiltinFunctionCreator,
+    ProgramContext,
+};
 use rand::Rng;
 use writer::DataGenOutput;
 
@@ -49,7 +52,8 @@ impl<T: Display + ?Sized + 'static> Generator for StableSelect<T> {
     }
 
     fn new_from_prototype(&self) -> DynGenerator<T> {
-        let new_wrapped = self.wrapped
+        let new_wrapped = self
+            .wrapped
             .iter()
             .map(|g| g.new_from_prototype())
             .collect();
@@ -72,59 +76,59 @@ impl<T: Display + ?Sized + 'static> Display for StableSelect<T> {
     }
 }
 
-pub struct StableSelectFun;
-impl FunctionCreator for StableSelectFun {
-    fn get_name(&self) -> &str {
-        STABLE_SELECT_FUN_NAME
+pub fn stable_select_fun() -> BuiltinFunctionCreator {
+    BuiltinFunctionCreator {
+        name: STABLE_SELECT_FUN_NAME.into(),
+        description: "Randomly selects one of it's inputs, and then continues to select the same one forever. Note that whichever input is selected may still generate different values",
+        args: ArgsBuilder::new().arg("gens", GeneratorType::String).variadic(),
+        create_fn: &create_stable_select
     }
-    fn get_arg_types(&self) -> (&[GeneratorType], bool) {
-        (&[GeneratorType::String], true)
-    }
-    fn get_description(&self) -> &str {
-        "Randomly selects one of it's inputs, and then continues to select the same one forever. Note that whichever input is selected may still generate different values."
-    }
+}
 
-    fn create(
-        &self,
-        args: Vec<GeneratorArg>,
-        _ctx: &ProgramContext,
-    ) -> Result<GeneratorArg, Error> {
-        let target_type = get_bottom_argument_type(args.as_slice());
-        match target_type {
-            GeneratorType::UnsignedInt => {
-                let generators = args.into_iter()
-                    .map(|a| a.as_uint().unwrap())
-                    .collect::<Vec<_>>();
-                Ok(GeneratorArg::UnsignedInt(StableSelect::create(generators)))
-            }
-            GeneratorType::SignedInt => {
-                let gens = args.into_iter()
-                    .map(|a| a.as_signed_int().unwrap())
-                    .collect::<Vec<_>>();
-                Ok(GeneratorArg::SignedInt(StableSelect::create(gens)))
-            }
-            GeneratorType::Decimal => {
-                let gens = args.into_iter()
-                    .map(|a| a.as_decimal().unwrap())
-                    .collect::<Vec<_>>();
-                Ok(GeneratorArg::Decimal(StableSelect::create(gens)))
-            }
-            GeneratorType::Boolean => {
-                let gens = args.into_iter()
-                    .map(|a| a.as_bool().unwrap())
-                    .collect::<Vec<_>>();
-                Ok(GeneratorArg::Bool(StableSelect::create(gens)))
-            }
-            GeneratorType::String => {
-                let generators = args.into_iter().map(|a| a.as_string()).collect::<Vec<_>>();
-                Ok(GeneratorArg::String(StableSelect::create(generators)))
-            }
-            GeneratorType::Char => {
-                let gens = args.into_iter()
-                    .map(|a| a.as_char().unwrap())
-                    .collect::<Vec<_>>();
-                Ok(GeneratorArg::Char(StableSelect::create(gens)))
-            }
+fn create_stable_select(
+    args: Vec<GeneratorArg>,
+    _ctx: &ProgramContext,
+) -> Result<GeneratorArg, Error> {
+    let target_type = get_bottom_argument_type(args.as_slice());
+    match target_type {
+        GeneratorType::UnsignedInt => {
+            let generators = args
+                .into_iter()
+                .map(|a| a.as_uint().unwrap())
+                .collect::<Vec<_>>();
+            Ok(GeneratorArg::UnsignedInt(StableSelect::create(generators)))
+        }
+        GeneratorType::SignedInt => {
+            let gens = args
+                .into_iter()
+                .map(|a| a.as_signed_int().unwrap())
+                .collect::<Vec<_>>();
+            Ok(GeneratorArg::SignedInt(StableSelect::create(gens)))
+        }
+        GeneratorType::Decimal => {
+            let gens = args
+                .into_iter()
+                .map(|a| a.as_decimal().unwrap())
+                .collect::<Vec<_>>();
+            Ok(GeneratorArg::Decimal(StableSelect::create(gens)))
+        }
+        GeneratorType::Boolean => {
+            let gens = args
+                .into_iter()
+                .map(|a| a.as_bool().unwrap())
+                .collect::<Vec<_>>();
+            Ok(GeneratorArg::Bool(StableSelect::create(gens)))
+        }
+        GeneratorType::String => {
+            let generators = args.into_iter().map(|a| a.as_string()).collect::<Vec<_>>();
+            Ok(GeneratorArg::String(StableSelect::create(generators)))
+        }
+        GeneratorType::Char => {
+            let gens = args
+                .into_iter()
+                .map(|a| a.as_char().unwrap())
+                .collect::<Vec<_>>();
+            Ok(GeneratorArg::Char(StableSelect::create(gens)))
         }
     }
 }

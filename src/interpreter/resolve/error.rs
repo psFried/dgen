@@ -2,28 +2,29 @@ use super::find_named_functions;
 use generator::GeneratorType;
 use interpreter::functions::FunctionHelp;
 use std::fmt::{self, Display};
+use IString;
 
 #[derive(Debug, Fail)]
 pub struct ResolveError {
     message: &'static str,
-    called_function: String,
+    called_function: IString,
     provided_args: Vec<GeneratorType>,
 }
 
 impl ResolveError {
-    pub fn no_such_function_name(name: String, provided_args: Vec<GeneratorType>) -> ResolveError {
+    pub fn no_such_function_name(name: IString, provided_args: Vec<GeneratorType>) -> ResolveError {
         ResolveError::new("no such function", name, provided_args)
     }
 
     pub fn mismatched_function_args(
-        name: String,
+        name: IString,
         provided_args: Vec<GeneratorType>,
     ) -> ResolveError {
         ResolveError::new("invalid function arguments", name, provided_args)
     }
 
     pub fn ambiguous_function_call(
-        name: String,
+        name: IString,
         provided_args: Vec<GeneratorType>,
     ) -> ResolveError {
         ResolveError::new(
@@ -35,7 +36,7 @@ impl ResolveError {
 
     pub fn new(
         message: &'static str,
-        called_function: String,
+        called_function: IString,
         provided_args: Vec<GeneratorType>,
     ) -> ResolveError {
         ResolveError {
@@ -66,7 +67,7 @@ impl Display for ResolveError {
 
         // TODO: don't lookup other possible functions from here, force them to be passed in when the error struct is initialized
         let mut first = true;
-        for matching in find_named_functions(self.called_function.as_str()) {
+        for matching in find_named_functions(self.called_function.clone()) {
             if first {
                 f.write_str("\nother possible functions are: \n")?;
                 first = false;

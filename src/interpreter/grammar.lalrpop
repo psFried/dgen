@@ -1,9 +1,10 @@
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused)]
-use interpreter::ast::{self, process_string_escapes};
+use interpreter::ast::{self, process_string_escapes, process_doc_comments};
 use generator::GeneratorType;
 use std::str::FromStr;
 use lalrpop_util::ParseError;
+use ::IString;
 
 grammar;
 
@@ -32,7 +33,7 @@ DecimalLiteral: f64 = {
     <s:r"[0-9]+\.[0-9]+"> => f64::from_str(s).unwrap()
 };
 
-StringLiteral: String = {
+StringLiteral: IString = {
     //<s:r#""([^"\\]*(\\.[^"\\]*)*)""#> => s[1..s.len() - 1].replace(r#"\""#, r#"""#).replace("\\n", "\n")
     <s:r#""([^"\\]*(\\.[^"\\]*)*)""#> =>? {
         process_string_escapes(&s[1..(s.len() - 1)]).map_err(|e| {
@@ -86,8 +87,8 @@ FunctionCall: ast::FunctionCall = {
     }
 };
 
-FunctionName: String = {
-    <s:r"[a-zA-Z]+\w*"> => s.to_owned()
+FunctionName: IString = {
+    <s:r"[a-zA-Z]+\w*"> => s.into()
 };
 
 GenType: GeneratorType = {
@@ -104,7 +105,7 @@ MacroArg: ast::MacroArgument = {
 }
 
 DefineMacro: ast::MacroDef = {
-    <c:Comment*> "def" <n:FunctionName> "(" <args:Comma<MacroArg>> ")" "=" <e:Expr> ";" => ast::MacroDef { name: n, args: args, body: e, doc_comments: c }
+    <c:Comment*> "def" <n:FunctionName> "(" <args:Comma<MacroArg>> ")" "=" <e:Expr> ";" => ast::MacroDef { name: n, args: args, body: e, doc_comments: process_doc_comments(c) }
 }
 
 

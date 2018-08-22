@@ -1,59 +1,63 @@
 use failure::Error;
-use generator::{GeneratorArg, GeneratorType};
-use interpreter::ast::MacroDef;
-use interpreter::functions::FunctionCreator;
+use generator::GeneratorArg;
+use interpreter::ast::{Expr, MacroDef};
+use interpreter::functions::{FunctionArgs, FunctionCreator, EMPTY_ARGS};
 use interpreter::ProgramContext;
+use IString;
 
 pub struct MacroDefFunctionCreator {
-    description: String,
-    macro_def: MacroDef,
-    arg_types: Vec<GeneratorType>,
+    description: String, // no point in interning the doc comments, since they're not likely to be repeated or compared
+    function_name: IString,
+    args: FunctionArgs,
+    body: Expr,
 }
 
 impl MacroDefFunctionCreator {
-    pub fn new(mut macro_def: MacroDef) -> MacroDefFunctionCreator {
-        let description = if macro_def.doc_comments.is_empty() {
-            "user defined function".to_owned()
-        } else {
-            macro_def.doc_comments.join("\n")
-        };
-        macro_def.doc_comments = Vec::new(); // just to deallocate the memory
-        let arg_types = macro_def.args.iter().map(|a| a.arg_type).collect();
+    pub fn new(macro_def: MacroDef) -> MacroDefFunctionCreator {
+        let MacroDef {
+            name,
+            args,
+            body,
+            doc_comments,
+        } = macro_def;
+
+        let args = args.into_iter().collect();
         MacroDefFunctionCreator {
-            macro_def,
-            arg_types,
-            description,
+            description: doc_comments,
+            args,
+            body,
+            function_name: name,
         }
     }
 
     pub fn bind_arguments(&self, args: Vec<GeneratorArg>) -> Vec<MacroArgFunctionCreator> {
         args.into_iter()
-            .zip(self.macro_def.args.iter())
-            .map(|(value, arg_type)| MacroArgFunctionCreator::new(arg_type.name.clone(), value))
+            .zip(self.args.arg_types.iter())
+            .map(|(value, arg)| MacroArgFunctionCreator::new(arg.name.clone(), value))
             .collect()
     }
 }
 
 pub struct MacroArgFunctionCreator {
-    name: String,
+    name: IString,
     value: GeneratorArg,
 }
 
 impl MacroArgFunctionCreator {
-    pub fn new(name: String, value: GeneratorArg) -> MacroArgFunctionCreator {
+    pub fn new(name: IString, value: GeneratorArg) -> MacroArgFunctionCreator {
         MacroArgFunctionCreator { name, value }
     }
 }
 
 impl FunctionCreator for MacroArgFunctionCreator {
-    fn get_name(&self) -> &str {
-        self.name.as_str()
+    fn get_name(&self) -> IString {
+        self.name.clone()
     }
-    fn get_arg_types(&self) -> (&[GeneratorType], bool) {
-        (&[], false)
+    fn get_arg_types(&self) -> &FunctionArgs {
+        &EMPTY_ARGS
     }
     fn get_description(&self) -> &str {
-        self.name.as_str()
+        &*self.name
     }
     fn create(
         &self,
@@ -65,12 +69,12 @@ impl FunctionCreator for MacroArgFunctionCreator {
 }
 
 impl FunctionCreator for MacroDefFunctionCreator {
-    fn get_name(&self) -> &str {
-        self.macro_def.name.as_str()
+    fn get_name(&self) -> IString {
+        self.function_name.clone()
     }
 
-    fn get_arg_types(&self) -> (&[GeneratorType], bool) {
-        (self.arg_types.as_slice(), false)
+    fn get_arg_types(&self) -> &FunctionArgs {
+        &self.args
     }
 
     fn get_description(&self) -> &str {
@@ -79,6 +83,6 @@ impl FunctionCreator for MacroDefFunctionCreator {
 
     fn create(&self, args: Vec<GeneratorArg>, ctx: &ProgramContext) -> Result<GeneratorArg, Error> {
         let bound_args = self.bind_arguments(args);
-        ctx.resolve_macro_call(&self.macro_def.body, bound_args)
+        ctx.resolve_macro_call(&self.body, bound_args)
     }
 }

@@ -1,4 +1,19 @@
 
+# Generates a string of random alphanumeric characters, using the given length generator
+def alphanumeric_string(length: Uint) = string(length, alphanumeric);
+
+# Generates a string of random characters from the Unicode Basic Multilingual Plane
+def bmp_string(length: Uint) = string(length, unicode_bmp);
+
+# Generates a string of random alphanumeric characters using the default length range of 0-24 inclusive
+def alphanumeric_string() = string(uint(0, 25), alphanumeric);
+
+# Generates a random unsigned 64 bit integer between 0 and the max value of 2^64
+def uint() = uint(0, max_uint());
+
+# Generates a random signed integer between min_int and max_int
+def int() = int(min_int, max_int);
+
 # Generates boolan values with the given frequency of `true`. The frequency must be between 0 and 1
 def boolean(true_frequency: Float) = either(true_frequency(), true, false);
 

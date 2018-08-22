@@ -1,23 +1,24 @@
 use generator::GeneratorType;
 use std::str::Chars;
+use ::IString;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct FunctionCall {
-    pub function_name: String,
+    pub function_name: IString,
     pub args: Vec<Expr>,
     pub mapper: Option<Box<FunctionMapper>>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct FunctionMapper {
-    pub arg_name: String,
+    pub arg_name: IString,
     pub mapper_body: Expr,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     Function(FunctionCall),
-    StringLiteral(String),
+    StringLiteral(IString),
     IntLiteral(u64),
     SignedIntLiteral(i64),
     DecimalLiteral(f64),
@@ -26,21 +27,15 @@ pub enum Expr {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct ColumnSpec {
-    pub column_name: String,
-    pub spec: Expr,
-}
-
-#[derive(Debug, Clone, PartialEq)]
 pub struct MacroArgument {
-    pub name: String,
+    pub name: IString,
     pub arg_type: GeneratorType,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct MacroDef {
-    pub doc_comments: Vec<String>,
-    pub name: String,
+    pub doc_comments: String,
+    pub name: IString,
     pub args: Vec<MacroArgument>,
     pub body: Expr,
 }
@@ -51,7 +46,7 @@ pub struct Program {
     pub expr: Expr,
 }
 
-pub fn process_string_escapes(input: &str) -> Result<String, &'static str> {
+pub fn process_string_escapes(input: &str) -> Result<IString, &'static str> {
     let mut result = String::with_capacity(input.len());
 
     let mut char_iter = input.chars();
@@ -88,7 +83,7 @@ pub fn process_string_escapes(input: &str) -> Result<String, &'static str> {
             result.push(next_char);
         }
     }
-    Ok(result)
+    Ok(result.into())
 }
 
 fn process_unicode_escape(char_iter: &mut Chars) -> Result<char, &'static str> {
@@ -123,4 +118,12 @@ fn process_unicode_escape(char_iter: &mut Chars) -> Result<char, &'static str> {
         );
         ERR_MSG
     })
+}
+
+pub fn process_doc_comments(raw_lines: Vec<String>) -> String {
+    if raw_lines.is_empty() {
+        "user defined function".to_owned()
+    } else {
+        raw_lines.join("\n")
+    }
 }

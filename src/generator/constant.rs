@@ -2,6 +2,7 @@ use super::{DataGenRng, DynStringGenerator, Generator};
 use failure::Error;
 use std::fmt::{self, Display};
 use writer::DataGenOutput;
+use ::IString;
 
 #[derive(Clone, Debug)]
 pub struct ConstantGenerator<T: Display + Clone + Send> {
@@ -57,14 +58,14 @@ impl<T: Display + Clone + Send> Display for ConstantGenerator<T> {
 }
 
 #[derive(Clone, PartialEq, Debug)]
-pub struct ConstantStringGenerator(String);
+pub struct ConstantStringGenerator(IString);
 
 pub fn empty_string() -> DynStringGenerator {
     ConstantStringGenerator::new("")
 }
 
 impl ConstantStringGenerator {
-    pub fn new<S: Into<String>>(value: S) -> DynStringGenerator {
+    pub fn new<S: Into<IString>>(value: S) -> DynStringGenerator {
         Box::new(ConstantStringGenerator(value.into()))
     }
 }
@@ -73,7 +74,7 @@ impl Generator for ConstantStringGenerator {
     type Output = str;
 
     fn gen_value(&mut self, _rng: &mut DataGenRng) -> Result<Option<&str>, Error> {
-        Ok(Some(self.0.as_str()))
+        Ok(Some(&*self.0))
     }
 
     fn write_value(
@@ -81,7 +82,7 @@ impl Generator for ConstantStringGenerator {
         _rng: &mut DataGenRng,
         output: &mut DataGenOutput,
     ) -> Result<u64, Error> {
-        output.write_string(self.0.as_str()).map_err(|e| e.into())
+        output.write_string(&*self.0).map_err(|e| e.into())
     }
 
     fn new_from_prototype(&self) -> Box<Generator<Output = str>> {

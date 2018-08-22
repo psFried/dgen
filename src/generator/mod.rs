@@ -143,12 +143,20 @@ pub enum GeneratorType {
 
 impl Display for GeneratorType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        /* from grammar definition:
+            "Uint" => GeneratorType::UnsignedInt,
+            "String" => GeneratorType::String,
+            "Int" => GeneratorType::SignedInt,
+            "Boolean" => GeneratorType::Boolean,
+            "Float" => GeneratorType::Decimal,
+            "Char" => GeneratorType::Char
+        */
         let stringy = match *self {
             GeneratorType::Boolean => "Boolean",
             GeneratorType::Char => "Char",
             GeneratorType::Decimal => "Float",
-            GeneratorType::UnsignedInt => "UnsignedInt",
-            GeneratorType::SignedInt => "SignedInt",
+            GeneratorType::UnsignedInt => "Uint",
+            GeneratorType::SignedInt => "Int",
             GeneratorType::String => "String",
         };
         f.write_str(stringy)

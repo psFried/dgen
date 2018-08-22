@@ -1,5 +1,5 @@
 use generator::{DataGenRng, DynStringGenerator, Generator, GeneratorArg, GeneratorType};
-use interpreter::{FunctionCreator, ProgramContext};
+use interpreter::{ProgramContext, ArgsBuilder, BuiltinFunctionCreator};
 use writer::DataGenOutput;
 
 use failure::Error;
@@ -128,57 +128,44 @@ impl Display for ConcatFormatter {
     }
 }
 
-pub struct ConcatDelimitedFun;
-impl FunctionCreator for ConcatDelimitedFun {
-    fn get_name(&self) -> &str {
-        CONCAT_FUNCTION_NAME
-    }
-    fn get_arg_types(&self) -> (&[GeneratorType], bool) {
-        (
-            &[
-                GeneratorType::String,
-                GeneratorType::String,
-                GeneratorType::String,
-                GeneratorType::String,
-            ],
-            true,
-        )
-    }
-    fn get_description(&self) -> &str {
-        "Concatenates the inputs into a single output"
-    }
-    fn create(
-        &self,
-        mut args: Vec<GeneratorArg>,
-        _ctx: &ProgramContext,
-    ) -> Result<GeneratorArg, Error> {
-        let prefix = args.remove(0).as_string();
-        let delimiter = args.remove(0).as_string();
-        let suffix = args.remove(0).as_string();
-        let values = args.into_iter().map(|g| g.as_string()).collect();
-        Ok(GeneratorArg::String(ConcatFormatter::new(
-            values, delimiter, prefix, suffix,
-        )))
+pub fn concat_delimited_function_creator() -> BuiltinFunctionCreator {
+    let args = ArgsBuilder::new()
+                .arg("prefix", GeneratorType::String)
+                .arg("delimiter", GeneratorType::String)
+                .arg("suffix", GeneratorType::String)
+                .arg("values", GeneratorType::String)
+                .variadic();
+    BuiltinFunctionCreator {
+        name: "concat_delimited".into(),
+        description: "Outputs the prefix, followed by the delimited list of values, followed by the suffix",
+        args,
+        create_fn: &create_concat_delimited
     }
 }
 
-pub struct SimpleConcat;
-impl FunctionCreator for SimpleConcat {
-    fn get_name(&self) -> &str {
-        "concat"
+fn create_concat_delimited(mut args: Vec<GeneratorArg>, _ctx: &ProgramContext) -> Result<GeneratorArg, Error> {
+    let prefix = args.remove(0).as_string();
+    let delimiter = args.remove(0).as_string();
+    let suffix = args.remove(0).as_string();
+    let values = args.into_iter().map(|g| g.as_string()).collect();
+    Ok(GeneratorArg::String(ConcatFormatter::new(
+        values, delimiter, prefix, suffix,
+    )))
+}
+
+pub fn simple_concat_function_creator() -> BuiltinFunctionCreator {
+    let args = ArgsBuilder::new()
+                .arg("values", GeneratorType::String)
+                .variadic();
+    BuiltinFunctionCreator {
+        name: "concat".into(),
+        description: "Concatenates the list of inputs",
+        args,
+        create_fn: &create_simple_concat
     }
-    fn get_arg_types(&self) -> (&[GeneratorType], bool) {
-        (&[GeneratorType::String], true)
-    }
-    fn get_description(&self) -> &str {
-        "Concatenates the inputs into a single output"
-    }
-    fn create(
-        &self,
-        args: Vec<GeneratorArg>,
-        _ctx: &ProgramContext,
-    ) -> Result<GeneratorArg, Error> {
-        let values = args.into_iter().map(|g| g.as_string()).collect();
-        Ok(GeneratorArg::String(ConcatFormatter::simple(values)))
-    }
+}
+
+fn create_simple_concat(args: Vec<GeneratorArg>, _ctx: &ProgramContext) -> Result<GeneratorArg, Error> {
+    let values = args.into_iter().map(|g| g.as_string()).collect();
+    Ok(GeneratorArg::String(ConcatFormatter::simple( values)))
 }

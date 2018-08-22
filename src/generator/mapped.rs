@@ -7,6 +7,7 @@ use std::rc::Rc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use writer::DataGenOutput;
+use ::IString;
 
 #[derive(Clone)]
 pub struct Resetter(Rc<(AtomicBool, AtomicBool)>);
@@ -42,7 +43,7 @@ struct ClosureArgumentInner<
     R: Display + ?Sized + ToOwned<Owned = T> + 'static,
     T: Borrow<R> + Display + Clone + ?Sized + 'static,
 > {
-    name: String,
+    name: IString,
     wrapped_gen: DynGenerator<R>,
     resetter: Resetter,
     memoized_value: Option<T>,
@@ -54,7 +55,7 @@ impl<
         T: Borrow<R> + Display + Clone + ?Sized + 'static,
     > ClosureArgumentInner<R, T>
 {
-    fn new(wrapped_gen: DynGenerator<R>, name: String) -> ClosureArgumentInner<R, T> {
+    fn new(wrapped_gen: DynGenerator<R>, name: IString) -> ClosureArgumentInner<R, T> {
         ClosureArgumentInner {
             name,
             wrapped_gen: wrapped_gen,
@@ -120,7 +121,7 @@ impl<
     }
 }
 
-pub fn create_arg(name: String, gen: GeneratorArg) -> (GeneratorArg, Resetter) {
+pub fn create_arg(name: IString, gen: GeneratorArg) -> (GeneratorArg, Resetter) {
     match gen {
         GeneratorArg::Bool(g) => {
             let arg = ClosureArgument::new(g, name);
@@ -160,7 +161,7 @@ impl<
         T: Borrow<R> + Display + Clone + ?Sized + 'static,
     > ClosureArgument<R, T>
 {
-    pub fn new(gen: DynGenerator<R>, name: String) -> ClosureArgument<R, T> {
+    pub fn new(gen: DynGenerator<R>, name: IString) -> ClosureArgument<R, T> {
         let inner = ClosureArgumentInner::new(gen, name);
         ClosureArgument(Rc::new(RefCell::new(inner)))
     }

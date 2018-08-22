@@ -1,7 +1,9 @@
 use failure::Error;
 use generator::constant::ConstantGenerator;
 use generator::{DataGenRng, DynSignedIntGenerator, Generator, GeneratorArg, GeneratorType};
-use interpreter::{FunctionCreator, ProgramContext};
+use interpreter::{
+    ArgsBuilder, BuiltinFunctionCreator, FunctionArgs, ProgramContext,
+};
 use rand::prelude::Rng;
 use std::fmt::{self, Display};
 use writer::DataGenOutput;
@@ -64,104 +66,50 @@ impl Generator for SignedIntGenerator {
     }
 }
 
-pub struct SignedIntFun2;
-impl FunctionCreator for SignedIntFun2 {
-    fn get_name(&self) -> &'static str {
-        INT_FUNCTION_NAME
-    }
-
-    fn get_arg_types(&self) -> (&'static [GeneratorType], bool) {
-        (&[GeneratorType::SignedInt, GeneratorType::SignedInt], false)
-    }
-
-    fn get_description(&self) -> &'static str {
-        "generates a signed integer within the given range"
-    }
-
-    fn create(
-        &self,
-        mut args: Vec<GeneratorArg>,
-        _ctx: &ProgramContext,
-    ) -> Result<GeneratorArg, Error> {
-        let max = args.pop().unwrap().as_signed_int().unwrap();
-        let min = args.pop().unwrap().as_signed_int().unwrap();
-        Ok(GeneratorArg::SignedInt(SignedIntGenerator::create(
-            min, max,
-        )))
+pub fn signed_int_fun2_creator() -> BuiltinFunctionCreator {
+    let args = ArgsBuilder::new()
+        .arg("min", GeneratorType::SignedInt)
+        .arg("max", GeneratorType::SignedInt)
+        .build();
+    BuiltinFunctionCreator {
+        name: INT_FUNCTION_NAME.into(),
+        description: "generates a signed integer within the given range",
+        args,
+        create_fn: &create_sint2,
     }
 }
-
-pub struct SignedIntFun0;
-impl FunctionCreator for SignedIntFun0 {
-    fn get_name(&self) -> &'static str {
-        INT_FUNCTION_NAME
-    }
-
-    fn get_arg_types(&self) -> (&'static [GeneratorType], bool) {
-        (&[], false)
-    }
-
-    fn get_description(&self) -> &'static str {
-        "generates a signed 64 bit integer"
-    }
-
-    fn create(
-        &self,
-        _args: Vec<GeneratorArg>,
-        _ctx: &ProgramContext,
-    ) -> Result<GeneratorArg, Error> {
-        Ok(GeneratorArg::SignedInt(SignedIntGenerator::create(
-            ConstantGenerator::create(DEFAULT_MIN),
-            ConstantGenerator::create(DEFAULT_MAX),
-        )))
-    }
+fn create_sint2(mut args: Vec<GeneratorArg>, _: &ProgramContext) -> Result<GeneratorArg, Error> {
+    let max = args.pop().unwrap().as_signed_int().unwrap();
+    let min = args.pop().unwrap().as_signed_int().unwrap();
+    Ok(GeneratorArg::SignedInt(SignedIntGenerator::create(
+        min, max,
+    )))
 }
 
-pub struct SignedIntMin;
-impl FunctionCreator for SignedIntMin {
-    fn get_name(&self) -> &'static str {
-        "min_int"
-    }
-
-    fn get_arg_types(&self) -> (&'static [GeneratorType], bool) {
-        (&[], false)
-    }
-
-    fn get_description(&self) -> &'static str {
-        "the minimum value of a signed 64 bit integer"
-    }
-
-    fn create(
-        &self,
-        _args: Vec<GeneratorArg>,
-        _ctx: &ProgramContext,
-    ) -> Result<GeneratorArg, Error> {
-        Ok(GeneratorArg::SignedInt(ConstantGenerator::create(
-            DEFAULT_MIN,
-        )))
+pub fn signed_int_min() -> BuiltinFunctionCreator {
+    BuiltinFunctionCreator {
+        name: "min_int".into(),
+        description: "the minimum value of a signed 64 bit integer",
+        args: FunctionArgs::empty(),
+        create_fn: &create_min_sint,
     }
 }
-pub struct SignedIntMax;
-impl FunctionCreator for SignedIntMax {
-    fn get_name(&self) -> &'static str {
-        "max_int"
-    }
+fn create_min_sint(_: Vec<GeneratorArg>, _: &ProgramContext) -> Result<GeneratorArg, Error> {
+    Ok(GeneratorArg::SignedInt(ConstantGenerator::create(
+        DEFAULT_MIN,
+    )))
+}
 
-    fn get_arg_types(&self) -> (&'static [GeneratorType], bool) {
-        (&[], false)
+pub fn signed_int_max() -> BuiltinFunctionCreator {
+    BuiltinFunctionCreator {
+        name: "max_int".into(),
+        description: "the maximum value of a signed 64 bit integer",
+        args: FunctionArgs::empty(),
+        create_fn: &create_max_sint,
     }
-
-    fn get_description(&self) -> &'static str {
-        "the maximum value of a signed 64 bit integer"
-    }
-
-    fn create(
-        &self,
-        _args: Vec<GeneratorArg>,
-        _ctx: &ProgramContext,
-    ) -> Result<GeneratorArg, Error> {
-        Ok(GeneratorArg::SignedInt(ConstantGenerator::create(
-            DEFAULT_MAX,
-        )))
-    }
+}
+fn create_max_sint(_: Vec<GeneratorArg>, _: &ProgramContext) -> Result<GeneratorArg, Error> {
+    Ok(GeneratorArg::SignedInt(ConstantGenerator::create(
+        DEFAULT_MAX,
+    )))
 }

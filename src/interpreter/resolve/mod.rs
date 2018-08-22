@@ -5,16 +5,14 @@ use failure::Error;
 use generator::constant::{ConstantGenerator, ConstantStringGenerator};
 use generator::{GeneratorArg, GeneratorType};
 use interpreter::ast::{Expr, FunctionCall, FunctionMapper, MacroDef, Program};
-use interpreter::functions::{get_builtin_functions, FunctionCreator};
+use interpreter::functions::{BuiltinFunctionIterator, FunctionNameFilter, FunctionCreator};
+use IString;
 
 use self::error::ResolveError;
 use self::interpreted_function_creator::{MacroArgFunctionCreator, MacroDefFunctionCreator};
 
-fn find_named_functions<'a>(name: &'a str) -> impl Iterator<Item = &FunctionCreator> {
-    get_builtin_functions()
-        .iter()
-        .filter(move |f| name == f.get_name())
-        .map(|f| *f)
+fn find_named_functions(name: IString) -> BuiltinFunctionIterator {
+    BuiltinFunctionIterator::new(FunctionNameFilter::ExactMatch(name))
 }
 
 #[derive(Clone)]
@@ -25,7 +23,11 @@ struct FunctionMatch<'a> {
 
 impl<'a> FunctionMatch<'a> {
     fn distance(&self) -> usize {
-        let addl = if self.call.get_arg_types().1 { 1 } else { 0 };
+        let addl = if self.call.get_arg_types().last_arg_variadic {
+            1
+        } else {
+            0
+        };
         self.num_coerced + addl
     }
 
@@ -33,12 +35,12 @@ impl<'a> FunctionMatch<'a> {
         candidate: &'a FunctionCreator,
         actual_args: &[GeneratorType],
     ) -> Option<FunctionMatch<'a>> {
-        let (expected_args, last_is_variadic) = candidate.get_arg_types();
-        let expected_arg_count = expected_args.len();
+        let expected_args = candidate.get_arg_types();
+        let expected_arg_count = expected_args.arg_types.len();
         let actual_arg_count = actual_args.len();
 
         if expected_arg_count > actual_arg_count
-            || (actual_arg_count > expected_arg_count && !last_is_variadic)
+            || (actual_arg_count > expected_arg_count && !expected_args.last_arg_variadic)
         {
             return None;
         }
@@ -55,7 +57,7 @@ impl<'a> FunctionMatch<'a> {
         // check to see if the argument types match. This is all guarded by the above checks
         let mut num_coerced = 0;
         for i in 0..expected_arg_count {
-            let expected_type = expected_args[i];
+            let expected_type = expected_args.arg_types[i].arg_type;
             if actual_args[i] != expected_type {
                 if expected_type == GeneratorType::String {
                     num_coerced += 1;
@@ -71,11 +73,11 @@ impl<'a> FunctionMatch<'a> {
         // Effectively, all variadic arguments count as one for the purposes of counting coercions
         let mut variadic_conversion_done = false;
         for i in expected_arg_count..actual_arg_count {
-            if !last_is_variadic {
+            if !expected_args.last_arg_variadic {
                 // there's extra arguments provided, but this isn't a variadic function
                 return None;
             }
-            let expected_arg_type = expected_args[expected_arg_count - 1];
+            let expected_arg_type = expected_args.arg_types[expected_arg_count - 1].arg_type;
             if actual_args[i] != expected_arg_type {
                 if expected_arg_type == GeneratorType::String {
                     if !variadic_conversion_done {
@@ -138,7 +140,8 @@ impl ProgramContext {
             .rev()
             .flat_map(|v| v.iter())
             .map(|i| i as &FunctionCreator)
-            .chain(get_builtin_functions().iter().map(|f| *f))
+            .chain(BuiltinFunctionIterator::new(FunctionNameFilter::All)
+            .map(|f| f)) // this goofy shit is here so that the compiler will resolve the two separate lifetimes into the one that's returned
     }
 
     fn resolve_expr_private(
@@ -171,16 +174,16 @@ impl ProgramContext {
 
     fn get_matching_functions<'a>(
         &'a self,
-        function_name: &'a str,
+        function_name: IString,
     ) -> impl Iterator<Item = &'a FunctionCreator> {
-        let f_name = function_name;
+        let builtin_functions = find_named_functions(function_name.clone());
         self.macros
             .iter()
             .rev()
             .flat_map(|v| v.iter())
             .filter(move |i| i.get_name() == function_name)
             .map(|i| i as &FunctionCreator)
-            .chain(find_named_functions(f_name))
+            .chain(builtin_functions.map(|f| f))
     }
 
     fn resolve_function_call(
@@ -205,7 +208,7 @@ impl ProgramContext {
 
         let resolved_generator = {
             self.call_function_creator(
-                function_name.as_str(),
+                function_name.clone(),
                 resolved_argument_types,
                 resolved_args,
                 bound_args,
@@ -243,7 +246,7 @@ impl ProgramContext {
     // or if the function creator itself returns an error
     fn call_function_creator(
         &self,
-        function_name: &str,
+        function_name: IString,
         resolved_argument_types: Vec<GeneratorType>,
         resolved_args: Vec<GeneratorArg>,
         bound_args: &mut Vec<Vec<MacroArgFunctionCreator>>,
@@ -256,12 +259,12 @@ impl ProgramContext {
 
         // first find all the functions where just the name matches
         let mut matching_name_functions = matching_arg_functions
-            .chain(self.get_matching_functions(function_name))
+            .chain(self.get_matching_functions(function_name.clone()))
             .peekable();
         // ensure that there's at least one function somewhere with a name that matches, and return early if not
         if matching_name_functions.peek().is_none() {
             return Err(ResolveError::no_such_function_name(
-                function_name.to_owned(),
+                function_name.clone(),
                 resolved_argument_types,
             ).into());
         }
@@ -280,7 +283,7 @@ impl ProgramContext {
             } else if match_distance == current_best_distance {
                 // 2 or more functions have the same distance, which means we have to error out
                 return Err(ResolveError::ambiguous_function_call(
-                    function_name.to_owned(),
+                    function_name.clone(),
                     resolved_argument_types.clone(),
                 ).into());
             }
@@ -290,7 +293,7 @@ impl ProgramContext {
             .ok_or_else(|| {
                 // there were no functions that matched both the name and the argument types
                 ResolveError::mismatched_function_args(
-                    function_name.to_owned(),
+                    function_name.clone(),
                     resolved_argument_types.clone(),
                 ).into()
             })

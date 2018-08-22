@@ -1,6 +1,9 @@
 use super::{DataGenRng, Generator, GeneratorArg, GeneratorType};
 use failure::Error;
-use interpreter::{get_bottom_argument_type, FunctionCreator, ProgramContext};
+use interpreter::{
+    get_bottom_argument_type, ArgsBuilder, BuiltinFunctionCreator,
+    ProgramContext,
+};
 use rand::Rng;
 use std::fmt::{self, Display};
 use std::marker::PhantomData;
@@ -44,7 +47,8 @@ impl<T: Display + ?Sized + 'static> Generator for OneOfGenerator<T> {
     }
 
     fn new_from_prototype(&self) -> Box<Generator<Output = T>> {
-        let wrapped = self.wrapped
+        let wrapped = self
+            .wrapped
             .iter()
             .map(|g| g.new_from_prototype())
             .collect::<Vec<Box<Generator<Output = T>>>>();
@@ -68,77 +72,45 @@ impl<T: Display + ?Sized + 'static> Display for OneOfGenerator<T> {
     }
 }
 
-// TODO: Add OneOf_ functions for other primitive types
-pub struct OneOfUint;
-impl FunctionCreator for OneOfUint {
-    fn get_name(&self) -> &'static str {
-        "one_of"
-    }
-
-    fn get_arg_types(&self) -> (&'static [GeneratorType], bool) {
-        (&[GeneratorType::UnsignedInt], true)
-    }
-
-    fn get_description(&self) -> &'static str {
-        "randomly selects one of the given arguments using a uniform distribution"
-    }
-
-    fn create(
-        &self,
-        args: Vec<GeneratorArg>,
-        _ctx: &ProgramContext,
-    ) -> Result<GeneratorArg, Error> {
-        create_one_of(args)
+pub fn one_of_fun() -> BuiltinFunctionCreator {
+    BuiltinFunctionCreator {
+        name: "one_of".into(),
+        description: "randomly selects one of the given arguments using a uniform distribution",
+        args: ArgsBuilder::new()
+            .arg("values", GeneratorType::String)
+            .variadic(),
+        create_fn: &create_one_of,
     }
 }
 
-pub struct OneOfString;
-impl FunctionCreator for OneOfString {
-    fn get_name(&self) -> &'static str {
-        "one_of"
-    }
-
-    fn get_arg_types(&self) -> (&'static [GeneratorType], bool) {
-        (&[GeneratorType::String], true)
-    }
-
-    fn get_description(&self) -> &'static str {
-        "randomly selects one of the given arguments using a uniform distribution. Allows for mixed input types"
-    }
-
-    fn create(
-        &self,
-        args: Vec<GeneratorArg>,
-        _ctx: &ProgramContext,
-    ) -> Result<GeneratorArg, Error> {
-        create_one_of(args)
-    }
-}
-
-fn create_one_of(args: Vec<GeneratorArg>) -> Result<GeneratorArg, Error> {
+fn create_one_of(args: Vec<GeneratorArg>, _: &ProgramContext) -> Result<GeneratorArg, Error> {
     let target_type = get_bottom_argument_type(args.as_slice());
 
     match target_type {
         GeneratorType::UnsignedInt => {
-            let generators = args.into_iter()
+            let generators = args
+                .into_iter()
                 .map(|a| a.as_uint().unwrap())
                 .collect::<Vec<_>>();
             Ok(GeneratorArg::UnsignedInt(OneOfGenerator::new(generators)))
         }
         GeneratorType::SignedInt => {
-            let gens = args.into_iter()
+            let gens = args
+                .into_iter()
                 .map(|a| a.as_signed_int().unwrap())
                 .collect::<Vec<_>>();
             Ok(GeneratorArg::SignedInt(OneOfGenerator::new(gens)))
         }
         GeneratorType::Decimal => {
-            let gens = args.into_iter()
+            let gens = args
+                .into_iter()
                 .map(|a| a.as_decimal().unwrap())
                 .collect::<Vec<_>>();
             Ok(GeneratorArg::Decimal(OneOfGenerator::new(gens)))
         }
         GeneratorType::Boolean => {
-            let gens = args.into_iter()
+            let gens = args
+                .into_iter()
                 .map(|a| a.as_bool().unwrap())
                 .collect::<Vec<_>>();
             Ok(GeneratorArg::Bool(OneOfGenerator::new(gens)))
@@ -148,7 +120,8 @@ fn create_one_of(args: Vec<GeneratorArg>) -> Result<GeneratorArg, Error> {
             Ok(GeneratorArg::String(OneOfGenerator::new(generators)))
         }
         GeneratorType::Char => {
-            let gens = args.into_iter()
+            let gens = args
+                .into_iter()
                 .map(|a| a.as_char().unwrap())
                 .collect::<Vec<_>>();
             Ok(GeneratorArg::Char(OneOfGenerator::new(gens)))

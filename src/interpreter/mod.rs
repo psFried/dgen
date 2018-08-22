@@ -1,4 +1,4 @@
-mod ast;
+pub mod ast;
 pub mod functions;
 mod grammar;
 #[cfg(test)]
@@ -10,7 +10,7 @@ use self::parser::{parse_library, parse_program};
 use failure::Error;
 use generator::{GeneratorArg, GeneratorType};
 
-pub use self::functions::FunctionCreator;
+pub use self::functions::{ArgsBuilder, FunctionArgs, FunctionCreator, BuiltinFunctionCreator, EMPTY_ARGS};
 pub use self::resolve::ProgramContext;
 
 pub struct Interpreter {

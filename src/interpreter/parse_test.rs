@@ -2,6 +2,7 @@ use generator::GeneratorType;
 use interpreter::ast::{Expr, FunctionCall, FunctionMapper, MacroArgument, MacroDef, Program};
 use interpreter::grammar::ExprParser;
 use interpreter::parser::parse_program;
+use ::IString;
 
 #[test]
 fn parses_boolean_literal_false_token() {
@@ -84,9 +85,9 @@ fn parses_newline_escaped_char_literal() {
 fn parses_function_call_with_literal_arguments() {
     let result = ExprParser::new().parse(r#"fun_name("foo", 55, 12.5)"#);
     let expected = FunctionCall {
-        function_name: "fun_name".to_owned(),
+        function_name: "fun_name".into(),
         args: vec![
-            Expr::StringLiteral("foo".to_owned()),
+            Expr::StringLiteral("foo".into()),
             Expr::IntLiteral(55),
             Expr::DecimalLiteral(12.5),
         ],
@@ -99,7 +100,7 @@ fn parses_function_call_with_literal_arguments() {
 fn parses_function_call_without_parens_or_arguments() {
     let result = ExprParser::new().parse("fun_name");
     let expected = FunctionCall {
-        function_name: "fun_name".to_owned(),
+        function_name: "fun_name".into(),
         args: Vec::new(),
         mapper: None,
     };
@@ -187,7 +188,7 @@ fn parses_program_with_macro_definitions() {
                     })],
                     mapper: None,
                 }),
-                doc_comments: vec!["comment 1".to_owned()],
+                doc_comments: "comment 1".to_owned(),
             },
             MacroDef {
                 name: s("foo"),
@@ -201,7 +202,7 @@ fn parses_program_with_macro_definitions() {
                     })],
                     mapper: None,
                 }),
-                doc_comments: vec!["comment 2".to_owned(), "comment 3".to_owned()],
+                doc_comments: "comment 2\ncomment 3".to_owned(),
             },
         ],
         expr: Expr::Function(FunctionCall {
@@ -215,8 +216,8 @@ fn parses_program_with_macro_definitions() {
     assert_eq!(expected, actual);
 }
 
-fn s(val: &str) -> String {
-    val.to_owned()
+fn s(val: &str) -> IString {
+    val.into()
 }
 
 fn string_literal_test(to_parse: &str, expected: &str) {
@@ -231,7 +232,7 @@ fn char_literal_test(to_parse: &str, expected: char) {
 
 fn fun(name: &str, args: Vec<Expr>) -> Expr {
     Expr::Function(FunctionCall {
-        function_name: name.to_owned(),
+        function_name: name.into(),
         args,
         mapper: None,
     })
@@ -239,17 +240,17 @@ fn fun(name: &str, args: Vec<Expr>) -> Expr {
 
 fn mfun(name: &str, args: Vec<Expr>, mapper_arg_name: &str, mapper_body: Expr) -> Expr {
     Expr::Function(FunctionCall {
-        function_name: name.to_owned(),
+        function_name: name.into(),
         args,
         mapper: Some(Box::new(FunctionMapper {
-            arg_name: mapper_arg_name.to_owned(),
+            arg_name: mapper_arg_name.into(),
             mapper_body,
         })),
     })
 }
 
 fn string(s: &str) -> Expr {
-    Expr::StringLiteral(s.to_owned())
+    Expr::StringLiteral(s.into())
 }
 
 fn ch(s: char) -> Expr {

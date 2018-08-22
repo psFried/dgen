@@ -1,6 +1,7 @@
 use failure::Error;
-use generator::{DataGenRng, DynCharGenerator, Generator, GeneratorArg, GeneratorType};
-use interpreter::{FunctionCreator, ProgramContext};
+use generator::{DataGenRng, DynCharGenerator, Generator, GeneratorArg};
+use interpreter::functions::BuiltinFunctionCreator;
+use interpreter::{FunctionArgs, ProgramContext};
 use rand::distributions::Alphanumeric;
 use rand::prelude::Rng;
 use std::fmt::{self, Display};
@@ -104,71 +105,41 @@ impl<T: CharGenType + 'static> Generator for CharGenerator<T> {
     }
 }
 
-pub struct UnicodeScalarFun;
-impl FunctionCreator for UnicodeScalarFun {
-    fn get_name(&self) -> &'static str {
-        UnicodeScalar::get_name()
-    }
-
-    fn get_arg_types(&self) -> (&'static [GeneratorType], bool) {
-        (&[], false)
-    }
-
-    fn get_description(&self) -> &'static str {
-        "Generates a random Unicode scalar value. This can be any unicode code point, except for high/low surrogate code points"
-    }
-
-    fn create(
-        &self,
-        _args: Vec<GeneratorArg>,
-        _ctx: &ProgramContext,
-    ) -> Result<GeneratorArg, Error> {
-        Ok(GeneratorArg::Char(UnicodeScalar::create()))
+pub fn unicode_scalar_builtin() -> BuiltinFunctionCreator {
+    let description = "Generates a random Unicode scalar value. This can be any unicode code point, except for high/low surrogate code points";
+    BuiltinFunctionCreator {
+        name: "unicode_scalar".into(),
+        description,
+        args: FunctionArgs::empty(),
+        create_fn: &create_unicode_scalar,
     }
 }
-
-pub struct UnicodeBmpFun;
-impl FunctionCreator for UnicodeBmpFun {
-    fn get_name(&self) -> &'static str {
-        UnicodeBmp::get_name()
-    }
-
-    fn get_arg_types(&self) -> (&'static [GeneratorType], bool) {
-        (&[], false)
-    }
-
-    fn get_description(&self) -> &'static str {
-        "Generates a random character from the unicode basic multilingual plane"
-    }
-
-    fn create(
-        &self,
-        _args: Vec<GeneratorArg>,
-        _ctx: &ProgramContext,
-    ) -> Result<GeneratorArg, Error> {
-        Ok(GeneratorArg::Char(UnicodeBmp::create()))
-    }
+fn create_unicode_scalar(_: Vec<GeneratorArg>, _: &ProgramContext) -> Result<GeneratorArg, Error> {
+    Ok(GeneratorArg::Char(UnicodeScalar::create()))
 }
 
-pub struct AlphaNumericChar;
-impl FunctionCreator for AlphaNumericChar {
-    fn get_name(&self) -> &'static str {
-        "alphanumeric"
+pub fn unicode_bmp_builtin() -> BuiltinFunctionCreator {
+    let description = "Generates a random character from the unicode basic multilingual plane";
+    BuiltinFunctionCreator {
+        name: "unicode_bmp".into(),
+        description,
+        args: FunctionArgs::empty(),
+        create_fn: &create_unicode_bmp
     }
+}
+fn create_unicode_bmp(_: Vec<GeneratorArg>, _: &ProgramContext) -> Result<GeneratorArg, Error> {
+    Ok(GeneratorArg::Char(UnicodeBmp::create()))
+}
 
-    fn get_arg_types(&self) -> (&'static [GeneratorType], bool) {
-        (&[], false)
+pub fn alphanumeric_builtin() -> BuiltinFunctionCreator {
+    let description = "Generates a random character from the unicode basic multilingual plane";
+    BuiltinFunctionCreator {
+        name: "alphanumeric".into(),
+        description,
+        args: FunctionArgs::empty(),
+        create_fn: &create_alphanumeric
     }
-
-    fn get_description(&self) -> &'static str {
-        "Generates a random alpha-numeric character from the ranges a-z,A-Z,0-9"
-    }
-
-    fn create(
-        &self,
-        _args: Vec<GeneratorArg>,
-        _ctx: &ProgramContext,
-    ) -> Result<GeneratorArg, Error> {
-        Ok(GeneratorArg::Char(AsciiAlphanumeric::create()))
-    }
+}
+fn create_alphanumeric(_: Vec<GeneratorArg>, _: &ProgramContext) -> Result<GeneratorArg, Error> {
+    Ok(GeneratorArg::Char(AsciiAlphanumeric::create()))
 }
