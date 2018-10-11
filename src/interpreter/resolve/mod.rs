@@ -169,6 +169,7 @@ impl ProgramContext {
                 float.clone(),
             ))),
             Expr::Function(call) => self.resolve_function_call(call, bound_arguments),
+            _ => unimplemented!()
         }
     }
 

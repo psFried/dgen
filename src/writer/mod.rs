@@ -1,5 +1,6 @@
 use std::fmt::Display;
 use std::io::{self, Write};
+use v2::OutputType;
 
 pub struct TrackingWriter<'a> {
     delegate: &'a mut Write,
@@ -53,6 +54,10 @@ impl<'a> DataGenOutput<'a> {
         self.writer
             .write_fmt(format_args!("{}", value))
             .map(|()| self.writer.get_num_bytes_written() - start)
+    }
+
+    pub fn write<O: OutputType>(&mut self, value: &O) -> Result<u64, ::failure::Error> {
+        value.write_output(self)
     }
 
     pub fn flush(&mut self) -> io::Result<()> {

@@ -1,0 +1,16 @@
+unstable_features = true
+
+indent_style = "Visual"
+control_brace_style = "AlwaysSameLine"
+imports_layout = "HorizontalVertical"
+merge_imports = true
+# ensures that multi-line expressions are surrounded by curly braces
+force_multiline_blocks = true
+newline_style = "Unix"
+tab_spaces = 4
+use_field_init_shorthand = true
+use_try_shorthand = true
+wrap_comments = true
+blank_lines_lower_bound = 1
+where_single_line = true
+#use_small_heuristics = "Off"

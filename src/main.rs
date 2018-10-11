@@ -8,7 +8,9 @@ extern crate lalrpop_util;
 extern crate rand;
 extern crate regex;
 extern crate string_cache;
+extern crate itertools;
 
+mod v2;
 mod cli_opts;
 #[cfg(test)]
 mod fun_test;

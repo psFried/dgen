@@ -17,6 +17,7 @@ pub struct FunctionMapper {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
+    ArgumentUsage(IString),
     Function(FunctionCall),
     StringLiteral(IString),
     IntLiteral(u64),
@@ -87,7 +88,7 @@ pub fn process_string_escapes(input: &str) -> Result<IString, &'static str> {
 }
 
 fn process_unicode_escape(char_iter: &mut Chars) -> Result<char, &'static str> {
-    const ERR_MSG: &'static str = "invalid unicode escape sequence";
+    const ERR_MSG: &str = "invalid unicode escape sequence";
     let l_curly = char_iter.next().ok_or(ERR_MSG)?;
     if l_curly != '{' {
         return Err(ERR_MSG);

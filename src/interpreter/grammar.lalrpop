@@ -59,26 +59,16 @@ pub Expr: ast::Expr = {
     <c:Comment*> <i:IntLiteral> => ast::Expr::IntLiteral(i),
     <c:Comment*> <i:SignedIntLiteral> => ast::Expr::SignedIntLiteral(i),
     <c:Comment*> <d:DecimalLiteral> => ast::Expr::DecimalLiteral(d),
-    <c:Comment*> <f:FunctionCall> => ast::Expr::Function(f)
+    <c:Comment*> <f:FunctionCall> => ast::Expr::Function(f),
+    <c:Comment*> <n:FunctionName> => ast::Expr::ArgumentUsage(n)
 };
 
 FunctionCall: ast::FunctionCall = {
     <n:FunctionName>"(" <a:Comma<Expr>> ")" => ast::FunctionCall { function_name: n, args: a, mapper: None },
-    <n:FunctionName> => ast::FunctionCall { function_name: n, args: Vec::new(), mapper: None },
     <n:FunctionName>"(" <a:Comma<Expr>> ")" "{" <ma:FunctionName> "->" <m:Expr> "}" => {
         ast::FunctionCall {
             function_name: n, 
             args: a, 
-            mapper: Some(Box::new(ast::FunctionMapper {
-                arg_name: ma,
-                mapper_body: m,
-            }))
-        }
-    },
-    <n:FunctionName> "{" <ma:FunctionName> "->" <m:Expr> "}" => {
-        ast::FunctionCall {
-            function_name: n, 
-            args: Vec::new(), 
             mapper: Some(Box::new(ast::FunctionMapper {
                 arg_name: ma,
                 mapper_body: m,
