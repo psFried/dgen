@@ -1,21 +1,15 @@
 mod chars;
+mod strings;
+mod concat;
 
 use failure::Error;
-use v2::{AnyFunction, GenType, FunctionPrototype};
-use v2::interpreter::Module;
+use v2::{AnyFunction, FunctionPrototype};
 
 pub const BUILTIN_FNS: &'static [&'static FunctionPrototype] = &[
     self::chars::CHAR_GEN_BUILTIN,
+    self::strings::STRING_GEN_BUILTIN,
+    self::concat::CONCAT_BUILTIN,
 ];
-
-fn wrong_argument_type(function_name: &str, expected: GenType, actual: AnyFunction) -> Error {
-    format_err!(
-        "Invalid argument for function '{}', expected type: {}, actual type: {}",
-        function_name,
-        expected,
-        actual.get_type()
-    )
-}
 
 trait ArgumentResult {
     fn required_arg(&mut self, arg_name: &'static str) -> Result<AnyFunction, Error>;

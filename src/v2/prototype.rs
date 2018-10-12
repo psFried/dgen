@@ -281,3 +281,9 @@ pub struct BoundArgument {
     pub arg_name: IString,
     pub value: AnyFunction,
 }
+
+impl BoundArgument {
+    pub fn new(arg_name: IString, value: AnyFunction) -> BoundArgument {
+        BoundArgument { arg_name, value }
+    }
+}

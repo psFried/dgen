@@ -1,7 +1,7 @@
 mod errors;
 
 use failure::Error;
-use interpreter::ast::{Expr, FunctionCall, MacroDef, Program};
+use interpreter::ast::{Expr, FunctionCall, FunctionMapper, MacroDef, Program};
 use interpreter::parser;
 use v2::builtins::BUILTIN_FNS;
 use v2::{
@@ -83,7 +83,14 @@ impl Compiler {
         let name = call.function_name.clone();
         let function = self.find_function(name, resolved_args.as_slice())?;
 
-        function.apply(&mut resolved_args, self)
+        let resolved = function.apply(&mut resolved_args, self)?;
+
+        if let Some(mapper) = call.mapper.as_ref() {
+            let bound = BoundArgument::new(mapper.arg_name.clone(), resolved);
+            self.eval_private(&mapper.mapper_body, &[bound])
+        } else {
+            Ok(resolved)
+        }
     }
 
     fn find_function<'a, 'b>(

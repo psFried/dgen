@@ -1,4 +1,4 @@
-use super::{wrong_argument_type, ArgumentResult};
+use super::ArgumentResult;
 use failure::Error;
 use rand::distributions::Alphanumeric;
 use rand::prelude::Rng;
