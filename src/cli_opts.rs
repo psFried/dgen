@@ -66,5 +66,9 @@ pub enum SubCommand {
         /// exactly the same results. This is NOT guaranteed to be true for different versions of pgen, though.
         #[structopt(short = "s", long = "seed")]
         seed: Option<String>,
+
+        // Enables the v2 interpreter, which is very incomplete
+        #[structopt(short = "e", long = "v2")]
+        use_v2_interpreter: bool,
     },
 }

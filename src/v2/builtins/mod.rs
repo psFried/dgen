@@ -1,7 +1,12 @@
 mod chars;
 
 use failure::Error;
-use v2::{AnyFunction, GenType};
+use v2::{AnyFunction, GenType, FunctionPrototype};
+use v2::interpreter::Module;
+
+pub const BUILTIN_FNS: &'static [&'static FunctionPrototype] = &[
+    self::chars::CHAR_GEN_BUILTIN,
+];
 
 fn wrong_argument_type(function_name: &str, expected: GenType, actual: AnyFunction) -> Error {
     format_err!(

@@ -8,6 +8,10 @@ pub struct ProgramContext {
 }
 
 impl ProgramContext {
+
+    pub fn new(rng: XorShiftRng) -> ProgramContext {
+        ProgramContext { rng }
+    }
     pub fn gen_value<T>(&mut self) -> T
     where
         Standard: Distribution<T>,

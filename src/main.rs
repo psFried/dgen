@@ -69,6 +69,7 @@ fn main() {
             libraries,
             no_std_lib,
             seed,
+            use_v2_interpreter,
         } => {
             let source = get_program_source(program, program_file, stdin).or_bail(verbosity);
             let rng = create_rng(seed);
@@ -79,6 +80,7 @@ fn main() {
                 libraries,
                 rng,
                 !no_std_lib,
+                use_v2_interpreter,
             ).or_bail(verbosity);
             run_program(program).or_bail(verbosity)
         }
@@ -127,8 +129,9 @@ fn create_program(
     libraries: Vec<PathBuf>,
     rng: DataGenRng,
     add_std_lib: bool,
+    use_v2_interpreter: bool,
 ) -> Result<Program, Error> {
-    let mut program = Program::new(verbosity, iterations, program_source, rng);
+    let mut program = Program::new(verbosity, iterations, program_source, rng, use_v2_interpreter);
 
     if add_std_lib {
         program.add_library(self::libraries::STANDARD_LIB)?;

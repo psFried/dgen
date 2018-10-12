@@ -3,7 +3,7 @@ pub mod functions;
 mod grammar;
 #[cfg(test)]
 mod parse_test;
-mod parser;
+pub mod parser;
 mod resolve;
 
 use self::parser::{parse_library, parse_program};

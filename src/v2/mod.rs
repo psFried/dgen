@@ -1,4 +1,4 @@
-mod builtins;
+pub(crate) mod builtins;
 mod context;
 pub(crate) mod interpreter;
 mod prototype;
@@ -63,6 +63,18 @@ impl AnyFunction {
             AnyFunction::Decimal(_) => GenType::Decimal,
             AnyFunction::Boolean(_) => GenType::Boolean,
             AnyFunction::Bin(_) => GenType::Bin,
+        }
+    }
+
+    pub fn write_value(&self, context: &mut ProgramContext, output: &mut DataGenOutput) -> Result<u64, Error> {
+        match *self {
+            AnyFunction::String(ref fun) => fun.write_value(context, output),
+            AnyFunction::Char(ref fun) => fun.write_value(context, output),
+            AnyFunction::Uint(ref fun) => fun.write_value(context, output),
+            AnyFunction::Int(ref fun) => fun.write_value(context, output),
+            AnyFunction::Decimal(ref fun) => fun.write_value(context, output),
+            AnyFunction::Boolean(ref fun) => fun.write_value(context, output),
+            AnyFunction::Bin(ref fun) => fun.write_value(context, output),
         }
     }
 }

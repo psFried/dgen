@@ -1,7 +1,9 @@
 mod errors;
 
 use failure::Error;
-use interpreter::ast::{Expr, FunctionCall, MacroDef};
+use interpreter::ast::{Expr, FunctionCall, MacroDef, Program};
+use interpreter::parser;
+use v2::builtins::BUILTIN_FNS;
 use v2::{
     AnyFunction, BoundArgument, BuiltinFunctionPrototype, ConstBoolean, ConstChar, ConstDecimal,
     ConstInt, ConstString, ConstUint, CreateFunctionResult, FunctionPrototype,
@@ -23,8 +25,13 @@ impl Module {
         Module { name, functions }
     }
 
-    fn function_iterator(&self, function_name: IString) -> impl Iterator<Item=&FunctionPrototype> {
-        self.functions.iter().filter(move |fun| fun.name() == &*function_name)
+    fn function_iterator(
+        &self,
+        function_name: IString,
+    ) -> impl Iterator<Item = &FunctionPrototype> {
+        self.functions
+            .iter()
+            .filter(move |fun| fun.name() == &*function_name)
     }
 }
 
@@ -33,6 +40,11 @@ pub struct Compiler {
 }
 
 impl Compiler {
+    fn new() -> Compiler {
+        Compiler {
+            modules: Vec::new(),
+        }
+    }
     fn add_module(&mut self, module: Module) {
         self.modules.push(module);
     }
@@ -85,7 +97,8 @@ impl Compiler {
                 .modules
                 .iter()
                 .rev()
-                .flat_map(|module| module.function_iterator(name_clone.clone()));
+                .flat_map(|module| module.function_iterator(name_clone.clone()))
+                .chain(BUILTIN_FNS.iter().map(|f| *f));
 
             let mut current_best: Option<&'a FunctionPrototype> = None;
 
@@ -98,16 +111,16 @@ impl Compiler {
                     } else {
                         let option1 = current_best.unwrap();
 
-                        return Err(errors::ambiguous_varargs_functions(name, arguments, option1, candidate));
+                        return Err(errors::ambiguous_varargs_functions(
+                            name, arguments, option1, candidate,
+                        ));
                     }
                 }
             }
             current_best
         };
 
-        best_match.ok_or_else(|| {
-            errors::no_such_method(name, arguments)
-        })
+        best_match.ok_or_else(|| errors::no_such_method(name, arguments))
     }
 
     fn eval_arg_usage(&self, name: IString, bound_args: &[BoundArgument]) -> CreateFunctionResult {
@@ -126,13 +139,26 @@ pub struct Interpreter {
 }
 
 impl Interpreter {
-
-    pub fn add_module<S: Into<IString>>(&mut self, module_name: S, functions: Vec<MacroDef>) {
+    pub fn new() -> Interpreter {
+        Interpreter {
+            internal: Compiler::new(),
+        }
+    }
+    pub fn add_module<S: Into<IString>>(
+        &mut self,
+        module_name: S,
+        text: &str,
+    ) -> Result<(), Error> {
+        let parsed = parser::parse_library(text)?;
         self.internal
-            .add_module(Module::new(module_name.into(), functions));
+            .add_module(Module::new(module_name.into(), parsed));
+        Ok(())
     }
 
-    pub fn eval(&mut self, expr: &Expr) -> CreateFunctionResult {
-        self.internal.eval(expr)
+    pub fn eval(&mut self, program: &str) -> CreateFunctionResult {
+        let Program { assignments, expr } = parser::parse_program(program)?;
+        let main_module = Module::new("main".into(), assignments);
+        self.internal.add_module(main_module);
+        self.internal.eval(&expr)
     }
 }

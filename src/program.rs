@@ -1,6 +1,5 @@
 use failure::Error;
 use generator::DataGenRng;
-use interpreter::Interpreter;
 use writer::DataGenOutput;
 
 use std::borrow::Cow;
@@ -20,6 +19,20 @@ pub enum Source {
 }
 
 impl Source {
+    pub fn get_name(&self) -> String {
+        match *self {
+            Source::File(ref pb) => pb
+                .file_name()
+                .map(|name| {
+                    name.to_str()
+                        .map(::std::borrow::ToOwned::to_owned)
+                        .unwrap_or_else(|| "unknown file".to_owned())
+                }).unwrap_or_else(|| "unknown file".to_owned()),
+            Source::String(_) => "string input".to_owned(),
+            Source::Builtin(ref name) => (*name).to_owned(),
+            Source::Stdin => "stdin".to_owned(),
+        }
+    }
     pub fn file<P: Into<PathBuf>>(path: P) -> Source {
         Source::File(path.into())
     }
@@ -75,11 +88,16 @@ impl From<PathBuf> for Source {
     }
 }
 
+enum InterpreterType {
+    V1(::interpreter::Interpreter),
+    V2(::v2::interpreter::Interpreter),
+}
+
 pub struct Program {
     iterations: u64,
     source: Source,
     rng: DataGenRng,
-    interpreter: Interpreter,
+    interpreter: InterpreterType,
 }
 
 impl Program {
@@ -88,12 +106,18 @@ impl Program {
         iterations: u64,
         source: T,
         rng: DataGenRng,
+        use_v2_interpreter: bool,
     ) -> Program {
+        let interpreter = if use_v2_interpreter {
+            InterpreterType::V2(::v2::interpreter::Interpreter::new())
+        } else {
+            InterpreterType::V1(::interpreter::Interpreter::new(verbosity))
+        };
         Program {
             iterations,
             source: source.into(),
             rng,
-            interpreter: Interpreter::new(verbosity),
+            interpreter,
         }
     }
 
@@ -102,22 +126,40 @@ impl Program {
             iterations,
             source,
             mut rng,
-            mut interpreter,
+            interpreter,
             ..
         } = self;
 
         let src_string = source.read_to_str()?;
-        let mut generator = interpreter.eval_program(src_string.as_ref())?;
+        let mut generator = match interpreter {
+            InterpreterType::V1(mut int) => {
+                let mut gen = int.eval_program(src_string.as_ref())?;
 
-        for _ in 0..iterations {
-            generator.write_value(&mut rng, output)?;
-        }
+                for _ in 0..iterations {
+                    gen.write_value(&mut rng, output)?;
+                }
+            }
+            InterpreterType::V2(mut int) => {
+                let gen = int.eval(src_string.as_ref())?;
+
+                let mut context = ::v2::ProgramContext::new(rng);
+                for _ in 0..iterations {
+                    gen.write_value(&mut context, output)?;
+                }
+            }
+        };
+
         output.flush().map_err(Into::into)
     }
 
     pub fn add_library<T: Into<Source>>(&mut self, lib_source: T) -> Result<(), Error> {
         let source = lib_source.into();
+        let name = source.get_name();
         let as_str = source.read_to_str()?;
-        self.interpreter.eval_library(as_str.as_ref())
+
+        match self.interpreter {
+            InterpreterType::V1(ref mut int) => int.eval_library(as_str.as_ref()),
+            InterpreterType::V2(ref mut int) => int.add_module(name, as_str.as_ref()),
+        }
     }
 }

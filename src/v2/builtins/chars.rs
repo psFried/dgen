@@ -6,7 +6,7 @@ use std::fmt::{self, Display};
 use std::marker::PhantomData;
 use std::rc::Rc;
 use v2::{
-    AnyFunction, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput, DynUintFun,
+    AnyFunction, BuiltinFunctionPrototype, FunctionPrototype, CreateFunctionResult, DataGenOutput, DynUintFun,
     ProgramContext, RunnableFunction, GenType
 };
 
@@ -54,10 +54,10 @@ fn create_char_gen(args: &mut Vec<AnyFunction>) -> CreateFunctionResult {
     })))
 }
 
-pub const CHAR_GEN_BUILTIN: &'static BuiltinFunctionPrototype = &BuiltinFunctionPrototype {
+pub const CHAR_GEN_BUILTIN: &'static FunctionPrototype = &FunctionPrototype::Builtin(&BuiltinFunctionPrototype {
     function_name: "char",
     description: "selects a single random character from within the provided range of unicode codepoints",
     arguments: &[(MIN_ARG, GenType::Uint), (MAX_ARG, GenType::Uint)],
     variadic: false,
     create_fn: &create_char_gen,
-};
+});
