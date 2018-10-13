@@ -1,9 +1,8 @@
-use super::ArgumentResult;
 use failure::Error;
 use std::rc::Rc;
 use v2::{
-    AnyFunction, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput, DynCharFun,
-    DynStringFun, DynUintFun, FunctionPrototype, GenType, ProgramContext, RunnableFunction,
+    AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput,
+    DynStringFun, FunctionPrototype, GenType, ProgramContext, RunnableFunction,
 };
 use IString;
 
@@ -41,12 +40,8 @@ impl RunnableFunction<IString> for Concat<DynStringFun> {
 
 const CONCAT_ARG_NAME: &str = "string_value";
 
-fn create_concat(args: &mut Vec<AnyFunction>) -> CreateFunctionResult {
-    let mut funs = Vec::with_capacity(args.len());
-    for arg in args.drain(..) {
-        let as_str = arg.require_string()?;
-        funs.push(as_str);
-    }
+fn create_concat(args: Arguments) -> CreateFunctionResult {
+    let funs = args.get_required_varargs(CONCAT_ARG_NAME, 0, AnyFunction::require_string)?;
     Ok(AnyFunction::String(Rc::new(Concat { funs })))
 }
 

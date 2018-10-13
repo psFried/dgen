@@ -1,7 +1,7 @@
 use interpreter::ast::{Expr, MacroArgument, MacroDef};
 use std::fmt::{self, Debug, Display};
 use v2::interpreter::Compiler;
-use v2::{AnyFunction, GenType};
+use v2::{AnyFunction, GenType, Arguments};
 use IString;
 
 use failure::Error;
@@ -70,7 +70,7 @@ impl InterpretedFunctionPrototype {
             body,
         }
     }
-    fn bind_arguments(&self, args: &mut Vec<AnyFunction>) -> Vec<BoundArgument> {
+    fn bind_arguments(&self, mut args: Vec<AnyFunction>) -> Vec<BoundArgument> {
         args.drain(..).enumerate().map(|(i, value)| {
             // the bounds check should have been taken care previously of by the type checking
             // We'll have to get a little move fancy here if we ever allow variadic functions in the grammar, though
@@ -79,13 +79,13 @@ impl InterpretedFunctionPrototype {
         }).collect()
     }
 
-    fn apply(&self, args: &mut Vec<AnyFunction>, compiler: &Compiler) -> CreateFunctionResult {
+    fn apply(&self, args: Vec<AnyFunction>, compiler: &Compiler) -> CreateFunctionResult {
         let bound_args = self.bind_arguments(args);
         compiler.eval_private(&self.body, bound_args.as_slice())
     }
 }
 
-pub type BuiltinFunctionCreator = &'static Fn(&mut Vec<AnyFunction>) -> CreateFunctionResult;
+pub type BuiltinFunctionCreator = &'static Fn(Arguments) -> CreateFunctionResult;
 
 pub struct BuiltinFunctionPrototype {
     pub function_name: &'static str,
@@ -123,8 +123,8 @@ impl Debug for BuiltinFunctionPrototype {
 }
 
 impl BuiltinFunctionPrototype {
-    fn apply(&self, args: &mut Vec<AnyFunction>) -> CreateFunctionResult {
-        (self.create_fn)(args)
+    fn apply(&self, args: Vec<AnyFunction>) -> CreateFunctionResult {
+        (self.create_fn)(Arguments::new(args))
     }
 }
 
@@ -222,7 +222,7 @@ impl FunctionPrototype {
 
     pub fn apply(
         &self,
-        arguments: &mut Vec<AnyFunction>,
+        arguments: Vec<AnyFunction>,
         compiler: &Compiler,
     ) -> CreateFunctionResult {
         match *self {

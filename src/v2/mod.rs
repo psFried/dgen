@@ -1,3 +1,4 @@
+mod arguments;
 pub(crate) mod builtins;
 mod context;
 pub(crate) mod interpreter;
@@ -18,6 +19,7 @@ pub use self::types::{
     ConstBin, ConstBoolean, ConstChar, ConstDecimal, ConstInt, ConstString, ConstUint, GenType,
     OutputType,
 };
+pub use self::arguments::Arguments;
 pub use writer::DataGenOutput;
 
 use failure::Error;

@@ -1,9 +1,8 @@
-use super::ArgumentResult;
 use failure::Error;
 use std::rc::Rc;
 use v2::{
     AnyFunction, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput, DynCharFun,
-    DynUintFun, FunctionPrototype, GenType, ProgramContext, RunnableFunction,
+    DynUintFun, FunctionPrototype, GenType, ProgramContext, RunnableFunction, Arguments,
 };
 use IString;
 
@@ -39,8 +38,8 @@ impl RunnableFunction<IString> for StringGenerator {
     }
 }
 
-fn create_string_gen(args: &mut Vec<AnyFunction>) -> CreateFunctionResult {
-    let (length, chars) = args.required_args2(
+fn create_string_gen(args: Arguments) -> CreateFunctionResult {
+    let (length, chars) = args.require_2_args(
         "length",
         AnyFunction::require_uint,
         "characters",

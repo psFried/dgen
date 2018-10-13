@@ -83,7 +83,7 @@ impl Compiler {
         let name = call.function_name.clone();
         let function = self.find_function(name, resolved_args.as_slice())?;
 
-        let resolved = function.apply(&mut resolved_args, self)?;
+        let resolved = function.apply(resolved_args, self)?;
 
         if let Some(mapper) = call.mapper.as_ref() {
             let bound = BoundArgument::new(mapper.arg_name.clone(), resolved);

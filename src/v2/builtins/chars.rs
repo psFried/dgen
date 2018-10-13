@@ -1,4 +1,3 @@
-use super::ArgumentResult;
 use failure::Error;
 use rand::distributions::Alphanumeric;
 use rand::prelude::Rng;
@@ -7,7 +6,7 @@ use std::marker::PhantomData;
 use std::rc::Rc;
 use v2::{
     AnyFunction, BuiltinFunctionPrototype, FunctionPrototype, CreateFunctionResult, DataGenOutput, DynUintFun,
-    ProgramContext, RunnableFunction, GenType
+    ProgramContext, RunnableFunction, GenType, Arguments
 };
 
 #[derive(Debug)]
@@ -41,9 +40,9 @@ impl RunnableFunction<char> for CharGenerator {
 const MIN_ARG: &str = "min_inclusive";
 const MAX_ARG: &str = "max_inclusive";
 
-fn create_char_gen(args: &mut Vec<AnyFunction>) -> CreateFunctionResult {
+fn create_char_gen(args: Arguments) -> CreateFunctionResult {
     #[cfg_attr(rustfmt, rustfmt_skip)]
-    let (min, max) = args.required_args2(
+    let (min, max) = args.require_2_args(
         MIN_ARG, AnyFunction::require_uint,
         MAX_ARG, AnyFunction::require_uint,
     )?;
