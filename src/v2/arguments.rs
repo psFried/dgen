@@ -1,7 +1,5 @@
-
-use v2::{GenType, AnyFunction};
 use failure::Error;
-use std::ops::Range;
+use v2::{AnyFunction, GenType};
 
 pub struct Arguments(Vec<AnyFunction>);
 
@@ -10,26 +8,52 @@ impl Arguments {
         Arguments(args)
     }
 
+    #[allow(dead_code)]
     pub fn get_arg_type(&self, index: usize) -> Option<GenType> {
         self.0.get(index).map(|a| a.get_type())
     }
 
-    pub fn required_arg<F, R>(&self, name: &str, position: usize, convert_fun: F) -> Result<R, Error> 
-    where F: Fn(AnyFunction) -> Result<R, Error> {
+    pub fn required_arg<F, R>(
+        &self,
+        name: &str,
+        position: usize,
+        convert_fun: F,
+    ) -> Result<R, Error>
+    where
+        F: Fn(AnyFunction) -> Result<R, Error>,
+    {
         if let Some(any) = self.0.get(position) {
             convert_fun(any.clone())
         } else {
-            bail!("No argument provided for arg '{}' at position {}", name, position)
+            bail!(
+                "No argument provided for arg '{}' at position {}",
+                name,
+                position
+            )
         }
     }
 
     fn get_optional_varargs<F, R>(&self, start_position: usize, convert: F) -> Result<Vec<R>, Error>
-    where  F: Fn(AnyFunction) -> Result<R, Error> {
-        self.0.iter().skip(start_position).cloned().map(convert).collect()
+    where
+        F: Fn(AnyFunction) -> Result<R, Error>,
+    {
+        self.0
+            .iter()
+            .skip(start_position)
+            .cloned()
+            .map(convert)
+            .collect()
     }
 
-    pub fn get_required_varargs<F, R>(&self, name: &str, start_position: usize, convert: F) -> Result<Vec<R>, Error>
-    where  F: Fn(AnyFunction) -> Result<R, Error> {
+    pub fn get_required_varargs<F, R>(
+        &self,
+        name: &str,
+        start_position: usize,
+        convert: F,
+    ) -> Result<Vec<R>, Error>
+    where
+        F: Fn(AnyFunction) -> Result<R, Error>,
+    {
         self.get_optional_varargs(start_position, convert).and_then(|args| {
             if args.is_empty() {
                 Err(format_err!("Missing required varargs '{}' starting at position {}. At least one argument is required ", name, start_position))
@@ -55,6 +79,7 @@ impl Arguments {
         Ok((r1, r2))
     }
 
+    #[allow(dead_code)]
     pub fn require_3_args<F1, R1, F2, R2, F3, R3>(
         self,
         arg1_name: &'static str,
@@ -75,4 +100,3 @@ impl Arguments {
         Ok((r1, r2, r3))
     }
 }
-

@@ -1,6 +1,5 @@
 use failure::Error;
 use std::fmt::{self, Display};
-use std::ops::{Deref, DerefMut};
 use std::rc::Rc;
 use v2::{AnyFunction, DataGenOutput, ProgramContext, RunnableFunction};
 use IString;
@@ -99,7 +98,7 @@ macro_rules! create_const_type {
 
             fn write_value(
                 &self,
-                context: &mut ProgramContext,
+                _context: &mut ProgramContext,
                 output: &mut DataGenOutput,
             ) -> Result<u64, Error> {
                 output.write(&self.0).map_err(Into::into)
@@ -107,6 +106,7 @@ macro_rules! create_const_type {
         }
 
         impl $const_struct_name {
+            #[allow(dead_code)]
             pub fn new<T: Into<$output_type>>(val: T) -> AnyFunction {
                 let fun = Rc::new($const_struct_name(val.into()));
                 $any_type(fun)

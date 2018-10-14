@@ -5,23 +5,10 @@ use v2::{
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput, DynFun,
     FunctionPrototype, GenType, ProgramContext, RunnableFunction,
 };
-use IString;
 
 #[derive(Debug)]
 struct SelectFun<T> {
     wrapped: Vec<DynFun<T>>,
-}
-
-impl<T> SelectFun<T> {
-    fn new<F>(args: Arguments, convert: F) -> Result<SelectFun<T>, Error>
-    where
-        F: Fn(AnyFunction) -> Result<DynFun<T>, Error>,
-    {
-        let typed_args = args.get_required_varargs(SELECT_ARG, 0, convert)?;
-        Ok(SelectFun {
-            wrapped: typed_args,
-        })
-    }
 }
 
 fn select_fun<'a, 'b, T>(ctx: &'a mut ProgramContext, values: &'b [DynFun<T>]) -> &'b DynFun<T> {

@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use std::fmt::{self, Debug};
 use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, Ordering};
-use v2::{AnyFunction, BoundArgument, DataGenOutput, DynFun, ProgramContext, RunnableFunction};
+use v2::{AnyFunction, DataGenOutput, DynFun, ProgramContext, RunnableFunction};
 
 pub struct Resetter {
     value: AtomicBool,

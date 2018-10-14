@@ -6,15 +6,14 @@ use interpreter::ast::{Expr, FunctionCall, FunctionMapper, MacroDef, Program};
 use interpreter::parser;
 use v2::builtins::BUILTIN_FNS;
 use v2::{
-    AnyFunction, BoundArgument, BuiltinFunctionPrototype, ConstBoolean, ConstChar, ConstDecimal,
+    AnyFunction, BoundArgument, ConstBoolean, ConstChar, ConstDecimal,
     ConstInt, ConstString, ConstUint, CreateFunctionResult, FunctionPrototype,
-    InterpretedFunctionPrototype,
 };
 use self::map::{create_memoized_fun, finish_mapped};
 use IString;
 
 pub struct Module {
-    name: IString,
+    _name: IString,
     functions: Vec<FunctionPrototype>,
 }
 
@@ -24,7 +23,7 @@ impl Module {
             .into_iter()
             .map(FunctionPrototype::new)
             .collect();
-        Module { name, functions }
+        Module { _name: name, functions }
     }
 
     fn function_iterator(&self) -> impl Iterator<Item = &FunctionPrototype> {

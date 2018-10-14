@@ -153,8 +153,8 @@ impl From<&'static BuiltinFunctionPrototype> for FunctionPrototype {
 }
 
 fn do_arguments_match<A: Iterator<Item = GenType>, B: Iterator<Item = GenType>>(
-    mut expected_types: A,
-    mut actual_types: B,
+    expected_types: A,
+    actual_types: B,
     variadic: bool,
 ) -> bool {
     use itertools::{EitherOrBoth, Itertools};
@@ -260,10 +260,9 @@ impl Display for FunctionPrototype {
         f.write_str(self.name())?;
         f.write_str("(")?;
         let variadic = self.is_variadic();
-        let mut first = true;
         let arg_count = self.get_arg_count();
         for i in 0..arg_count {
-            if !first {
+            if i > 0 {
                 f.write_str(", ")?;
             }
             let (arg_name, arg_type) = self.get_arg(i);

@@ -12,6 +12,8 @@ impl ProgramContext {
     pub fn new(rng: XorShiftRng) -> ProgramContext {
         ProgramContext { rng }
     }
+
+    #[allow(dead_code)]
     pub fn gen_value<T>(&mut self) -> T
     where
         Standard: Distribution<T>,

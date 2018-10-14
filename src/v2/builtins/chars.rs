@@ -1,8 +1,4 @@
 use failure::Error;
-use rand::distributions::Alphanumeric;
-use rand::prelude::Rng;
-use std::fmt::{self, Display};
-use std::marker::PhantomData;
 use std::rc::Rc;
 use v2::{
     AnyFunction, BuiltinFunctionPrototype, FunctionPrototype, CreateFunctionResult, DataGenOutput, DynUintFun,

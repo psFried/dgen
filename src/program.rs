@@ -131,7 +131,7 @@ impl Program {
         } = self;
 
         let src_string = source.read_to_str()?;
-        let mut generator = match interpreter {
+        match interpreter {
             InterpreterType::V1(mut int) => {
                 let mut gen = int.eval_program(src_string.as_ref())?;
 
