@@ -1,7 +1,7 @@
 use interpreter::ast::{Expr, MacroArgument, MacroDef};
 use std::fmt::{self, Debug, Display};
 use v2::interpreter::Compiler;
-use v2::{AnyFunction, GenType, Arguments};
+use v2::{AnyFunction, Arguments, GenType};
 use IString;
 
 use failure::Error;
@@ -166,18 +166,23 @@ fn do_arguments_match<A: Iterator<Item = GenType>, B: Iterator<Item = GenType>>(
     if expected_types.peek().is_none() {
         return actual_types.peek().is_none();
     }
-    // expected_types is now guaranteed to be non-empty
-    // we'll initialize last_arg_type to the first expected type here because it is considered
-    // valid to pass zero arguments to a varargs function
-    let mut last_arg_type = expected_types.peek().cloned().unwrap();
+
+    /*
+     * expected_types is now guaranteed to be non-empty
+     * we must require at least one argument for a varargs parameter. This is because we don't really
+     * resolve to a "best" match. We instead assume that a function call will match at most two prototypes.
+     * When a call does match two prototypes, we will select whichever one is NOT variadic, and error
+     * if they are both variadic.
+     */
+    let mut last_arg_type = None;
     for either_or_both in expected_types.zip_longest(actual_types) {
         let arg_matches = match either_or_both {
             EitherOrBoth::Both(e, a) => {
-                last_arg_type = e;
+                last_arg_type = Some(e);
                 e == a
             }
             EitherOrBoth::Left(_) => false,
-            EitherOrBoth::Right(arg_type) => variadic && arg_type == last_arg_type,
+            EitherOrBoth::Right(arg_type) => variadic && Some(arg_type) == last_arg_type,
         };
         if !arg_matches {
             return false;
@@ -220,11 +225,7 @@ impl FunctionPrototype {
         }
     }
 
-    pub fn apply(
-        &self,
-        arguments: Vec<AnyFunction>,
-        compiler: &Compiler,
-    ) -> CreateFunctionResult {
+    pub fn apply(&self, arguments: Vec<AnyFunction>, compiler: &Compiler) -> CreateFunctionResult {
         match *self {
             FunctionPrototype::Builtin(ref builtin) => builtin.apply(arguments),
             FunctionPrototype::Interpreted(ref int) => int.apply(arguments, compiler),

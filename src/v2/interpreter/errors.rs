@@ -2,7 +2,7 @@ use ::IString;
 use failure::Error;
 use v2::AnyFunction;
 use v2::FunctionPrototype;
-
+use itertools::Itertools;
 
 pub fn no_such_argument(name: IString) -> Error {
     format_err!("No such argument: '{}'", name)
@@ -14,5 +14,8 @@ pub fn no_such_method(name: IString, arguments: &[AnyFunction]) -> Error {
 }
 
 pub fn ambiguous_varargs_functions(name: IString, arguments: &[AnyFunction], option1: &FunctionPrototype, option2: &FunctionPrototype) -> Error {
-    unimplemented!()
+    let actual_arg_types = arguments.iter().map(AnyFunction::get_type).join(", ");
+
+    format_err!("Ambiguous function call: '{}({})' could refer to two or more function prototypes:\nA: {}\nB: {}\n",
+        name, actual_arg_types, option1, option2)
 }

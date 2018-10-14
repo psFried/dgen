@@ -212,3 +212,8 @@ impl OutputType for Vec<u8> {
         writer.write_bytes(self.as_slice()).map_err(Into::into)
     }
 }
+impl<'a> OutputType for &'a [u8] {
+    fn write_output(&self, writer: &mut DataGenOutput) -> Result<u64, Error> {
+        writer.write_bytes(self).map_err(Into::into)
+    }
+}

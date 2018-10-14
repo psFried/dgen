@@ -1,5 +1,5 @@
 
-use v2::AnyFunction;
+use v2::{GenType, AnyFunction};
 use failure::Error;
 use std::ops::Range;
 
@@ -8,6 +8,10 @@ pub struct Arguments(Vec<AnyFunction>);
 impl Arguments {
     pub fn new(args: Vec<AnyFunction>) -> Arguments {
         Arguments(args)
+    }
+
+    pub fn get_arg_type(&self, index: usize) -> Option<GenType> {
+        self.0.get(index).map(|a| a.get_type())
     }
 
     pub fn required_arg<F, R>(&self, name: &str, position: usize, convert_fun: F) -> Result<R, Error> 

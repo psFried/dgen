@@ -1,4 +1,5 @@
 mod errors;
+mod map;
 
 use failure::Error;
 use interpreter::ast::{Expr, FunctionCall, FunctionMapper, MacroDef, Program};
@@ -9,6 +10,7 @@ use v2::{
     ConstInt, ConstString, ConstUint, CreateFunctionResult, FunctionPrototype,
     InterpretedFunctionPrototype,
 };
+use self::map::{create_memoized_fun, finish_mapped};
 use IString;
 
 pub struct Module {
@@ -25,13 +27,8 @@ impl Module {
         Module { name, functions }
     }
 
-    fn function_iterator(
-        &self,
-        function_name: IString,
-    ) -> impl Iterator<Item = &FunctionPrototype> {
-        self.functions
-            .iter()
-            .filter(move |fun| fun.name() == &*function_name)
+    fn function_iterator(&self) -> impl Iterator<Item = &FunctionPrototype> {
+        self.functions.iter()
     }
 }
 
@@ -86,11 +83,18 @@ impl Compiler {
         let resolved = function.apply(resolved_args, self)?;
 
         if let Some(mapper) = call.mapper.as_ref() {
-            let bound = BoundArgument::new(mapper.arg_name.clone(), resolved);
-            self.eval_private(&mapper.mapper_body, &[bound])
+            self.eval_mapped_function(resolved, mapper)
         } else {
             Ok(resolved)
         }
+    }
+
+    fn eval_mapped_function(&self, resolved_outer: AnyFunction, mapper: &FunctionMapper) -> CreateFunctionResult {
+        let (memoized, resetter) = create_memoized_fun(resolved_outer);
+        let bound_arg = BoundArgument::new(mapper.arg_name.clone(), memoized);
+        let mapped = self.eval_private(&mapper.mapper_body, &[bound_arg])?;
+        let resolved = finish_mapped(mapped, resetter);
+        Ok(resolved)
     }
 
     fn find_function<'a, 'b>(
@@ -104,8 +108,11 @@ impl Compiler {
                 .modules
                 .iter()
                 .rev()
-                .flat_map(|module| module.function_iterator(name_clone.clone()))
-                .chain(BUILTIN_FNS.iter().map(|f| *f));
+                .flat_map(|module| module.function_iterator())
+                .chain(BUILTIN_FNS.iter().map(|f| *f))
+                .filter(|proto| {
+                    proto.name() == &*name_clone
+                });
 
             let mut current_best: Option<&'a FunctionPrototype> = None;
 
