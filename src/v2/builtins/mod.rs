@@ -1,5 +1,6 @@
 mod chars;
 mod concat;
+mod repeat_delim;
 mod select;
 mod strings;
 
@@ -16,4 +17,5 @@ pub const BUILTIN_FNS: &'static [&'static FunctionPrototype] = &[
     self::select::SELECT_UINT_BUILTIN,
     self::select::SELECT_INT_BUILTIN,
     self::select::SELECT_BIN_BUILTIN,
+    self::repeat_delim::REPEAT_DELIM_BUILTIN,
 ];

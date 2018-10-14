@@ -99,6 +99,7 @@ impl<T: Clone> RunnableFunction<T> for MemoizedFunction<T> {
                 cell.bytes = Some(Vec::new());
             }
             let buffer = cell.bytes.as_mut().unwrap();
+            buffer.clear();
             let mut new_out = DataGenOutput::new(buffer);
             let _ = wrapped.write_value(ctx, &mut new_out)?;
             resetter.bytes_set();
