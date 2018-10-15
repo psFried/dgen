@@ -1,5 +1,6 @@
 mod chars;
 mod concat;
+mod from_file;
 mod numeric;
 mod repeat_delim;
 mod select;
@@ -22,4 +23,6 @@ pub const BUILTIN_FNS: &'static [&'static FunctionPrototype] = &[
     self::numeric::UINT_BUILTIN,
     self::numeric::INT_BUILTIN,
     self::numeric::DECIMAL_BUILTIN,
+    self::from_file::WORDS_BUILTIN,
+    self::from_file::SELECT_FROM_FILE_BUILTIN,
 ];
