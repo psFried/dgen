@@ -9,8 +9,8 @@ pub enum Source {
     File(PathBuf),
     /// source is held entirely in memory
     String(String),
-    /// used for the standard lib, which is included in the binary
-    Builtin(&'static str),
+    /// used for the standard libraries, which are included in the binary
+    Builtin(&'static str, &'static str),
     /// source will be read dynamically from stdin. It is an error to have more than one sourceType that uses stdin
     Stdin,
 }
@@ -26,7 +26,7 @@ impl Source {
                         .unwrap_or_else(|| "unknown file".to_owned())
                 }).unwrap_or_else(|| "unknown file".to_owned()),
             Source::String(_) => "string input".to_owned(),
-            Source::Builtin(ref name) => (*name).to_owned(),
+            Source::Builtin(ref name, _) => (*name).to_owned(),
             Source::Stdin => "stdin".to_owned(),
         }
     }
@@ -50,7 +50,7 @@ impl Source {
                 Ok(buffer.into())
             }
             Source::String(ref string) => Ok(string.as_str().into()),
-            Source::Builtin(ref builtin) => Ok((*builtin).into()),
+            Source::Builtin(_, ref builtin) => Ok((*builtin).into()),
             Source::Stdin => {
                 let mut sin = io::stdin();
                 let mut buffer = String::with_capacity(512);
@@ -64,11 +64,6 @@ impl Source {
 impl From<String> for Source {
     fn from(s: String) -> Source {
         Source::string(s)
-    }
-}
-impl From<&'static str> for Source {
-    fn from(s: &'static str) -> Source {
-        Source::Builtin(s)
     }
 }
 

@@ -1,5 +1,6 @@
 pub mod ast;
 mod errors;
+pub mod libraries;
 mod map;
 pub(crate) mod parser;
 mod source;
@@ -122,7 +123,8 @@ impl Compiler {
         &self,
         resolved_outer: AnyFunction,
         mapper: &FunctionMapper,
-        bound_args: &[BoundArgument]) -> CreateFunctionResult {
+        bound_args: &[BoundArgument],
+    ) -> CreateFunctionResult {
         let (memoized, resetter) = create_memoized_fun(resolved_outer);
         let bound_arg = BoundArgument::new(mapper.arg_name.clone(), memoized);
         let mut all_bound_args = Vec::with_capacity(bound_args.len() + 1);
@@ -195,14 +197,26 @@ impl Interpreter {
             internal: Compiler::new(),
         }
     }
-    pub fn add_module<S: Into<IString>>(
-        &mut self,
-        module_name: S,
-        text: &str,
-    ) -> Result<(), Error> {
-        let parsed = parser::parse_library(text)?;
-        self.internal
-            .add_module(Module::new(module_name.into(), parsed));
+
+    pub fn add_std_lib(&mut self) {
+        for lib in self::libraries::STDLIBS.iter() {
+            self.add_module(lib)
+                .expect("Failed to add std library. This is a bug!");
+        }
+    }
+
+    pub fn add_module(&mut self, source: &Source) -> Result<(), Error> {
+        use std::borrow::Borrow;
+
+        let module_name: IString = source.get_name().into();
+        let text = source.read_to_str()?;
+        let parsed = parser::parse_library(text.borrow()).map_err(|e| {
+            e.context(format!(
+                "Failed to parse source for module: '{}'",
+                module_name.clone()
+            ))
+        })?;
+        self.internal.add_module(Module::new(module_name, parsed));
         Ok(())
     }
 

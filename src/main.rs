@@ -11,7 +11,6 @@ extern crate string_cache;
 mod cli_opts;
 #[cfg(test)]
 mod fun_test;
-mod libraries;
 mod program;
 mod v2;
 mod writer;
@@ -140,11 +139,8 @@ fn list_functions(name: Option<String>, verbosity: u64) {
     use std::io::{stdout, Write};
     use v2::interpreter::Interpreter;
 
-    // TODO: add an Interpreter::add_std_lib() function
     let mut interpreter = Interpreter::new();
-    for lib in self::libraries::STDLIBS {
-        interpreter.add_module("std.pgen", lib).or_bail(verbosity);
-    }
+    interpreter.add_std_lib();
 
     let out = stdout();
     let mut lock = out.lock();

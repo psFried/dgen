@@ -3,7 +3,6 @@ use writer::DataGenOutput;
 
 use v2::interpreter::{Interpreter, Source};
 use v2::ProgramContext;
-use libraries::STDLIBS;
 
 pub struct Program {
     iterations: u64,
@@ -46,15 +45,11 @@ impl Program {
     }
 
     pub fn add_std_lib(&mut self) {
-        for lib in STDLIBS {
-            self.add_library(Source::Builtin(lib)).unwrap();
-        }
+        self.interpreter.add_std_lib();
     }
 
     pub fn add_library<T: Into<Source>>(&mut self, lib_source: T) -> Result<(), Error> {
         let source = lib_source.into();
-        let name = source.get_name();
-        let as_str = source.read_to_str()?;
-        self.interpreter.add_module(name, as_str.as_ref())
+        self.interpreter.add_module(&source)
     }
 }
