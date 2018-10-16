@@ -2,8 +2,6 @@
 extern crate structopt;
 #[macro_use]
 extern crate failure;
-#[macro_use]
-extern crate lazy_static;
 extern crate itertools;
 extern crate lalrpop_util;
 extern crate rand;
@@ -66,7 +64,6 @@ fn main() {
             libraries,
             no_std_lib,
             seed,
-            use_v2_interpreter,
         } => {
             let source = get_program_source(program, program_file, stdin).or_bail(verbosity);
             let rng = create_rng(seed);
@@ -84,8 +81,6 @@ fn main() {
 }
 
 fn create_rng(seed: Option<String>) -> ProgramContext {
-    use rand::{FromEntropy, SeedableRng};
-
     seed.map(|s| {
         let resolved_seed = string_to_byte_array(s);
         ProgramContext::from_seed(resolved_seed)
@@ -145,13 +140,13 @@ fn list_functions(name: Option<String>, verbosity: u64) {
     use std::io::{stdout, Write};
     use v2::interpreter::Interpreter;
 
-
+    // TODO: add an Interpreter::add_std_lib() function
     let mut interpreter = Interpreter::new();
     for lib in self::libraries::STDLIBS {
-        interpreter.add_module("std.pgen", lib);
+        interpreter.add_module("std.pgen", lib).or_bail(verbosity);
     }
 
-    let mut out = stdout();
+    let out = stdout();
     let mut lock = out.lock();
     for fun in interpreter.function_iterator() {
         let should_print_help = name

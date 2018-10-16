@@ -1,9 +1,15 @@
 
 # Always returns the maximum value of a signed 64 bit integer: 9223372036854775807
-def max_int() = +9223372036854775807;
+def MAX_INT() = +9223372036854775807;
 
 # Always returns the minimum value of a signed 64 bit integer: -9223372036854775808
-def min_int() = -9223372036854775808;
+def MIN_INT() = -9223372036854775808;
+
+# Returns an unsigned integer between 0 and max_uint
+def int() = int(MIN_INT(), MAX_INT());
 
 # Always returns the maximum value of an unsigned 64 bit integer: 18446744073709551615
-def max_uint() = 18446744073709551615;
+def MAX_UINT() = 18446744073709551615;
+
+# Returns an unsigned integer between 0 and max_uint
+def uint() = uint(0, MAX_UINT());

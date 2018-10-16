@@ -5,3 +5,14 @@ def alphanumeric_string(length: Uint) = string(length, ascii_alphanumeric_char()
 
 # Generates a string of random characters from the unicode basic multilingual plane
 def unicode_bmp_string(length: Uint) = string(length, unicode_bmp_char());
+
+# Surrounds the given string with the given characters
+def surround(inner: String, outer: String) = outer() { out ->
+    concat(out, inner, out)
+};
+
+# Surrounds the input with single quote characters (')
+def single_quote(to_quote: String) = surround(to_quote, "'");
+
+# Surrounds the input with double quote characters (")
+def double_quote(to_quote: String) = surround(to_quote, "\"");

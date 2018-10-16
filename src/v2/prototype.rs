@@ -277,6 +277,7 @@ impl Display for FunctionPrototype {
     }
 }
 
+#[derive(Clone)]
 pub struct BoundArgument {
     pub arg_name: IString,
     pub value: AnyFunction,

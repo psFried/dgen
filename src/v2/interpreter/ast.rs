@@ -1,6 +1,37 @@
-use v2::GenType;
+use std::fmt::{self, Display};
 use std::str::Chars;
 use ::IString;
+
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
+pub enum GenType {
+    Char,
+    String,
+    Uint,
+    Int,
+    Decimal,
+    Boolean,
+    Bin,
+}
+
+impl GenType {
+    pub fn display_name(&self) -> &'static str {
+        match *self {
+            GenType::Char => "Char",
+            GenType::String => "String",
+            GenType::Uint => "Uint",
+            GenType::Int => "Int",
+            GenType::Decimal => "Decimal",
+            GenType::Boolean => "Boolean",
+            GenType::Bin => "Bin",
+        }
+    }
+}
+
+impl Display for GenType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str(self.display_name())
+    }
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct FunctionCall {

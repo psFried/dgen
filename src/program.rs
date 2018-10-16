@@ -14,7 +14,7 @@ pub struct Program {
 
 impl Program {
     pub fn new<T: Into<Source>>(
-        verbosity: u64,
+        _verbosity: u64,
         iterations: u64,
         source: T,
         rng: ProgramContext,

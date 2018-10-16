@@ -1,11 +1,14 @@
 pub mod ast;
 mod errors;
 mod map;
-mod parser;
+pub(crate) mod parser;
 mod source;
 
+#[cfg(test)]
+mod parse_test;
+
 #[allow(unused)]
-mod grammar {
+pub(crate) mod grammar {
     include!(concat!(env!("OUT_DIR"), "/v2/interpreter/grammar.rs"));
 }
 
@@ -95,12 +98,21 @@ impl Compiler {
 
         // now that we have resolved all the arguments, look for a matching function prototype
         let name = call.function_name.clone();
-        let function = self.find_function(name, resolved_args.as_slice())?;
+        // first check the bound args for a matching function
+        let mut resolved = bound_args
+            .iter()
+            .find(|bound| &*bound.arg_name == &*name)
+            .map(|bound| bound.value.clone());
 
-        let resolved = function.apply(resolved_args, self)?;
+        if resolved.is_none() {
+            let function = self.find_function(name, resolved_args.as_slice())?;
+            let res = function.apply(resolved_args, self)?;
+            resolved = Some(res);
+        }
+        let resolved = resolved.unwrap();
 
         if let Some(mapper) = call.mapper.as_ref() {
-            self.eval_mapped_function(resolved, mapper)
+            self.eval_mapped_function(resolved, mapper, bound_args)
         } else {
             Ok(resolved)
         }
@@ -110,10 +122,16 @@ impl Compiler {
         &self,
         resolved_outer: AnyFunction,
         mapper: &FunctionMapper,
-    ) -> CreateFunctionResult {
+        bound_args: &[BoundArgument]) -> CreateFunctionResult {
         let (memoized, resetter) = create_memoized_fun(resolved_outer);
         let bound_arg = BoundArgument::new(mapper.arg_name.clone(), memoized);
-        let mapped = self.eval_private(&mapper.mapper_body, &[bound_arg])?;
+        let mut all_bound_args = Vec::with_capacity(bound_args.len() + 1);
+        all_bound_args.push(bound_arg);
+        for arg in bound_args.iter() {
+            all_bound_args.push(arg.clone());
+        }
+
+        let mapped = self.eval_private(&mapper.mapper_body, all_bound_args.as_slice())?;
         let resolved = finish_mapped(mapped, resetter);
         Ok(resolved)
     }

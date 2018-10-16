@@ -1,35 +1,34 @@
 use super::Program;
 use failure::Error;
-use rand::SeedableRng;
-use writer::DataGenOutput;
 use v2::ProgramContext;
+use writer::DataGenOutput;
 
 #[test]
 fn generate_ascii_strings() {
-    let expected_output = "aACrrnGjOTedJsRy";
+    let expected_output = "w6U9vomgJ4gxen0XO";
     let input = "alphanumeric_string(uint(0, 10))";
     test_program_success(4, input, expected_output);
 }
 
-#[test]
-fn generate_unicode_strings() {
-    let expected_output = "栈 \u{8cc}겙\u{fd4f}긧ﶩ鵝ᣧ蹈澨ꇦ笲";
-    let input = "bmp_string(uint(0, 10))";
-    test_program_success(4, input, expected_output);
-}
+// #[test]
+// fn generate_unicode_strings() {
+//     let expected_output = "栈 \u{8cc}겙\u{fd4f}긧ﶩ鵝ᣧ蹈澨ꇦ笲";
+//     let input = "bmp_string(uint(0, 10))";
+//     test_program_success(4, input, expected_output);
+// }
 
 #[test]
 fn signed_integer_functions() {
-    let input = r#"concat_delimited("", ", ", "", int(), int(-9, +7), min_int, max_int)"#;
-    let expected_output = "-4897931037155257082, -9, -9223372036854775808, 9223372036854775807";
+    let input = r#"int(-9, +7)"#;
+    let expected_output = "-9";
     test_program_success(1, input, expected_output);
 }
 
 #[test]
-fn declare_and_use_macros() {
-    let expected_output = "DPaADCI2CrrnGjOTboedJ";
+fn declare_and_use_functions() {
+    let expected_output = "aw6IU9vomgJ42f1aT0XOE";
     let input = r#"
-        def foo(len: Uint) = alphanumeric_string(len());
+        def foo(len: Uint) = alphanumeric_string(len);
         def bar() = foo(7);
 
         bar()
@@ -39,41 +38,30 @@ fn declare_and_use_macros() {
 
 #[test]
 fn stable_select_a_generator() {
-    let input = "stable_select(boolean(), uint())";
-    let expected_output = "truetruefalsefalsefalsefalsefalsetruefalsetrue";
+    let input = r#"stable_select(select("a", "b"), select("c", "d"))"#;
+    let expected_output = "aabbbbbbaa";
     test_program_success(10, input, expected_output);
 }
 
 #[test]
 fn use_custom_string_function() {
     let input = r#"
-        def consonants() = one_of('b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 
+        def consonants() = select('b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 
                 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z');
-        def vowels() = one_of('a', 'e', 'i', 'o', 'u');
+        def vowels() = select('a', 'e', 'i', 'o', 'u');
 
-        def chars() = either(vowels, consonants);
+        def chars() = select(vowels(), consonants());
 
-        string(10, chars)
+        string(10, chars())
     "#;
-    let expected_output = "ausjmhpije";
-    test_program_success(1, input, expected_output);
-}
-
-#[test]
-fn use_easy_csv_function() {
-    let input = "easy_csv(2, 3)";
-    let expected_output = r#""DCI2","rnGjOTboedJsRyC2F59PJ1KOiibFmf9eT8P"
-"6856658967277113641","true"
-"true","p5xK7LZAhglu"
-"true","16469683845218708375"
-"#;
+    let expected_output = "ausjmhaevg";
     test_program_success(1, input, expected_output);
 }
 
 #[test]
 fn use_std_boolean_function() {
     let expected_output = "truetruetrue";
-    let input = r#"boolean(1.0)"#;
+    let input = r#"boolean()"#;
     test_program_success(3, input, expected_output);
 }
 
@@ -81,16 +69,16 @@ fn use_std_boolean_function() {
 fn declare_and_use_function_with_mapper() {
     let input = r#"
         def repeat_words(times: Uint) = times() { num ->
-            concat(num, " : ", repeat(num, alphanumeric_string(5) { word ->
-                repeat(num, trailing_newline(word))
+            concat(to_string(num), " : ", repeat(num, alphanumeric_string(5) { word ->
+                repeat(num, concat(word, "\n"))
             }))
         };
 
         def count() = uint(2, 5);
 
-        concat(repeat_words(count), repeat_words(count))
+        concat(repeat_words(count()), repeat_words(count()))
     "#;
-    let expected = "2 : aADCI\naADCI\n2Crrn\n2Crrn\n3 : OTboe\nOTboe\nOTboe\ndJsRy\ndJsRy\ndJsRy\nC2F59\nC2F59\nC2F59\n";
+    let expected = "2 : w6IU9\nw6IU9\nvomgJ\nvomgJ\n4 : 2f1aT\n2f1aT\n2f1aT\n0XOET\n0XOET\n0XOET\n9Vk0R\n9Vk0R\n9Vk0R\n";
     test_program_success(1, input, expected);
 }
 
@@ -100,9 +88,9 @@ fn pass_mapped_function_as_function_argument() {
         def compare_words(word_fun: String) = 
             repeat(3, concat(word_fun, " != ", word_fun, "\n"));
 
-        compare_words(alphanumeric() { w -> repeat_delimited(3, w, ", ") } )
+        compare_words(alphanumeric_string(1) { w -> repeat_delimited(3, w, ", ") } )
     "#;
-    let expected = "D, D, D != P, P, P\na, a, a != A, A, A\nD, D, D != C, C, C\n";
+    let expected = "a, a, a != w, w, w\n6, 6, 6 != I, I, I\nU, U, U != 9, 9, 9\n";
     test_program_success(1, input, expected);
 }
 
@@ -114,9 +102,9 @@ fn mapping_a_mapped_function() {
                 concat(single_quote(word), " == ", single_quote(word), "\n")
             });
         
-        compare_words(alphanumeric() { w -> repeat_delimited(3, w, "_") } )
+        compare_words(alphanumeric_string(1) { w -> repeat_delimited(3, w, "_") } )
     "#;
-    let expected = "'D_D_D' == 'D_D_D'\n'P_P_P' == 'P_P_P'\n'a_a_a' == 'a_a_a'\n";
+    let expected = "\'a_a_a\' == \'a_a_a\'\n\'w_w_w\' == \'w_w_w\'\n\'6_6_6\' == \'6_6_6\'\n";
     test_program_success(1, input, expected);
 }
 
@@ -129,8 +117,7 @@ fn run_program(iterations: u64, program: &str) -> Result<Vec<u8>, Error> {
     {
         let mut output = DataGenOutput::new(&mut out);
         let mut prog = Program::new(2, iterations, program.to_owned(), rng);
-        prog.add_library(::libraries::STANDARD_LIB)
-            .expect("failed to eval std library");
+        prog.add_std_lib();
         prog.run(&mut output)?;
     }
 

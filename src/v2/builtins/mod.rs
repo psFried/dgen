@@ -2,6 +2,7 @@ mod chars;
 mod concat;
 mod from_file;
 mod numeric;
+mod to_string;
 mod repeat_delim;
 mod select;
 mod strings;
@@ -32,4 +33,9 @@ pub const BUILTIN_FNS: &'static [&'static FunctionPrototype] = &[
     self::numeric::DECIMAL_BUILTIN,
     self::from_file::WORDS_BUILTIN,
     self::from_file::SELECT_FROM_FILE_BUILTIN,
+    self::to_string::BOOLEAN_TO_STRING_BUILTIN,
+    self::to_string::CHAR_TO_STRING_BUILTIN,
+    self::to_string::DECIMAL_TO_STRING_BUILTIN,
+    self::to_string::INT_TO_STRING_BUILTIN,
+    self::to_string::UINT_TO_STRING_BUILTIN,
 ];

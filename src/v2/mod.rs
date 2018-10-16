@@ -11,13 +11,13 @@ use IString;
 
 pub use self::context::ProgramContext;
 pub use self::interpreter::Interpreter;
+pub use self::interpreter::ast::GenType;
 pub use self::prototype::{
     BoundArgument, BuiltinFunctionCreator, BuiltinFunctionPrototype, CreateFunctionResult,
     FunctionPrototype, InterpretedFunctionPrototype,
 };
 pub use self::types::{
-    ConstBin, ConstBoolean, ConstChar, ConstDecimal, ConstInt, ConstString, ConstUint, GenType,
-    OutputType,
+    ConstBin, ConstBoolean, ConstChar, ConstDecimal, ConstInt, ConstString, ConstUint, OutputType,
 };
 pub use self::arguments::Arguments;
 pub use writer::DataGenOutput;

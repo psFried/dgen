@@ -20,6 +20,7 @@ BooleanLiteral: bool = {
 }
 
 IntLiteral: u64 = {
+    <s:r"0x[0-9a-fA-F]+"> => u64::from_str_radix(&s[2..], 16).unwrap(),
     <s:r"[0-9]+"> => u64::from_str(s).unwrap()
 };
 

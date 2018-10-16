@@ -1,0 +1,6 @@
+
+# Repeats the given string function a number of times based on count
+def repeat(count: Uint, to_repeat: String) = repeat_delimited(count, "", to_repeat, "", "");
+
+# Repeats the given string function a number of times based on count, with the delimiter interpolated in between
+def repeat_delimited(count: Uint, to_repeat: String, delimiter: String) = repeat_delimited(count, "", to_repeat, delimiter, "");

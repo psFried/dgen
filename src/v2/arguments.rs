@@ -13,6 +13,12 @@ impl Arguments {
         self.0.get(index).map(|a| a.get_type())
     }
 
+    pub fn require_any(&self, arg_name: &str, index: usize) -> Result<AnyFunction, Error> {
+        self.0.get(index).cloned().ok_or_else(|| {
+            format_err!("Missing required argument '{}'", arg_name)
+        })
+    }
+
     pub fn required_arg<F, R>(
         &self,
         name: &str,
