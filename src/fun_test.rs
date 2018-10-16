@@ -3,19 +3,6 @@ use failure::Error;
 use v2::ProgramContext;
 use writer::DataGenOutput;
 
-#[test]
-fn generate_ascii_strings() {
-    let expected_output = "w6U9vomgJ4gxen0XO";
-    let input = "alphanumeric_string(uint(0, 10))";
-    test_program_success(4, input, expected_output);
-}
-
-// #[test]
-// fn generate_unicode_strings() {
-//     let expected_output = "栈 \u{8cc}겙\u{fd4f}긧ﶩ鵝ᣧ蹈澨ꇦ笲";
-//     let input = "bmp_string(uint(0, 10))";
-//     test_program_success(4, input, expected_output);
-// }
 
 #[test]
 fn signed_integer_functions() {
@@ -41,28 +28,6 @@ fn stable_select_a_generator() {
     let input = r#"stable_select(select("a", "b"), select("c", "d"))"#;
     let expected_output = "aabbbbbbaa";
     test_program_success(10, input, expected_output);
-}
-
-#[test]
-fn use_custom_string_function() {
-    let input = r#"
-        def consonants() = select('b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 
-                'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z');
-        def vowels() = select('a', 'e', 'i', 'o', 'u');
-
-        def chars() = select(vowels(), consonants());
-
-        string(10, chars())
-    "#;
-    let expected_output = "ausjmhaevg";
-    test_program_success(1, input, expected_output);
-}
-
-#[test]
-fn std_unicode_string_fun() {
-    let expected_output = "ༀʠㅰ⻆\u{1713}ⅻףּ𐌷﹗☔\u{243d}ᜇᜑᥤ慧\u{df1}ખ@䷪ǲ𐌚ℍṄﵗ㎕𐑩︲ᵕቢ\u{2429}☖㎱ඍ∯೦₮\u{20ed}⁺⁅␌ㇹ㈤ゼ⡀Ǜԇ𐎑𐎍\u{efd0}≈𥴘き﹛ᥚ數𐎁য়ﺂᚇ⫝⟏𝀀ਗ਼ΠᏲᥜჳស႔㠛𐎌პś﹀₾ㅉ⨏⇍☹\u{1885}擎⁽୮\u{fe09}ꀬˬꂩ෨﹊Ⓗភڊ깞ᜇ੯⻃\u{fe28}\u{a55}ԟ⼜";
-    let input = r#"unicode_string(100)"#;
-    test_program_success(1, input, expected_output);
 }
 
 #[test]
@@ -117,7 +82,7 @@ fn mapping_a_mapped_function() {
 
 const RAND_SEED: &[u8; 16] = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 
-fn run_program(iterations: u64, program: &str) -> Result<Vec<u8>, Error> {
+pub fn run_program(iterations: u64, program: &str) -> Result<Vec<u8>, Error> {
     let rng = ProgramContext::from_seed(*RAND_SEED);
 
     let mut out = Vec::new();
@@ -131,7 +96,7 @@ fn run_program(iterations: u64, program: &str) -> Result<Vec<u8>, Error> {
     Ok(out)
 }
 
-fn test_program_success(iterations: u64, input: &str, expected_output: &str) {
+pub fn test_program_success(iterations: u64, input: &str, expected_output: &str) {
     let results = run_program(iterations, input).expect("Failed to run program");
     let as_str = String::from_utf8(results).expect("program results were not valid utf8");
     if expected_output != as_str.as_str() {

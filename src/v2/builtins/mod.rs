@@ -12,6 +12,7 @@ use v2::FunctionPrototype;
 pub const BUILTIN_FNS: &'static [&'static FunctionPrototype] = &[
     self::chars::CHAR_GEN_BUILTIN,
     self::strings::STRING_GEN_BUILTIN,
+    self::strings::STRING_LENGTH_BUILTIN,
     self::concat::CONCAT_BUILTIN,
     self::select::SELECT_CHAR_BUILTIN,
     self::select::SELECT_STRING_BUILTIN,

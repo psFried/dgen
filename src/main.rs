@@ -10,7 +10,7 @@ extern crate string_cache;
 
 mod cli_opts;
 #[cfg(test)]
-mod fun_test;
+pub(crate) mod fun_test;
 mod program;
 mod v2;
 mod writer;
