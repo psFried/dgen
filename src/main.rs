@@ -4,27 +4,24 @@ extern crate structopt;
 extern crate failure;
 #[macro_use]
 extern crate lazy_static;
+extern crate itertools;
 extern crate lalrpop_util;
 extern crate rand;
 extern crate regex;
 extern crate string_cache;
-extern crate itertools;
 
-mod v2;
 mod cli_opts;
 #[cfg(test)]
 mod fun_test;
-mod generator;
-mod interpreter;
 mod libraries;
 mod program;
+mod v2;
 mod writer;
 
 use self::cli_opts::{CliOptions, SubCommand};
-use self::generator::DataGenRng;
-use self::interpreter::functions::{FunctionCreator, FunctionHelp};
-use self::interpreter::Interpreter;
-use self::program::{Program, Source};
+use self::program::Program;
+use self::v2::interpreter::Source;
+use self::v2::ProgramContext;
 use failure::Error;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -80,20 +77,19 @@ fn main() {
                 libraries,
                 rng,
                 !no_std_lib,
-                use_v2_interpreter,
             ).or_bail(verbosity);
             run_program(program).or_bail(verbosity)
         }
     }
 }
 
-fn create_rng(seed: Option<String>) -> DataGenRng {
+fn create_rng(seed: Option<String>) -> ProgramContext {
     use rand::{FromEntropy, SeedableRng};
 
     seed.map(|s| {
         let resolved_seed = string_to_byte_array(s);
-        DataGenRng::from_seed(resolved_seed)
-    }).unwrap_or_else(|| DataGenRng::from_entropy())
+        ProgramContext::from_seed(resolved_seed)
+    }).unwrap_or_else(|| ProgramContext::from_random_seed())
 }
 
 fn string_to_byte_array(string: String) -> [u8; 16] {
@@ -127,14 +123,13 @@ fn create_program(
     verbosity: u64,
     iterations: u64,
     libraries: Vec<PathBuf>,
-    rng: DataGenRng,
+    rng: ProgramContext,
     add_std_lib: bool,
-    use_v2_interpreter: bool,
 ) -> Result<Program, Error> {
-    let mut program = Program::new(verbosity, iterations, program_source, rng, use_v2_interpreter);
+    let mut program = Program::new(verbosity, iterations, program_source, rng);
 
     if add_std_lib {
-        program.add_library(self::libraries::STANDARD_LIB)?;
+        program.add_std_lib();
     }
     for lib in libraries {
         program.add_library(Source::file(lib))?;
@@ -147,27 +142,25 @@ fn print_backtraces(verbosity: u64) -> bool {
 }
 
 fn list_functions(name: Option<String>, verbosity: u64) {
-    use failure::ResultExt;
-    use interpreter::functions::FunctionNameFilter;
-    use regex::Regex;
-    let name_filter =
-        name.map(|n| {
-            let trimmed = n.trim();
-            let regex = Regex::new(trimmed)
-                .context(format!("Cannot parse filter '{}' as a regex", trimmed))
-                .map_err(|e| e.into())
-                .or_bail(verbosity);
-            FunctionNameFilter::Regex(regex)
-        }).unwrap_or(FunctionNameFilter::All);
+    use std::io::{stdout, Write};
+    use v2::interpreter::Interpreter;
 
-    let mut interpreter = Interpreter::new(0);
-    interpreter.eval_library(libraries::STANDARD_LIB).unwrap();
 
-    println!("Standard library functions:\n");
+    let mut interpreter = Interpreter::new();
+    for lib in self::libraries::STDLIBS {
+        interpreter.add_module("std.pgen", lib);
+    }
 
-    for fun in interpreter.function_iter() {
-        if name_filter.matches(fun.get_name()) {
-            print_function_help(fun);
+    let mut out = stdout();
+    let mut lock = out.lock();
+    for fun in interpreter.function_iterator() {
+        let should_print_help = name
+            .as_ref()
+            .map(|n| fun.name().contains(n))
+            .unwrap_or(true);
+
+        if should_print_help {
+            write!(&mut lock, "{}\n", fun).map_err(Into::into).or_bail(verbosity);
         }
     }
 }
@@ -179,9 +172,4 @@ fn run_program(program: Program) -> Result<(), Error> {
     let mut output = self::writer::DataGenOutput::new(&mut lock);
 
     program.run(&mut output)
-}
-
-fn print_function_help(fun: &FunctionCreator) {
-    let help = FunctionHelp(fun);
-    println!("{}", help);
 }

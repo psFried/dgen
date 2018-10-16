@@ -1,4 +1,4 @@
-use generator::GeneratorType;
+use v2::GenType;
 use std::str::Chars;
 use ::IString;
 
@@ -30,7 +30,7 @@ pub enum Expr {
 #[derive(Debug, Clone, PartialEq)]
 pub struct MacroArgument {
     pub name: IString,
-    pub arg_type: GeneratorType,
+    pub arg_type: GenType,
 }
 
 #[derive(Debug, Clone, PartialEq)]

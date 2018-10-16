@@ -1,0 +1,7 @@
+
+
+# Generates a string of random alphanumeric characters, using the given length generator
+def alphanumeric_string(length: Uint) = string(length, ascii_alphanumeric_char());
+
+# Generates a string of random characters from the unicode basic multilingual plane
+def unicode_bmp_string(length: Uint) = string(length, unicode_bmp_char());

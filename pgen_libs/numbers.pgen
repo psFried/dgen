@@ -1,0 +1,9 @@
+
+# Always returns the maximum value of a signed 64 bit integer: 9223372036854775807
+def max_int() = +9223372036854775807;
+
+# Always returns the minimum value of a signed 64 bit integer: -9223372036854775808
+def min_int() = -9223372036854775808;
+
+# Always returns the maximum value of an unsigned 64 bit integer: 18446744073709551615
+def max_uint() = 18446744073709551615;

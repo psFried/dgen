@@ -1,4 +1,4 @@
-use interpreter::ast::{Expr, MacroArgument, MacroDef};
+use v2::interpreter::ast::{Expr, MacroArgument, MacroDef};
 use std::fmt::{self, Debug, Display};
 use v2::interpreter::Compiler;
 use v2::{AnyFunction, Arguments, GenType};
@@ -268,7 +268,7 @@ impl Display for FunctionPrototype {
             let (arg_name, arg_type) = self.get_arg(i);
             write!(f, "{}: {}", arg_name, arg_type)?;
             if variadic && i == arg_count.saturating_sub(1) {
-                f.write_str(", ...")?;
+                f.write_str("...")?;
             }
         }
         f.write_str(") - ")?;

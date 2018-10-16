@@ -1,8 +1,8 @@
 use super::Program;
 use failure::Error;
-use generator::DataGenRng;
 use rand::SeedableRng;
 use writer::DataGenOutput;
+use v2::ProgramContext;
 
 #[test]
 fn generate_ascii_strings() {
@@ -123,12 +123,12 @@ fn mapping_a_mapped_function() {
 const RAND_SEED: &[u8; 16] = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 
 fn run_program(iterations: u64, program: &str) -> Result<Vec<u8>, Error> {
-    let rng = DataGenRng::from_seed(*RAND_SEED);
+    let rng = ProgramContext::from_seed(*RAND_SEED);
 
     let mut out = Vec::new();
     {
         let mut output = DataGenOutput::new(&mut out);
-        let mut prog = Program::new(2, iterations, program.to_owned(), rng, false);
+        let mut prog = Program::new(2, iterations, program.to_owned(), rng);
         prog.add_library(::libraries::STANDARD_LIB)
             .expect("failed to eval std library");
         prog.run(&mut output)?;

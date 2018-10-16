@@ -154,20 +154,6 @@ impl Display for GenType {
     }
 }
 
-impl From<::generator::GeneratorType> for GenType {
-    fn from(t: ::generator::GeneratorType) -> GenType {
-        use generator::GeneratorType;
-        match t {
-            GeneratorType::Boolean => GenType::Boolean,
-            GeneratorType::Char => GenType::Char,
-            GeneratorType::String => GenType::String,
-            GeneratorType::Decimal => GenType::Decimal,
-            GeneratorType::UnsignedInt => GenType::Uint,
-            GeneratorType::SignedInt => GenType::Int,
-        }
-    }
-}
-
 pub trait OutputType {
     fn write_output(&self, writer: &mut DataGenOutput) -> Result<u64, Error>;
 }

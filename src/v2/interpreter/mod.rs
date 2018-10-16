@@ -1,15 +1,23 @@
+pub mod ast;
 mod errors;
 mod map;
+mod parser;
+mod source;
 
+#[allow(unused)]
+mod grammar {
+    include!(concat!(env!("OUT_DIR"), "/v2/interpreter/grammar.rs"));
+}
+
+use self::ast::{Expr, FunctionCall, FunctionMapper, MacroDef, Program};
+use self::map::{create_memoized_fun, finish_mapped};
+pub use self::source::Source;
 use failure::Error;
-use interpreter::ast::{Expr, FunctionCall, FunctionMapper, MacroDef, Program};
-use interpreter::parser;
 use v2::builtins::BUILTIN_FNS;
 use v2::{
-    AnyFunction, BoundArgument, ConstBoolean, ConstChar, ConstDecimal,
-    ConstInt, ConstString, ConstUint, CreateFunctionResult, FunctionPrototype,
+    AnyFunction, BoundArgument, ConstBoolean, ConstChar, ConstDecimal, ConstInt, ConstString,
+    ConstUint, CreateFunctionResult, FunctionPrototype,
 };
-use self::map::{create_memoized_fun, finish_mapped};
 use IString;
 
 pub struct Module {
@@ -23,7 +31,10 @@ impl Module {
             .into_iter()
             .map(FunctionPrototype::new)
             .collect();
-        Module { _name: name, functions }
+        Module {
+            _name: name,
+            functions,
+        }
     }
 
     fn function_iterator(&self) -> impl Iterator<Item = &FunctionPrototype> {
@@ -62,6 +73,13 @@ impl Compiler {
         }
     }
 
+    pub fn function_iterator(&self) -> impl Iterator<Item = &FunctionPrototype> {
+        self.modules
+            .iter()
+            .flat_map(|module| module.function_iterator())
+            .chain(BUILTIN_FNS.iter().map(|f| *f))
+    }
+
     fn eval_function_call(
         &self,
         call: &FunctionCall,
@@ -88,7 +106,11 @@ impl Compiler {
         }
     }
 
-    fn eval_mapped_function(&self, resolved_outer: AnyFunction, mapper: &FunctionMapper) -> CreateFunctionResult {
+    fn eval_mapped_function(
+        &self,
+        resolved_outer: AnyFunction,
+        mapper: &FunctionMapper,
+    ) -> CreateFunctionResult {
         let (memoized, resetter) = create_memoized_fun(resolved_outer);
         let bound_arg = BoundArgument::new(mapper.arg_name.clone(), memoized);
         let mapped = self.eval_private(&mapper.mapper_body, &[bound_arg])?;
@@ -109,9 +131,7 @@ impl Compiler {
                 .rev()
                 .flat_map(|module| module.function_iterator())
                 .chain(BUILTIN_FNS.iter().map(|f| *f))
-                .filter(|proto| {
-                    proto.name() == &*name_clone
-                });
+                .filter(|proto| proto.name() == &*name_clone);
 
             let mut current_best: Option<&'a FunctionPrototype> = None;
 
@@ -173,5 +193,9 @@ impl Interpreter {
         let main_module = Module::new("main".into(), assignments);
         self.internal.add_module(main_module);
         self.internal.eval(&expr)
+    }
+
+    pub fn function_iterator(&self) -> impl Iterator<Item = &FunctionPrototype> {
+        self.internal.function_iterator()
     }
 }

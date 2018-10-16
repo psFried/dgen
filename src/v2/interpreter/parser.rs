@@ -1,6 +1,6 @@
 use failure::Error;
-use interpreter::ast::{MacroDef, Program};
-use interpreter::grammar::{LibraryParser, ProgramParser};
+use v2::interpreter::ast::{MacroDef, Program};
+use v2::interpreter::grammar::{LibraryParser, ProgramParser};
 
 pub fn parse_program(input: &str) -> Result<Program, Error> {
     ProgramParser::new()

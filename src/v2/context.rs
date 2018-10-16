@@ -1,7 +1,7 @@
 use rand::distributions::uniform::SampleUniform;
 use rand::distributions::{Distribution, Standard};
 use rand::prng::XorShiftRng;
-use rand::{Rng, SeedableRng};
+use rand::{Rng, SeedableRng, FromEntropy};
 
 pub struct ProgramContext {
     rng: XorShiftRng,
@@ -10,6 +10,11 @@ pub struct ProgramContext {
 impl ProgramContext {
     pub fn from_seed(seed: [u8; 16]) -> ProgramContext {
         let rng = XorShiftRng::from_seed(seed);
+        ProgramContext::new(rng)
+    }
+
+    pub fn from_random_seed() -> ProgramContext {
+        let rng = XorShiftRng::from_entropy();
         ProgramContext::new(rng)
     }
 
