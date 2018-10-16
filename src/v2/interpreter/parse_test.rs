@@ -18,19 +18,25 @@ fn parses_boolean_literal_true_token() {
 }
 
 #[test]
-fn parses_int_literal_token() {
+fn parses_unsigned_int_literal_token() {
     let result = ExprParser::new().parse(r#"1234"#);
     assert_eq!(Ok(int(1234)), result);
 }
 
 #[test]
-fn parses_unsigned_int_literal_negative_token() {
+fn parses_unsigned_int_hex_literal_token() {
+    let result = ExprParser::new().parse("0xFF");
+    assert_eq!(Ok(int(255)), result);
+}
+
+#[test]
+fn parses_signed_int_literal_negative_token() {
     let result = ExprParser::new().parse(r#"-1234"#);
     assert_eq!(Ok(sint(-1234)), result);
 }
 
 #[test]
-fn parses_unsigned_int_literal_positive_token() {
+fn parses_signed_int_literal_positive_token() {
     let result = ExprParser::new().parse(r#"+1234"#);
     assert_eq!(Ok(sint(1234)), result);
 }

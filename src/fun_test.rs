@@ -59,6 +59,13 @@ fn use_custom_string_function() {
 }
 
 #[test]
+fn std_unicode_string_fun() {
+    let expected_output = "ༀʠㅰ⻆\u{1713}ⅻףּ𐌷﹗☔\u{243d}ᜇᜑᥤ慧\u{df1}ખ@䷪ǲ𐌚ℍṄﵗ㎕𐑩︲ᵕቢ\u{2429}☖㎱ඍ∯೦₮\u{20ed}⁺⁅␌ㇹ㈤ゼ⡀Ǜԇ𐎑𐎍\u{efd0}≈𥴘き﹛ᥚ數𐎁য়ﺂᚇ⫝⟏𝀀ਗ਼ΠᏲᥜჳស႔㠛𐎌პś﹀₾ㅉ⨏⇍☹\u{1885}擎⁽୮\u{fe09}ꀬˬꂩ෨﹊Ⓗភڊ깞ᜇ੯⻃\u{fe28}\u{a55}ԟ⼜";
+    let input = r#"unicode_string(100)"#;
+    test_program_success(1, input, expected_output);
+}
+
+#[test]
 fn use_std_boolean_function() {
     let expected_output = "truetruetrue";
     let input = r#"boolean()"#;
