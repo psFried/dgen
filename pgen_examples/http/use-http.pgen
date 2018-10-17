@@ -1,0 +1,34 @@
+# Uses `http-lib.pgen` to create a series of randomly generated http requests
+# to run this file, execute the following from this directory: `pgen run -f use-http.pgen --lib http-lib.pgen`
+# You can also add the `-n <count>` option to execute this script the given number of times
+
+# picks a random top level domain
+def tld() = select("com", "co", "org", "net", "io");
+
+# generates a random hostname
+def hostname() = concat(
+    repeat_delimited(uint(1, 3), lowercase_ascii_string(uint(4, 20)), "."),
+    ".",
+    tld()
+);
+
+# generates a random request path
+def path() = concat(
+    "/",
+    repeat_delimited(uint(0, 10), alphanumeric_string(uint(3, 15)), "/")
+);
+
+# generates the body to use with put/post requests
+def request_body() = unicode_string(uint(10, 100));
+
+
+# This is the final expression, which will get evaluated as the actual program to run.
+# Pick any request type and generate it
+select(
+    get_request(hostname(), path()),
+    options_request(hostname(), path()),
+    head_request(hostname(), path()),
+    delete_request(hostname(), path()),
+    put_request(hostname(), path(), request_body()),
+    post_request(hostname(), path(), request_body())
+)

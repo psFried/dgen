@@ -11,7 +11,7 @@ pgen is a CLI tool for generating pseudorandom data in arbitrary formats. The go
 The following program will print 10 random quoted words, separated by newlines:
 
 ```
-$ pgen run -p 'repeat(10, concat(quote(words()), "\n"))'
+$ pgen run -p 'repeat_delimited(10, double_quote(words()), "\n")'
 "gule"
 "erugation"
 "avouchment"
@@ -33,6 +33,8 @@ Pgen programs are invoked by calling `pgen run` and providing the program input 
 You can also add your own libraries to the program scope using the `--lib` option.
 
 PGen has a bunch of builtin functions, too. You can list the builtin functions by executing `pgen help`. You can optionally filter the list of functions by name with `pgen help --function <name>`. Of course `pgen -h` will print out info on all of the available options.
+
+Take a look at [the examples](pgen_examples/) for more.
 
 ### Build
 
