@@ -1,6 +1,6 @@
 use failure::Error;
 use std::rc::Rc;
-use v2::{AnyFunction, DataGenOutput, ProgramContext, RunnableFunction};
+use ::{AnyFunction, DataGenOutput, ProgramContext, RunnableFunction};
 use IString;
 
 macro_rules! create_const_type {

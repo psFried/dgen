@@ -10,15 +10,16 @@ mod parse_test;
 
 #[allow(unused)]
 pub(crate) mod grammar {
-    include!(concat!(env!("OUT_DIR"), "/v2/interpreter/grammar.rs"));
+    include!(concat!(env!("OUT_DIR"), "/interpreter/grammar.rs"));
 }
+
+pub use self::source::Source;
 
 use self::ast::{Expr, FunctionCall, FunctionMapper, MacroDef, Program};
 use self::map::{create_memoized_fun, finish_mapped};
-pub use self::source::Source;
 use failure::Error;
-use v2::builtins::BUILTIN_FNS;
-use v2::{
+use builtins::BUILTIN_FNS;
+use ::{
     AnyFunction, BoundArgument, ConstBoolean, ConstChar, ConstDecimal, ConstInt, ConstString,
     ConstUint, CreateFunctionResult, FunctionPrototype,
 };

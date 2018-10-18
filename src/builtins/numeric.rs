@@ -1,7 +1,7 @@
 use failure::Error;
 use std::rc::Rc;
 use std::fmt::Debug;
-use v2::{
+use ::{
     AnyFunction, BuiltinFunctionPrototype, FunctionPrototype, CreateFunctionResult, DataGenOutput,
     ProgramContext, RunnableFunction, GenType, Arguments, DynFun, OutputType
 };

@@ -1,6 +1,6 @@
 use std::fmt::Display;
 use std::io::{self, Write};
-use v2::OutputType;
+use ::OutputType;
 
 pub struct TrackingWriter<'a> {
     delegate: &'a mut Write,

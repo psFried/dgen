@@ -1,13 +1,23 @@
+#[macro_use]
+extern crate failure;
+extern crate itertools;
+extern crate lalrpop_util;
+extern crate rand;
+extern crate regex;
+extern crate string_cache;
+
 mod arguments;
 pub(crate) mod builtins;
 mod context;
-pub(crate) mod interpreter;
+pub mod interpreter;
 mod prototype;
 mod types;
+mod writer;
+pub mod program;
 
-use std::fmt::Debug;
-use std::rc::Rc;
-use IString;
+#[cfg(test)]
+mod fun_test;
+
 
 pub use self::context::ProgramContext;
 pub use self::interpreter::Interpreter;
@@ -20,9 +30,15 @@ pub use self::types::{
     ConstBin, ConstBoolean, ConstChar, ConstDecimal, ConstInt, ConstString, ConstUint, OutputType,
 };
 pub use self::arguments::Arguments;
-pub use writer::DataGenOutput;
+pub use self::writer::DataGenOutput;
 
 use failure::Error;
+use std::fmt::Debug;
+use std::rc::Rc;
+
+
+/// interned string type used throughout
+pub type IString = string_cache::DefaultAtom;
 
 pub trait RunnableFunction<T>: Debug {
     fn gen_value(&self, context: &mut ProgramContext) -> Result<T, Error>;

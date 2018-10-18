@@ -1,10 +1,9 @@
 use failure::Error;
 use std::rc::Rc;
-use v2::{
+use ::{
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput,
-    DynStringFun, FunctionPrototype, GenType, ProgramContext, RunnableFunction,
+    DynStringFun, FunctionPrototype, GenType, ProgramContext, RunnableFunction, IString,
 };
-use IString;
 
 #[derive(Debug)]
 struct Concat<T> {

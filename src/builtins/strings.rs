@@ -1,6 +1,6 @@
 use failure::Error;
 use std::rc::Rc;
-use v2::{
+use ::{
     AnyFunction, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput, DynCharFun,
     DynUintFun, DynStringFun, FunctionPrototype, GenType, ProgramContext, RunnableFunction, Arguments,
 };

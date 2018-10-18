@@ -19,3 +19,10 @@ itertools = "0.7.3"
 [build-dependencies]
 lalrpop = "0.16.0"
 
+[lib]
+name = "pgen"
+path = "src/lib.rs"
+
+[[bin]]
+name = "pgen"
+path = "src/main.rs"

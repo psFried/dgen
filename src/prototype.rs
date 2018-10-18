@@ -1,7 +1,7 @@
-use v2::interpreter::ast::{Expr, MacroArgument, MacroDef};
+use interpreter::ast::{Expr, MacroArgument, MacroDef};
+use interpreter::Compiler;
+use ::{AnyFunction, Arguments, GenType};
 use std::fmt::{self, Debug, Display};
-use v2::interpreter::Compiler;
-use v2::{AnyFunction, Arguments, GenType};
 use IString;
 
 use failure::Error;

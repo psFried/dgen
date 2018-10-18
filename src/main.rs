@@ -7,23 +7,18 @@ extern crate lalrpop_util;
 extern crate rand;
 extern crate regex;
 extern crate string_cache;
+extern crate pgen;
 
 mod cli_opts;
-#[cfg(test)]
-pub(crate) mod fun_test;
-mod program;
-mod v2;
-mod writer;
 
 use self::cli_opts::{CliOptions, SubCommand};
-use self::program::Program;
-use self::v2::interpreter::Source;
-use self::v2::ProgramContext;
+use pgen::program::Program;
+use pgen::interpreter::Source;
+use pgen::ProgramContext;
 use failure::Error;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-pub type IString = string_cache::DefaultAtom;
 
 trait OrBail<T> {
     fn or_bail(self, verbosity: u64) -> T;
@@ -137,7 +132,7 @@ fn print_backtraces(verbosity: u64) -> bool {
 
 fn list_functions(name: Option<String>, verbosity: u64) {
     use std::io::{stdout, Write};
-    use v2::interpreter::Interpreter;
+    use pgen::interpreter::Interpreter;
 
     let mut interpreter = Interpreter::new();
     interpreter.add_std_lib();
@@ -160,7 +155,7 @@ fn run_program(program: Program) -> Result<(), Error> {
     let sout = std::io::stdout();
     // lock stdout once at the beginning so we don't have to keep locking/unlocking it
     let mut lock = sout.lock();
-    let mut output = self::writer::DataGenOutput::new(&mut lock);
+    let mut output = pgen::DataGenOutput::new(&mut lock);
 
     program.run(&mut output)
 }

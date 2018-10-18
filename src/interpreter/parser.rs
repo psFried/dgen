@@ -1,8 +1,8 @@
 use failure::Error;
 use lalrpop_util::ParseError;
-use v2::interpreter::ast::{MacroDef, Program};
-use v2::interpreter::grammar::{LibraryParser, ProgramParser};
-use v2::interpreter::errors::SourceErrRegion;
+use ::interpreter::ast::{MacroDef, Program};
+use ::interpreter::grammar::{LibraryParser, ProgramParser};
+use ::interpreter::errors::SourceErrRegion;
 use std::fmt::{self, Display};
 use IString;
 

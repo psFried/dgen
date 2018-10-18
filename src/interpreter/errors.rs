@@ -1,7 +1,7 @@
 use ::IString;
 use failure::Error;
-use v2::AnyFunction;
-use v2::FunctionPrototype;
+use ::AnyFunction;
+use ::FunctionPrototype;
 use itertools::Itertools;
 use std::fmt::{self, Display};
 

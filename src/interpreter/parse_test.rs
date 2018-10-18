@@ -1,8 +1,8 @@
-use v2::interpreter::ast::{
+use ::interpreter::ast::{
     Expr, FunctionCall, FunctionMapper, GenType, MacroArgument, MacroDef, Program,
 };
-use v2::interpreter::grammar::ExprParser;
-use v2::interpreter::parser::parse_program;
+use ::interpreter::grammar::ExprParser;
+use ::interpreter::parser::parse_program;
 use IString;
 
 #[test]

@@ -1,9 +1,9 @@
-use v2::interpreter::Source;
+use ::interpreter::Source;
 
 macro_rules! include_lib {
     ($name:expr) => {
         {
-            const LIB_CONTENT: &'static str = include_str!(concat!("../../../pgen_libs/", $name));
+            const LIB_CONTENT: &'static str = include_str!(concat!("../../pgen_libs/", $name));
             &Source::Builtin($name, LIB_CONTENT)
         }
     };

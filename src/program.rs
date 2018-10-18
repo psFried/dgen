@@ -1,8 +1,8 @@
 use failure::Error;
 use writer::DataGenOutput;
 
-use v2::interpreter::{Interpreter, Source};
-use v2::ProgramContext;
+use ::interpreter::{Interpreter, Source};
+use ::ProgramContext;
 
 pub struct Program {
     iterations: u64,

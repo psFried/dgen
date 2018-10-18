@@ -6,7 +6,7 @@ use std::fmt::{self, Debug};
 use std::fs::File;
 use std::io::{self, Read, Seek, SeekFrom};
 use std::rc::Rc;
-use v2::{
+use ::{
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput,
     DynStringFun, FunctionPrototype, GenType, ProgramContext, RunnableFunction,
 };
@@ -288,7 +288,7 @@ fn create_file_fun(args: Arguments) -> CreateFunctionResult {
 
 fn create_words_fun(_: Arguments) -> CreateFunctionResult {
     use std::path::Path;
-    use v2::ConstString;
+    use ::ConstString;
 
     let words_paths = ["/usr/share/dict/words", "/usr/dict/words"];
     let path = words_paths
@@ -330,7 +330,7 @@ pub const WORDS_BUILTIN: &FunctionPrototype = &FunctionPrototype::Builtin(&Built
 #[cfg(test)]
 mod test {
     use super::*;
-    use v2::ConstString;
+    use ::ConstString;
 
     const RAND_SEED: &[u8; 16] = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 

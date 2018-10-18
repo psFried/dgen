@@ -1,5 +1,5 @@
 use failure::Error;
-use v2::{AnyFunction, GenType};
+use ::{AnyFunction, GenType};
 
 pub struct Arguments(Vec<AnyFunction>);
 
