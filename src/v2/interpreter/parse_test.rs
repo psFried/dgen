@@ -54,6 +54,18 @@ fn parses_decimal_literal_token() {
 }
 
 #[test]
+fn parses_decimal_literal_token_with_negative_sign() {
+    let result = ExprParser::new().parse(r#"-123.45"#);
+    assert_eq!(Ok(float(-123.45)), result);
+}
+
+#[test]
+fn parses_decimal_literal_token_with_positive_sign() {
+    let result = ExprParser::new().parse(r#"+123.45"#);
+    assert_eq!(Ok(float(123.45)), result);
+}
+
+#[test]
 fn parses_basic_string_literal_token() {
     string_literal_test(r#""somestr""#, "somestr");
 }
@@ -220,7 +232,7 @@ fn parses_program_with_macro_definitions() {
         }),
     };
 
-    let actual = parse_program(input).expect("failed to parse input");
+    let actual = parse_program("test input".into(), input).expect("failed to parse input");
     assert_eq!(expected, actual);
 }
 

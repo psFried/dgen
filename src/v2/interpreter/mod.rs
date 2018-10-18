@@ -1,5 +1,5 @@
 pub mod ast;
-mod errors;
+pub(crate) mod errors;
 pub mod libraries;
 mod map;
 pub(crate) mod parser;
@@ -210,19 +210,15 @@ impl Interpreter {
 
         let module_name: IString = source.get_name().into();
         let text = source.read_to_str()?;
-        let parsed = parser::parse_library(text.borrow()).map_err(|e| {
-            e.context(format!(
-                "Failed to parse source for module: '{}'",
-                module_name.clone()
-            ))
-        })?;
+        let parsed = parser::parse_library(module_name.clone(), text.borrow())?;
         self.internal.add_module(Module::new(module_name, parsed));
         Ok(())
     }
 
     pub fn eval(&mut self, program: &str) -> CreateFunctionResult {
-        let Program { assignments, expr } = parser::parse_program(program)?;
-        let main_module = Module::new("main".into(), assignments);
+        let module_name: IString = "main".into();
+        let Program { assignments, expr } = parser::parse_program(module_name.clone(), program)?;
+        let main_module = Module::new(module_name, assignments);
         self.internal.add_module(main_module);
         self.internal.eval(&expr)
     }

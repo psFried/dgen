@@ -1,0 +1,90 @@
+# This file is runnable as it is since it ends with an expression.
+# Running this will generate a random json object or array
+# To run this, execute: `pgen run -f pgen_examples/json/json.pgen`
+
+# json_number generates a random number, either an integer or a decimal
+def json_number() = select(
+    to_string(int()),
+    to_string(decimal(-10500000.0, +10500000.0))
+);
+
+# generates random double quoted strings
+def json_string() = double_quote(alphanumeric_string(uint(0, 50)));
+
+# generates either a string or a number
+def string_or_number() = select(json_string(), json_number());
+
+# generates either a string or a number, and continues to always generate that same type (but with different values)
+def stable_string_or_number() = stable_select(json_string(), json_number());
+
+# creates a random double quoted string to use as a key
+def json_key() = double_quote(alphanumeric_string(uint(2, 20)));
+
+# formats a json array, using whatever function is passed in the generate the values
+def json_array(value: String) = repeat_delimited(
+    uint(0, 10),
+    "[ ",
+    value,
+    ", ",
+    " ]"
+);
+
+# formats a json object, using whatever function is passed in to generate the values
+def json_object(value: String) = repeat_delimited(
+    uint(0, 10),
+    "{ ",
+    concat(
+        json_key(),
+        ": ",
+        value,
+    ),
+    ", ",
+    " }"
+);
+
+# creates a random json array. Notice that we do not call the zero-arg json_array() method from within
+# itself since that would overflow the stack
+def json_array() = json_array(stable_select(
+    json_object(
+        select(
+            json_object(string_or_number()),
+            json_array(stable_string_or_number()),
+            json_string(),
+            json_number()
+        )
+    ),
+    json_array(
+        stable_select(
+            json_object(stable_string_or_number()),
+            json_array(stable_string_or_number()),
+            json_string(),
+            json_number()
+        )
+    ),
+    json_string(),
+    json_number()
+));
+
+# creates a random json object. Notice that we do not call the zero-arg json_object() method from within
+# itself since that would overflow the stack
+def json_object() = json_object(select(
+    json_object(
+        select(
+            json_object(string_or_number()),
+            json_array(stable_string_or_number()),
+            json_string(),
+            json_number()
+        )
+    ),
+    json_array(
+        stable_select(
+            json_object(stable_string_or_number()),
+            json_array(stable_string_or_number()),
+            json_string(),
+            json_number()
+        )
+    )
+));
+
+# Generate either an object or array
+select(json_object(), json_array())
