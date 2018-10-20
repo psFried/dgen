@@ -56,6 +56,7 @@ pub enum Expr {
     DecimalLiteral(f64),
     BooleanLiteral(bool),
     CharLiteral(char),
+    BinaryLiteral(Vec<u8>),
 }
 
 #[derive(Debug, Clone, PartialEq)]

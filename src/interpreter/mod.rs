@@ -17,13 +17,13 @@ pub use self::source::Source;
 
 use self::ast::{Expr, FunctionCall, FunctionMapper, MacroDef, Program};
 use self::map::{create_memoized_fun, finish_mapped};
-use failure::Error;
 use builtins::BUILTIN_FNS;
-use ::{
-    AnyFunction, BoundArgument, ConstBoolean, ConstChar, ConstDecimal, ConstInt, ConstString,
+use failure::Error;
+use IString;
+use {
+    AnyFunction, BoundArgument, ConstBoolean, ConstChar, ConstBin, ConstDecimal, ConstInt, ConstString,
     ConstUint, CreateFunctionResult, FunctionPrototype,
 };
-use IString;
 
 pub struct Module {
     _name: IString,
@@ -74,6 +74,7 @@ impl Compiler {
             Expr::SignedIntLiteral(ref lit) => Ok(ConstInt::new(*lit)),
             Expr::DecimalLiteral(ref lit) => Ok(ConstDecimal::new(*lit)),
             Expr::CharLiteral(ref lit) => Ok(ConstChar::new(*lit)),
+            Expr::BinaryLiteral(ref lit) => Ok(ConstBin::new(lit.clone())),
             Expr::Function(ref call) => self.eval_function_call(call, bound_args),
         }
     }

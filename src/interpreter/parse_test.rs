@@ -176,11 +176,6 @@ fn parses_mapped_function_call_withou_args() {
     assert_eq!(Ok(expected), result);
 }
 
-/*
- left: `Program { assignments: [MacroDef { doc_comments: "comment 1", name: Atom('wtf' type=inline), args: [MacroArgument { name: Atom('count' type=inline), arg_type: Uint }], body: Function(FunctionCall { function_name: Atom('asciiString' type=dynamic), args: [Function(FunctionCall { function_name: Atom('count' type=inline), args: [], mapper: None })], mapper: None }) }, MacroDef { doc_comments: "comment 2\ncomment 3", name: Atom('foo' type=inline), args: [], body: Function(FunctionCall { function_name: Atom('wtf' type=inline), args: [Function(FunctionCall { function_name: Atom('uint' type=inline), args: [IntLiteral(0), IntLiteral(9)], mapper: None })], mapper: None }) }], expr: Function(FunctionCall { function_name: Atom('foo' type=inline), args: [], mapper: None }) }`,
-right: `Program { assignments: [MacroDef { doc_comments: "comment 1", name: Atom('wtf' type=inline), args: [MacroArgument { name: Atom('count' type=inline), arg_type: Uint }], body: Function(FunctionCall { function_name: Atom('asciiString' type=dynamic), args: [ArgumentUsage(Atom('count' type=inline))], mapper: None }) }, MacroDef { doc_comments: "comment 2\ncomment 3", name: Atom('foo' type=inline), args: [], body: Function(FunctionCall { function_name: Atom('wtf' type=inline), args: [Function(FunctionCall { function_name: Atom('uint' type=inline), args: [IntLiteral(0), IntLiteral(9)], mapper: None })], mapper: None }) }], expr: Function(FunctionCall { function_name: Atom('foo' type=inline), args: [], mapper: None }) }`'
-*/
-
 #[test]
 fn parses_program_with_macro_definitions() {
     let input = r#"
@@ -235,6 +230,23 @@ fn parses_program_with_macro_definitions() {
     let actual = parse_program("test input".into(), input).expect("failed to parse input");
     assert_eq!(expected, actual);
 }
+
+#[test]
+fn parses_bin_literal() {
+    let input = "[ 0x00,0xff, 0x01]";
+    let expected_output = bin(&[0x00, 0xff, 0x01]);
+    let actual = ExprParser::new().parse(input).expect("failed to parse");
+    assert_eq!(expected_output, actual);
+}
+
+#[test]
+fn parses_empty_bin_literal() {
+    let input = "[ ]";
+    let expected_output = bin(&[]);
+    let actual = ExprParser::new().parse(input).expect("failed to parse");
+    assert_eq!(expected_output, actual);
+}
+
 
 fn s(val: &str) -> IString {
     val.into()
@@ -295,4 +307,8 @@ fn boolean(b: bool) -> Expr {
 
 fn sint(i: i64) -> Expr {
     Expr::SignedIntLiteral(i)
+}
+
+fn bin(bytes: &[u8]) -> Expr {
+    Expr::BinaryLiteral(bytes.to_owned())
 }

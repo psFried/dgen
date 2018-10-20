@@ -1,8 +1,7 @@
-use ::ProgramContext;
-use ::program::Program;
 use failure::Error;
+use program::Program;
 use writer::DataGenOutput;
-
+use ProgramContext;
 
 #[test]
 fn signed_integer_functions() {
@@ -21,6 +20,20 @@ fn declare_and_use_functions() {
         bar()
     "#;
     test_program_success(3, input, expected_output);
+}
+
+#[test]
+fn use_binary_functions() {
+    let program = r##"
+        def foo() = select([0x01], [0x02, 0x03], [0x04, 0x05, 0x06]);
+
+        def boo(len: Uint) = len() { i ->
+            concat(repeat_delimited(i, [0xFF], [0x00]), [0xAA], repeat(i, foo()))
+        };
+        boo(3)
+        "##;
+    let expected = &[0xff, 0x00, 0xff, 0x00, 0xff, 0xAA, 0x01, 0x01, 0x01];
+    assert_bin_output_is_expected(program, expected);
 }
 
 #[test]
@@ -94,6 +107,11 @@ pub fn run_program(iterations: u64, program: &str) -> Result<Vec<u8>, Error> {
     }
 
     Ok(out)
+}
+
+pub fn assert_bin_output_is_expected(program: &str, expected: &[u8]) {
+    let results = run_program(1, program).expect("Failed to run program");
+    assert_eq!(results.as_slice(), expected);
 }
 
 pub fn test_program_success(iterations: u64, input: &str, expected_output: &str) {

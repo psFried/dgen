@@ -50,7 +50,21 @@ CharLiteral: char = {
     }
 }
 
+
+BinLiteral: Vec<u8> = {
+    "[" <b:Comma<IntLiteral>> "]" =>? {
+        b.into_iter().map(|i| {
+            if i <= 255 {
+                Ok(i as u8)
+            } else {
+                Err(ParseError::User { error: "Invalid byte value is out of range" })
+            }
+        }).collect()
+    }
+}
+
 pub Expr: ast::Expr = {
+    <c:Comment*> <b:BinLiteral> => ast::Expr::BinaryLiteral(b),
     <c:Comment*> <l:CharLiteral> => ast::Expr::CharLiteral(l),
     <c:Comment*> <b:BooleanLiteral> => ast::Expr::BooleanLiteral(b),
     <c:Comment*> <s:StringLiteral> => ast::Expr::StringLiteral(s),
@@ -85,7 +99,8 @@ GenType: GenType = {
     "Int" => GenType::Int,
     "Boolean" => GenType::Boolean,
     "Float" => GenType::Decimal,
-    "Char" => GenType::Char
+    "Char" => GenType::Char,
+    "Bin" => GenType::Bin,
 }
 
 MacroArg: ast::MacroArgument = {
