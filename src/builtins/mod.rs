@@ -1,22 +1,24 @@
+mod bin_length;
 mod byte_order;
 mod chars;
 mod concat;
 mod from_file;
 mod numeric;
-mod to_string;
 mod repeat_delim;
 mod select;
 mod sequence;
 mod strings;
+mod to_string;
 
-use ::FunctionPrototype;
+use FunctionPrototype;
 
 pub const BUILTIN_FNS: &'static [&'static FunctionPrototype] = &[
-    self::byte_order::UINT_LITTLE_ENDIAN, 
+    self::bin_length::BIN_LENGTH,
+    self::byte_order::UINT_LITTLE_ENDIAN,
     self::byte_order::UINT_BIG_ENDIAN,
-    self::byte_order::INT_LITTLE_ENDIAN, 
+    self::byte_order::INT_LITTLE_ENDIAN,
     self::byte_order::INT_BIG_ENDIAN,
-    self::byte_order::DECIMAL_LITTLE_ENDIAN, 
+    self::byte_order::DECIMAL_LITTLE_ENDIAN,
     self::byte_order::DECIMAL_BIG_ENDIAN,
     self::chars::CHAR_GEN_BUILTIN,
     self::strings::STRING_GEN_BUILTIN,
