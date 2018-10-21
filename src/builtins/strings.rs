@@ -104,10 +104,11 @@ impl RunnableFunction<Vec<u8>> for StringBytes {
         let encoding_label = self.encoding.gen_value(context)?;
         if let Some(encoding) = encoding_from_whatwg_label(&*encoding_label) {
             let value = self.string.gen_value(context)?;
-            encoding.encode(&*value, EncoderTrap::Strict).map_err(|_| {
+            encoding.encode(&*value, EncoderTrap::Strict).map_err(|e| {
                 format_err!(
-                    "Invalid encoding label: '{}', no such encoding",
-                    encoding_label
+                    "Failed to encode the input using encoding: {} -- error: {}",
+                    encoding_label,
+                    e
                 )
             })
         } else {
@@ -119,8 +120,23 @@ impl RunnableFunction<Vec<u8>> for StringBytes {
         context: &mut ProgramContext,
         out: &mut DataGenOutput,
     ) -> Result<u64, Error> {
-        let value = self.gen_value(context)?;
-        out.write(&value)
+        let encoding_label = self.encoding.gen_value(context)?;
+        if let Some(encoding) = encoding_from_whatwg_label(&*encoding_label) {
+            let value = self.string.gen_value(context)?;
+            out.with(move |output| {
+                encoding
+                    .encode_to(&*value, EncoderTrap::Strict, output)
+                    .map_err(|e| {
+                        format_err!(
+                            "Failed to encode the input using encoding: {} -- error: {}",
+                            encoding_label,
+                            e
+                        )
+                    })
+            })
+        } else {
+            Err(format_err!("Invalid encoding label: '{}', encodings must be specified as a WHATWG label. See: https://encoding.spec.whatwg.org/#concept-encoding-get for more info", &*encoding_label))
+        }
     }
 }
 
@@ -159,7 +175,8 @@ mod test {
     #[test]
     fn string_bytes_supports_a_lot_of_encodings() {
         let program = r##"
-        # This is not a 100% complete list of supported encodings, but it ought to cover most of what folks are likely to use
+        # This is not a 100% complete list of supported encodings, but it ought to cover most of what folks 
+        # are likely to use.
         def encodings() = select(
             "unicode-1-1-utf-8",
             "utf-8",

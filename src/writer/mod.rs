@@ -1,6 +1,7 @@
+use encoding::ByteWriter;
 use std::fmt::Display;
 use std::io::{self, Write};
-use ::OutputType;
+use OutputType;
 
 pub struct TrackingWriter<'a> {
     delegate: &'a mut Write,
@@ -60,7 +61,31 @@ impl<'a> DataGenOutput<'a> {
         value.write_output(self)
     }
 
+    pub fn with<F, T>(&mut self, fun: F) -> Result<u64, ::failure::Error>
+    where
+        F: FnOnce(&mut DataGenOutput) -> Result<T, ::failure::Error>,
+    {
+        let start = self.writer.get_num_bytes_written();
+
+        let _ = fun(self)?;
+        let end = self.writer.get_num_bytes_written();
+        Ok(end - start)
+    }
+
     pub fn flush(&mut self) -> io::Result<()> {
         self.writer.flush()
+    }
+}
+
+impl<'a> ByteWriter for DataGenOutput<'a> {
+    fn write_byte(&mut self, b: u8) {
+        self.writer
+            .write_all(&[b])
+            .expect("Failed to write output of encoded string");
+    }
+    fn write_bytes(&mut self, v: &[u8]) {
+        self.writer
+            .write_all(v)
+            .expect("Failed to write output of encoded string");
     }
 }
