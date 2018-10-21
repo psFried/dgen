@@ -5,6 +5,7 @@ extern crate lalrpop_util;
 extern crate rand;
 extern crate regex;
 extern crate string_cache;
+extern crate encoding;
 
 mod arguments;
 pub(crate) mod builtins;

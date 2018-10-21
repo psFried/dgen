@@ -25,3 +25,7 @@ def single_quote(to_quote: String) = surround(to_quote, "'");
 
 # Surrounds the input with double quote characters (")
 def double_quote(to_quote: String) = surround(to_quote, "\"");
+
+# Convenience function for getting a Binary representation of a string as utf-8 encoded bytes.
+# For any other encodings, use the `string_bytes` function.
+def utf8_bytes(string: String) = string_bytes("utf-8", string);

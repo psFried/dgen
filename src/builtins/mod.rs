@@ -13,6 +13,7 @@ pub const BUILTIN_FNS: &'static [&'static FunctionPrototype] = &[
     self::chars::CHAR_GEN_BUILTIN,
     self::strings::STRING_GEN_BUILTIN,
     self::strings::STRING_LENGTH_BUILTIN,
+    self::strings::STRING_ENCODE_BUILTIN,
     self::concat::CONCAT_BUILTIN,
     self::concat::CONCAT_BIN_BUILTIN,
     self::select::SELECT_CHAR_BUILTIN,
