@@ -1,29 +1,32 @@
 #[macro_use]
 extern crate failure;
+#[macro_use]
+extern crate lazy_static;
+
+extern crate byteorder;
+extern crate encoding;
 extern crate itertools;
 extern crate lalrpop_util;
 extern crate rand;
 extern crate regex;
 extern crate string_cache;
-extern crate encoding;
-extern crate byteorder;
 
 mod arguments;
 pub(crate) mod builtins;
 mod context;
 pub mod interpreter;
+pub mod program;
 mod prototype;
 mod types;
 mod writer;
-pub mod program;
 
 #[cfg(test)]
 mod fun_test;
 
-
+pub use self::arguments::Arguments;
 pub use self::context::ProgramContext;
-pub use self::interpreter::Interpreter;
 pub use self::interpreter::ast::GenType;
+pub use self::interpreter::Interpreter;
 pub use self::prototype::{
     BoundArgument, BuiltinFunctionCreator, BuiltinFunctionPrototype, CreateFunctionResult,
     FunctionPrototype, InterpretedFunctionPrototype,
@@ -31,13 +34,11 @@ pub use self::prototype::{
 pub use self::types::{
     ConstBin, ConstBoolean, ConstChar, ConstDecimal, ConstInt, ConstString, ConstUint, OutputType,
 };
-pub use self::arguments::Arguments;
 pub use self::writer::DataGenOutput;
 
 use failure::Error;
 use std::fmt::Debug;
 use std::rc::Rc;
-
 
 /// interned string type used throughout
 pub type IString = string_cache::DefaultAtom;
@@ -86,7 +87,11 @@ impl AnyFunction {
         }
     }
 
-    pub fn write_value(&self, context: &mut ProgramContext, output: &mut DataGenOutput) -> Result<u64, Error> {
+    pub fn write_value(
+        &self,
+        context: &mut ProgramContext,
+        output: &mut DataGenOutput,
+    ) -> Result<u64, Error> {
         match *self {
             AnyFunction::String(ref fun) => fun.write_value(context, output),
             AnyFunction::Char(ref fun) => fun.write_value(context, output),

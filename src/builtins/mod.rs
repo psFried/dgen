@@ -2,6 +2,7 @@ mod bin_length;
 mod byte_order;
 mod chars;
 mod concat;
+mod env;
 mod from_file;
 mod numeric;
 mod repeat_delim;
@@ -21,6 +22,7 @@ pub const BUILTIN_FNS: &'static [&'static FunctionPrototype] = &[
     self::byte_order::DECIMAL_LITTLE_ENDIAN,
     self::byte_order::DECIMAL_BIG_ENDIAN,
     self::chars::CHAR_GEN_BUILTIN,
+    self::env::ENV_VAR,
     self::strings::STRING_GEN_BUILTIN,
     self::strings::STRING_LENGTH_BUILTIN,
     self::strings::STRING_ENCODE_BUILTIN,
