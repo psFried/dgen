@@ -6,6 +6,7 @@ extern crate rand;
 extern crate regex;
 extern crate string_cache;
 extern crate encoding;
+extern crate byteorder;
 
 mod arguments;
 pub(crate) mod builtins;
