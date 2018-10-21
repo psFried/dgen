@@ -5,6 +5,7 @@ mod numeric;
 mod to_string;
 mod repeat_delim;
 mod select;
+mod sequence;
 mod strings;
 
 use ::FunctionPrototype;
@@ -42,4 +43,16 @@ pub const BUILTIN_FNS: &'static [&'static FunctionPrototype] = &[
     self::to_string::DECIMAL_TO_STRING_BUILTIN,
     self::to_string::INT_TO_STRING_BUILTIN,
     self::to_string::UINT_TO_STRING_BUILTIN,
+    self::sequence::CHAR_WRAPPING_SEQ,
+    self::sequence::CHAR_SEQ,
+    self::sequence::STRING_WRAPPING_SEQ,
+    self::sequence::STRING_SEQ,
+    self::sequence::BIN_WRAPPING_SEQ,
+    self::sequence::BIN_SEQ,
+    self::sequence::UINT_WRAPPING_SEQ,
+    self::sequence::UINT_SEQ,
+    self::sequence::INT_WRAPPING_SEQ,
+    self::sequence::INT_SEQ,
+    self::sequence::DECIMAL_WRAPPING_SEQ,
+    self::sequence::DECIMAL_SEQ,
 ];
