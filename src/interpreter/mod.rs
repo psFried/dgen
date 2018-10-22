@@ -42,6 +42,7 @@ impl Module {
         }
     }
 
+    #[allow(unused)]
     pub fn add_function(&mut self, function: MacroDef) {
         let new_function = FunctionPrototype::new(function);
 
