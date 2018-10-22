@@ -1,6 +1,6 @@
 [package]
 name = "dgen"
-version = "0.1.0"
+version = "0.1.1"
 description = "An interpreted DSL for generating test data in any format"
 authors = ["Phil Fried <philipsfried@gmail.com>"]
 build = "build.rs"
@@ -8,9 +8,6 @@ repository = "https://github.com/psFried/dgen"
 license = "MIT"
 keywords = [ "generator", "data", "test", "random", "dsl" ]
 categories = [ "command-line-utilities", "development-tools::testing", "encoding", "parsing", "template-engine" ]
-
-[badges]
-travis-ci = { repository = "psFried/dgen", branch = "master" }
 
 [dependencies]
 structopt = "0.2.10"
