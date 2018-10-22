@@ -1,6 +1,8 @@
 [package]
 name = "dgen"
 version = "0.1.1"
+readme = "README.md"
+documentation = "https://github.com/psFried/dgen#dgen"
 description = "An interpreted DSL for generating test data in any format"
 authors = ["Phil Fried <philipsfried@gmail.com>"]
 build = "build.rs"
