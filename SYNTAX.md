@@ -1,10 +1,10 @@
 # PGen Syntax
 
-The PGen language syntax is intentionally as simple and minimal as possible. Most people will probably only write pgen scripts occasionally, so we want the syntax to be simple and easy to remember. As of right now, the language only has a few types.
+The PGen language syntax is intentionally as simple and minimal as possible. Most people will probably only write dgen scripts occasionally, so we want the syntax to be simple and easy to remember. As of right now, the language only has a few types.
 
 ## Expressions
 
-Expressions are the bread and butter of any pgen program. Expressions evaluate to something that will generate data. The simplest expressions are literals, which will always return the same constant value. By using functions, it's easy to generate pseudorandom data. Expressions come in only two flavors: literals and function calls.
+Expressions are the bread and butter of any dgen program. Expressions evaluate to something that will generate data. The simplest expressions are literals, which will always return the same constant value. By using functions, it's easy to generate pseudorandom data. Expressions come in only two flavors: literals and function calls.
 
 ### Literals
 
@@ -34,7 +34,7 @@ There's kind of a lot there, so let's break it down. First, all function definit
 Let's create a function that repeats the string `Hello World!` a given number of times. To do this, we'll use the builtin `repeat` function.
 
 ```
-# print_hello.pgen
+# print_hello.dgen
 
 # repeats printing "Hello World!" a bounded number of times, each on it's own line
 def hello_world(min_repeats: Uint, max_repeats: Uint) = 

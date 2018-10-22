@@ -63,7 +63,7 @@ pub enum SubCommand {
         no_std_lib: bool,
 
         /// specifies the seed used for the random number generator. For an identical program, the same seed will always produce
-        /// exactly the same results. This is NOT guaranteed to be true for different versions of pgen, though.
+        /// exactly the same results. This is NOT guaranteed to be true for different versions of dgen, though.
         #[structopt(short = "s", long = "seed")]
         seed: Option<String>,
     },

@@ -1,8 +1,15 @@
 [package]
-name = "pgen"
+name = "dgen"
 version = "0.1.0"
 authors = ["Phil Fried <philipsfried@gmail.com>"]
 build = "build.rs"
+repository = "https://github.com/psFried/dgen"
+license = "MIT"
+keywords = [ "generator", "data", "test", "random", "dsl" ]
+categories = [ "command-line-utilities", "development-tools::testing", "encoding", "parsing", "template-engine" ]
+
+[badges]
+travis-ci = { repository = "psFried/dgen", branch = "master" }
 
 [dependencies]
 structopt = "0.2.10"
@@ -22,9 +29,9 @@ byteorder = "1.2.6"
 lalrpop = "0.16.0"
 
 [lib]
-name = "pgen"
+name = "dgen"
 path = "src/lib.rs"
 
 [[bin]]
-name = "pgen"
+name = "dgen"
 path = "src/main.rs"
