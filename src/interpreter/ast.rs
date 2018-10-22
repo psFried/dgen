@@ -76,7 +76,7 @@ pub struct MacroDef {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Program {
     pub assignments: Vec<MacroDef>,
-    pub expr: Expr,
+    pub expr: Option<Expr>,
 }
 
 pub fn process_string_escapes(input: &str) -> Result<IString, &'static str> {

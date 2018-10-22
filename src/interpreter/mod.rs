@@ -21,8 +21,8 @@ use builtins::BUILTIN_FNS;
 use failure::Error;
 use IString;
 use {
-    AnyFunction, BoundArgument, ConstBoolean, ConstChar, ConstBin, ConstDecimal, ConstInt, ConstString,
-    ConstUint, CreateFunctionResult, FunctionPrototype,
+    AnyFunction, BoundArgument, ConstBin, ConstBoolean, ConstChar, ConstDecimal, ConstInt,
+    ConstString, ConstUint, CreateFunctionResult, FunctionPrototype,
 };
 
 pub struct Module {
@@ -39,6 +39,21 @@ impl Module {
         Module {
             _name: name,
             functions,
+        }
+    }
+
+    pub fn add_function(&mut self, function: MacroDef) {
+        let new_function = FunctionPrototype::new(function);
+
+        let existing_function = self
+            .functions
+            .iter()
+            .position(|fun| fun.is_same_signature(&new_function));
+        if let Some(index) = existing_function {
+            // replace the existing function
+            self.functions[index] = new_function;
+        } else {
+            self.functions.push(new_function);
         }
     }
 
@@ -212,17 +227,37 @@ impl Interpreter {
 
         let module_name: IString = source.get_name().into();
         let text = source.read_to_str()?;
-        let parsed = parser::parse_library(module_name.clone(), text.borrow())?;
-        self.internal.add_module(Module::new(module_name, parsed));
+        let parsed = parser::parse_program(module_name.clone(), text.borrow())?;
+        self.internal.add_module(Module::new(module_name, parsed.assignments));
         Ok(())
     }
 
     pub fn eval(&mut self, program: &str) -> CreateFunctionResult {
         let module_name: IString = "main".into();
         let Program { assignments, expr } = parser::parse_program(module_name.clone(), program)?;
+
+        if let Some(expression) = expr {
+            let main_module = Module::new(module_name, assignments);
+            self.internal.add_module(main_module);
+
+            self.internal.eval(&expression)
+        } else {
+            bail!("The program does not end with an expression. An expression is required")
+        }
+    }
+
+    pub fn eval_any(&mut self, program: &str) -> Result<Option<AnyFunction>, Error> {
+        let module_name: IString = "main".into();
+        let Program { assignments, expr } = parser::parse_program(module_name.clone(), program)?;
         let main_module = Module::new(module_name, assignments);
         self.internal.add_module(main_module);
-        self.internal.eval(&expr)
+
+        if let Some(expression) = expr {
+            let function = self.internal.eval(&expression)?;
+            Ok(Some(function))
+        } else {
+            Ok(None)
+        }
     }
 
     pub fn function_iterator(&self) -> impl Iterator<Item = &FunctionPrototype> {

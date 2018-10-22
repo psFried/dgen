@@ -210,6 +210,29 @@ impl FunctionPrototype {
         }
     }
 
+    pub fn is_same_signature(&self, other: &FunctionPrototype) -> bool {
+        if self.name() != other.name() {
+            return false;
+        }
+
+        let arg_count = self.get_arg_count();
+        if arg_count != other.get_arg_count() {
+            return false;
+        }
+
+        for i in 0..arg_count {
+            // we're only checking the type of the arguments, not their names
+            if self.get_arg(i).1 != other.get_arg(i).1 {
+                return false;
+            }
+        }
+
+        if self.is_variadic() != other.is_variadic() {
+            return false;
+        }
+        true
+    }
+
     pub fn do_arguments_match(&self, actual_args: &[AnyFunction]) -> bool {
         let variadic = self.is_variadic();
         let actual_arg_types = actual_args.iter().map(AnyFunction::get_type);

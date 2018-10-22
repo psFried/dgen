@@ -220,11 +220,11 @@ fn parses_program_with_macro_definitions() {
                 doc_comments: "comment 2\ncomment 3".to_owned(),
             },
         ],
-        expr: Expr::Function(FunctionCall {
+        expr: Some(Expr::Function(FunctionCall {
             function_name: s("foo"),
             args: Vec::new(),
             mapper: None,
-        }),
+        })),
     };
 
     let actual = parse_program("test input".into(), input).expect("failed to parse input");

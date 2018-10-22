@@ -113,9 +113,6 @@ DefineMacro: ast::MacroDef = {
 
 
 pub Program: ast::Program = {
-    <m:DefineMacro*> <e:Expr> => ast::Program {assignments: m, expr: e }
-}
-
-pub Library: Vec<ast::MacroDef> = {
-    <m:DefineMacro*> => m
+    <m:DefineMacro*> => ast::Program {assignments: m, expr: None },
+    <m:DefineMacro*> <e:Expr> => ast::Program {assignments: m, expr: Some(e) }
 }

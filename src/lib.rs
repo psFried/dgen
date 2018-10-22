@@ -26,7 +26,7 @@ mod fun_test;
 pub use self::arguments::Arguments;
 pub use self::context::ProgramContext;
 pub use self::interpreter::ast::GenType;
-pub use self::interpreter::Interpreter;
+pub use self::interpreter::{Interpreter, Source};
 pub use self::prototype::{
     BoundArgument, BuiltinFunctionCreator, BuiltinFunctionPrototype, CreateFunctionResult,
     FunctionPrototype, InterpretedFunctionPrototype,
