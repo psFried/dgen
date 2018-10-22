@@ -1,6 +1,6 @@
 # dgen
 
-[![Build Status](https://travis-ci.com/psFried/dgen.svg?branch=master)](https://travis-ci.com/psFried/pgen)
+[![Build Status](https://travis-ci.com/psFried/dgen.svg?branch=master)](https://travis-ci.com/psFried/dgen)
 
 Generate evil test data
 
