@@ -2,6 +2,7 @@ pub mod ast;
 pub(crate) mod errors;
 pub mod libraries;
 mod map;
+mod module;
 pub(crate) mod parser;
 mod source;
 
@@ -14,8 +15,11 @@ pub(crate) mod grammar {
 }
 
 pub use self::source::Source;
+pub use self::module::Module;
 
-use self::ast::{Expr, FunctionCall, FunctionMapper, MacroDef, Program};
+pub const MODULE_SEPARATOR_CHAR: char = '.';
+
+use self::ast::{Expr, FunctionCall, FunctionMapper, Program};
 use self::map::{create_memoized_fun, finish_mapped};
 use builtins::BUILTIN_FNS;
 use failure::Error;
@@ -24,44 +28,6 @@ use {
     AnyFunction, BoundArgument, ConstBin, ConstBoolean, ConstChar, ConstDecimal, ConstInt,
     ConstString, ConstUint, CreateFunctionResult, FunctionPrototype,
 };
-
-pub struct Module {
-    _name: IString,
-    functions: Vec<FunctionPrototype>,
-}
-
-impl Module {
-    pub fn new(name: IString, function_defs: Vec<MacroDef>) -> Module {
-        let functions = function_defs
-            .into_iter()
-            .map(FunctionPrototype::new)
-            .collect();
-        Module {
-            _name: name,
-            functions,
-        }
-    }
-
-    #[allow(unused)]
-    pub fn add_function(&mut self, function: MacroDef) {
-        let new_function = FunctionPrototype::new(function);
-
-        let existing_function = self
-            .functions
-            .iter()
-            .position(|fun| fun.is_same_signature(&new_function));
-        if let Some(index) = existing_function {
-            // replace the existing function
-            self.functions[index] = new_function;
-        } else {
-            self.functions.push(new_function);
-        }
-    }
-
-    fn function_iterator(&self) -> impl Iterator<Item = &FunctionPrototype> {
-        self.functions.iter()
-    }
-}
 
 pub struct Compiler {
     modules: Vec<Module>,
@@ -95,11 +61,23 @@ impl Compiler {
         }
     }
 
-    pub fn function_iterator(&self) -> impl Iterator<Item = &FunctionPrototype> {
+    fn find_function<'a>(&'a self, name: IString) -> impl Iterator<Item = &'a FunctionPrototype> {
+        let builtin_iter = builtin_functions(name.clone());
+        let module_iter = self.modules.iter().filter_map(move |module| module.find_function(&name)).flat_map(|funs| funs);
+        builtin_iter.chain(module_iter)
+    }
+
+    fn function_iterator(&self) -> impl Iterator<Item = &FunctionPrototype> {
         self.modules
             .iter()
             .flat_map(|module| module.function_iterator())
             .chain(BUILTIN_FNS.iter().map(|f| *f))
+    }
+
+    fn get_module(&self, name: &IString) -> Result<&Module, Error> {
+        self.modules.iter().find(|module| name == &module.name).ok_or_else(|| {
+            errors::no_such_module(name.clone())
+        })
     }
 
     fn eval_function_call(
@@ -124,7 +102,7 @@ impl Compiler {
             .map(|bound| bound.value.clone());
 
         if resolved.is_none() {
-            let function = self.find_function(name, resolved_args.as_slice())?;
+            let function = self.find_matching_function(name, resolved_args.as_slice())?;
             let res = function.apply(resolved_args, self)?;
             resolved = Some(res);
         }
@@ -156,42 +134,23 @@ impl Compiler {
         Ok(resolved)
     }
 
-    fn find_function<'a, 'b>(
+    fn find_matching_function<'a, 'b>(
         &'a self,
         name: IString,
         arguments: &'b [AnyFunction],
     ) -> Result<&'a FunctionPrototype, Error> {
         let name_clone = name.clone();
-        let best_match: Option<&'a FunctionPrototype> = {
-            let iter = self
-                .modules
-                .iter()
-                .rev()
-                .flat_map(|module| module.function_iterator())
-                .chain(BUILTIN_FNS.iter().map(|f| *f))
-                .filter(|proto| proto.name() == &*name_clone);
 
-            let mut current_best: Option<&'a FunctionPrototype> = None;
-
-            for candidate in iter {
-                if candidate.do_arguments_match(arguments) {
-                    if !candidate.is_variadic() {
-                        return Ok(candidate);
-                    } else if current_best.is_none() {
-                        current_best = Some(candidate);
-                    } else {
-                        let option1 = current_best.unwrap();
-
-                        return Err(errors::ambiguous_varargs_functions(
-                            name, arguments, option1, candidate,
-                        ));
-                    }
-                }
-            }
-            current_best
-        };
-
-        best_match.ok_or_else(|| errors::no_such_method(name, arguments))
+        if let Some((module_name, function_name)) = split_module_and_function(&*name) {
+            let matching_module = self.get_module(&module_name)?;
+            let function_iter = matching_module.find_function(&function_name).ok_or_else(|| {
+                errors::no_such_method(name, arguments)
+            })?;
+            filter_matching_arguments(name_clone, arguments, function_iter)
+        } else {
+            let iter = self.find_function(name);
+            filter_matching_arguments(name_clone, arguments, iter)
+        }
     }
 
     fn eval_arg_usage(&self, name: IString, bound_args: &[BoundArgument]) -> CreateFunctionResult {
@@ -203,6 +162,41 @@ impl Compiler {
 
         Ok(bound_arg.value.clone())
     }
+}
+
+fn split_module_and_function(function_name: &str) -> Option<(IString, IString)> {
+    function_name.rfind(MODULE_SEPARATOR_CHAR).map(|separator_position| {
+        let (module, function_with_separator) = function_name.split_at(separator_position);
+        let function = (&function_with_separator[1..]).into();
+        (module.into(), function)
+    })
+}
+
+fn builtin_functions<'a>(name: IString) -> impl Iterator<Item = &'a FunctionPrototype> {
+    BUILTIN_FNS.iter().filter(move |fun| fun.name() == &*name).map(|f| *f)
+}
+
+fn filter_matching_arguments<'a, I: Iterator<Item = &'a FunctionPrototype>>(name: IString, arguments: &[AnyFunction], iter: I) -> Result<&'a FunctionPrototype, Error> {
+    let mut current_best: Option<&'a FunctionPrototype> = None;
+
+    for candidate in iter {
+        if candidate.do_arguments_match(arguments) {
+            if !candidate.is_variadic() {
+                return Ok(candidate);
+            } else if current_best.is_none() {
+                current_best = Some(candidate);
+            } else {
+                let option1 = current_best.unwrap();
+
+                return Err(errors::ambiguous_varargs_functions(
+                    name, arguments, option1, candidate,
+                ));
+            }
+        }
+    }
+    current_best.ok_or_else(|| {
+        errors::no_such_method(name, arguments)
+    })
 }
 
 pub struct Interpreter {
@@ -226,10 +220,11 @@ impl Interpreter {
     pub fn add_module(&mut self, source: &Source) -> Result<(), Error> {
         use std::borrow::Borrow;
 
-        let module_name: IString = source.get_name().into();
+        let module_name: IString = source.get_name();
         let text = source.read_to_str()?;
         let parsed = parser::parse_program(module_name.clone(), text.borrow())?;
-        self.internal.add_module(Module::new(module_name, parsed.assignments));
+        let module = Module::new(module_name, parsed.assignments)?;
+        self.internal.add_module(module);
         Ok(())
     }
 
@@ -238,7 +233,7 @@ impl Interpreter {
         let Program { assignments, expr } = parser::parse_program(module_name.clone(), program)?;
 
         if let Some(expression) = expr {
-            let main_module = Module::new(module_name, assignments);
+            let main_module = Module::new(module_name, assignments)?;
             self.internal.add_module(main_module);
 
             self.internal.eval(&expression)
@@ -250,7 +245,7 @@ impl Interpreter {
     pub fn eval_any(&mut self, program: &str) -> Result<Option<AnyFunction>, Error> {
         let module_name: IString = "main".into();
         let Program { assignments, expr } = parser::parse_program(module_name.clone(), program)?;
-        let main_module = Module::new(module_name, assignments);
+        let main_module = Module::new(module_name, assignments)?;
         self.internal.add_module(main_module);
 
         if let Some(expression) = expr {

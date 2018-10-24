@@ -2,6 +2,7 @@ use failure::Error;
 use std::borrow::Cow;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
+use IString;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Source {
@@ -15,19 +16,23 @@ pub enum Source {
     Stdin,
 }
 
+fn default_module_name() -> IString {
+    "main".into()
+}
+
 impl Source {
-    pub fn get_name(&self) -> String {
+    pub fn get_name(&self) -> IString {
         match *self {
             Source::File(ref pb) => pb
                 .file_name()
                 .map(|name| {
                     name.to_str()
-                        .map(::std::borrow::ToOwned::to_owned)
-                        .unwrap_or_else(|| "unknown file".to_owned())
-                }).unwrap_or_else(|| "unknown file".to_owned()),
-            Source::String(_) => "string input".to_owned(),
-            Source::Builtin(ref name, _) => (*name).to_owned(),
-            Source::Stdin => "stdin".to_owned(),
+                        .map(Into::into)
+                        .unwrap_or_else(|| default_module_name())
+                }).unwrap_or_else(|| default_module_name()),
+            Source::String(_) => default_module_name(),
+            Source::Builtin(ref name, _) => (*name).into(),
+            Source::Stdin => default_module_name(),
         }
     }
     pub fn file<P: Into<PathBuf>>(path: P) -> Source {

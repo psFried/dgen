@@ -2,6 +2,7 @@ use failure::Error;
 use program::Program;
 use writer::DataGenOutput;
 use ProgramContext;
+use interpreter::Source;
 
 #[test]
 fn signed_integer_functions() {
@@ -93,20 +94,55 @@ fn mapping_a_mapped_function() {
     test_program_success(1, input, expected);
 }
 
+#[test]
+fn calling_a_function_with_module_name() {
+    let lib1 = r##"
+        def foo() = "lib1foo";
+    "##;
+
+    let lib2 = r##"
+        def foo() = "lib2foo";
+    "##;
+
+    let mut runner = Program::new(2, 1, "lib2.foo()".to_owned(), create_context());
+    runner.add_library(Source::Builtin("lib1", lib1)).unwrap();
+    runner.add_library(Source::Builtin("lib2", lib2)).unwrap();
+
+    let result = run_to_string(runner);
+    assert_eq!("lib2foo", &result);
+
+    let mut runner = Program::new(2, 1, "lib1.foo()".to_owned(), create_context());
+    runner.add_library(Source::Builtin("lib1", lib1)).unwrap();
+    runner.add_library(Source::Builtin("lib2", lib2)).unwrap();
+
+    let result = run_to_string(runner);
+    assert_eq!("lib1foo", &result);
+}
+
 const RAND_SEED: &[u8; 16] = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 
+pub fn create_context() -> ProgramContext {
+    ProgramContext::from_seed(*RAND_SEED)
+}
 pub fn run_program(iterations: u64, program: &str) -> Result<Vec<u8>, Error> {
-    let rng = ProgramContext::from_seed(*RAND_SEED);
-
     let mut out = Vec::new();
     {
         let mut output = DataGenOutput::new(&mut out);
-        let mut prog = Program::new(2, iterations, program.to_owned(), rng);
+        let mut prog = Program::new(2, iterations, program.to_owned(), create_context());
         prog.add_std_lib();
         prog.run(&mut output)?;
     }
 
     Ok(out)
+}
+
+fn run_to_string(runner: Program) -> String {
+    let mut out = Vec::new();
+    {
+        let mut output = DataGenOutput::new(&mut out);
+        runner.run(&mut output).expect("failed to run program");
+    }
+    String::from_utf8(out).expect("program results were not valid utf8")
 }
 
 pub fn assert_bin_output_is_expected(program: &str, expected: &[u8]) {
