@@ -6,7 +6,7 @@ use IString;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Source {
-    /// reference to a file on the local filesystem
+    /// reference to a file on the local filesystem. The filename will become the module name
     File(PathBuf),
     /// source is held entirely in memory
     String(String),
@@ -17,14 +17,14 @@ pub enum Source {
 }
 
 fn default_module_name() -> IString {
-    "main".into()
+    "default".into()
 }
 
 impl Source {
     pub fn get_name(&self) -> IString {
         match *self {
             Source::File(ref pb) => pb
-                .file_name()
+                .file_stem()
                 .map(|name| {
                     name.to_str()
                         .map(Into::into)
@@ -81,5 +81,20 @@ impl<'a> From<&'a Path> for Source {
 impl From<PathBuf> for Source {
     fn from(p: PathBuf) -> Source {
         Source::file(p)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::path::Path;
+    use super::*;
+
+    #[test]
+    fn filename_minus_extension_is_used_as_module_name() {
+        let path = Path::new("/foo/bar/baz.dgen");
+        let source = Source::from(path);
+
+        let name = source.get_name();
+        assert_eq!("baz", &*name);
     }
 }

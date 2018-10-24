@@ -39,8 +39,14 @@ impl Compiler {
             modules: Vec::new(),
         }
     }
-    fn add_module(&mut self, module: Module) {
+    fn add_module(&mut self, module: Module) -> Result<(), Error> {
+        let module_name = module.name.clone();
+        
+        if let Some(existing_module) = self.get_module_mut(&module_name) {
+            return existing_module.combine(module);
+        }  
         self.modules.push(module);
+        Ok(())
     }
 
     pub fn eval(&self, expr: &Expr) -> CreateFunctionResult {
@@ -72,6 +78,10 @@ impl Compiler {
             .iter()
             .flat_map(|module| module.function_iterator())
             .chain(BUILTIN_FNS.iter().map(|f| *f))
+    }
+
+    fn get_module_mut(&mut self, name: &IString) -> Option<&mut Module> {
+        self.modules.iter_mut().find(|module| name == &module.name)
     }
 
     fn get_module(&self, name: &IString) -> Result<&Module, Error> {
@@ -224,8 +234,7 @@ impl Interpreter {
         let text = source.read_to_str()?;
         let parsed = parser::parse_program(module_name.clone(), text.borrow())?;
         let module = Module::new(module_name, parsed.assignments)?;
-        self.internal.add_module(module);
-        Ok(())
+        self.internal.add_module(module)
     }
 
     pub fn eval(&mut self, program: &str) -> CreateFunctionResult {
@@ -234,7 +243,7 @@ impl Interpreter {
 
         if let Some(expression) = expr {
             let main_module = Module::new(module_name, assignments)?;
-            self.internal.add_module(main_module);
+            self.internal.add_module(main_module)?;
 
             self.internal.eval(&expression)
         } else {
@@ -246,7 +255,7 @@ impl Interpreter {
         let module_name: IString = "main".into();
         let Program { assignments, expr } = parser::parse_program(module_name.clone(), program)?;
         let main_module = Module::new(module_name, assignments)?;
-        self.internal.add_module(main_module);
+        self.internal.add_module(main_module)?;
 
         if let Some(expression) = expr {
             let function = self.internal.eval(&expression)?;
