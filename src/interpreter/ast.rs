@@ -2,6 +2,12 @@ use std::fmt::{self, Display};
 use std::str::Chars;
 use ::IString;
 
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub struct Span {
+    pub start: usize,
+    pub end: usize,
+}
+
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
 pub enum GenType {
     Char,
@@ -36,14 +42,14 @@ impl Display for GenType {
 #[derive(Debug, Clone, PartialEq)]
 pub struct FunctionCall {
     pub function_name: IString,
-    pub args: Vec<Expr>,
+    pub args: Vec<WithSpan<Expr>>,
     pub mapper: Option<Box<FunctionMapper>>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct FunctionMapper {
     pub arg_name: IString,
-    pub mapper_body: Expr,
+    pub mapper_body: WithSpan<Expr>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -60,6 +66,20 @@ pub enum Expr {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct WithSpan<T> {
+    pub span: Span,
+    pub value: T,
+}
+
+impl<T> ::std::ops::Deref for WithSpan<T> {
+    type Target = T;
+
+    fn deref(&self) -> &T {
+        &self.value
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct MacroArgument {
     pub name: IString,
     pub arg_type: GenType,
@@ -70,13 +90,13 @@ pub struct MacroDef {
     pub doc_comments: String,
     pub name: IString,
     pub args: Vec<MacroArgument>,
-    pub body: Expr,
+    pub body: WithSpan<Expr>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Program {
-    pub assignments: Vec<MacroDef>,
-    pub expr: Option<Expr>,
+    pub assignments: Vec<WithSpan<MacroDef>>,
+    pub expr: Option<WithSpan<Expr>>,
 }
 
 pub fn process_string_escapes(input: &str) -> Result<IString, &'static str> {

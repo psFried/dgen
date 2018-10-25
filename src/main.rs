@@ -13,7 +13,7 @@ mod cli_opts;
 
 use self::cli_opts::{CliOptions, SubCommand};
 use dgen::program::Program;
-use dgen::interpreter::Source;
+use dgen::interpreter::UnreadSource;
 use dgen::ProgramContext;
 use failure::Error;
 use std::path::PathBuf;
@@ -93,9 +93,9 @@ fn get_program_source(
     program_string: Option<String>,
     program_file: Option<PathBuf>,
     stdin: bool,
-) -> Result<Source, Error> {
+) -> Result<UnreadSource, Error> {
     let maybe_source = if stdin {
-        Some(Source::stdin())
+        Some(UnreadSource::stdin())
     } else if program_string.is_some() {
         program_string.map(Into::into)
     } else if program_file.is_some() {
@@ -108,7 +108,7 @@ fn get_program_source(
 }
 
 fn create_program(
-    program_source: Source,
+    program_source: UnreadSource,
     verbosity: u64,
     iterations: u64,
     libraries: Vec<PathBuf>,
@@ -121,7 +121,7 @@ fn create_program(
         program.add_std_lib();
     }
     for lib in libraries {
-        program.add_library(Source::file(lib))?;
+        program.add_library(UnreadSource::file(lib))?;
     }
     Ok(program)
 }

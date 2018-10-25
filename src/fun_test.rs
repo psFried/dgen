@@ -2,7 +2,7 @@ use failure::Error;
 use program::Program;
 use writer::DataGenOutput;
 use ProgramContext;
-use interpreter::Source;
+use interpreter::UnreadSource;
 
 #[test]
 fn signed_integer_functions() {
@@ -105,15 +105,15 @@ fn calling_a_function_with_module_name() {
     "##;
 
     let mut runner = Program::new(2, 1, "lib2.foo()".to_owned(), create_context());
-    runner.add_library(Source::Builtin("lib1", lib1)).unwrap();
-    runner.add_library(Source::Builtin("lib2", lib2)).unwrap();
+    runner.add_library(UnreadSource::Builtin("lib1", lib1)).unwrap();
+    runner.add_library(UnreadSource::Builtin("lib2", lib2)).unwrap();
 
     let result = run_to_string(runner);
     assert_eq!("lib2foo", &result);
 
     let mut runner = Program::new(2, 1, "lib1.foo()".to_owned(), create_context());
-    runner.add_library(Source::Builtin("lib1", lib1)).unwrap();
-    runner.add_library(Source::Builtin("lib2", lib2)).unwrap();
+    runner.add_library(UnreadSource::Builtin("lib1", lib1)).unwrap();
+    runner.add_library(UnreadSource::Builtin("lib2", lib2)).unwrap();
 
     let result = run_to_string(runner);
     assert_eq!("lib1foo", &result);
@@ -150,9 +150,9 @@ fn adding_multiple_default_modules_that_each_define_the_same_function_retuns_err
     "##;
 
     let mut runner = Program::new(2, 1, "bar()".to_owned(), create_context());
-    runner.add_library(Source::string(lib1)).expect("First lib should be added OK");
+    runner.add_library(UnreadSource::string(lib1)).expect("First lib should be added OK");
 
-    let result = runner.add_library(Source::string(lib2));
+    let result = runner.add_library(UnreadSource::string(lib2));
     assert!(result.is_err());
     let error = result.unwrap_err();
     let err_str = format!("{}", error);

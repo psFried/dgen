@@ -16,7 +16,6 @@ pub(crate) mod builtins;
 mod context;
 pub mod interpreter;
 pub mod program;
-mod prototype;
 mod types;
 mod writer;
 
@@ -27,7 +26,7 @@ pub use self::arguments::Arguments;
 pub use self::context::ProgramContext;
 pub use self::interpreter::ast::GenType;
 pub use self::interpreter::{Interpreter, Source};
-pub use self::prototype::{
+pub use self::interpreter::prototype::{
     BoundArgument, BuiltinFunctionCreator, BuiltinFunctionPrototype, CreateFunctionResult,
     FunctionPrototype, InterpretedFunctionPrototype,
 };

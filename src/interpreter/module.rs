@@ -1,25 +1,30 @@
 use IString;
-use prototype::FunctionPrototype;
-use interpreter::ast::MacroDef;
+use interpreter::prototype::{FunctionPrototype, InterpretedFunctionPrototype};
+use interpreter::ast::{WithSpan, MacroDef};
+use interpreter::Source;
 use failure::Error;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Module {
     pub name: IString,
+    source: Arc<Source>,
     functions: HashMap<IString, Vec<FunctionPrototype>>,
 }
 
 impl Module {
-    pub fn new(name: IString, function_defs: Vec<MacroDef>) -> Result<Module, Error> {
+    pub fn new(source: Arc<Source>, function_defs: Vec<WithSpan<MacroDef>>) -> Result<Module, Error> {
+        let name = source.module_name();
         let mut module = Module {
             name,
+            source: source.clone(),
             functions: HashMap::with_capacity(32)
         };
 
         for function in function_defs.into_iter() {
-            let new_function = FunctionPrototype::new(function);
-            module.add_function(new_function)?;
+            let new_function = InterpretedFunctionPrototype::new(source.clone(), function);
+            module.add_function(new_function.into())?;
         }
 
         Ok(module)
@@ -35,7 +40,7 @@ impl Module {
     }
 
     pub fn add_function(&mut self, new_function: FunctionPrototype) -> Result<(), Error> {
-        let Module { ref name, ref mut functions } = *self;
+        let Module { ref name, ref mut functions, .. } = *self;
         let new_function_name = new_function.name().into();
         let existing: &mut Vec<FunctionPrototype> = functions.entry(new_function_name).or_insert(Vec::new());
 

@@ -4,26 +4,178 @@ use ::AnyFunction;
 use ::FunctionPrototype;
 use itertools::Itertools;
 use std::fmt::{self, Display};
+use std::sync::Arc;
+use interpreter::ast::{GenType, Span};
+use interpreter::Source;
 
-pub fn no_such_argument(name: IString) -> Error {
-    format_err!("No such argument: '{}'", name)
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SourceRef {
+    pub source: Arc<Source>,
+    pub span: Span,
 }
 
-pub fn no_such_module(name: IString) -> Error {
-    format_err!("No such module: '{}'", name)
+impl SourceRef {
+    pub fn new(source: Arc<Source>, span: Span) -> SourceRef {
+        SourceRef { source, span }
+    }
 }
 
-pub fn no_such_method(name: IString, arguments: &[AnyFunction]) -> Error {
-    use itertools::Itertools;
-    format_err!("No such method: '{}({})'", name, arguments.iter().map(|a| a.get_type()).join(", "))
+impl Display for SourceRef {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let source_name = self.source.description();
+        let source_str = self.source.text();
+        let region = SourceErrRegion::new(&source_str, self.span.start);
+        let line_number = region.get_line_number();
+
+        write!(f, "{}:{}\n\n{}\n", source_name, line_number, region)
+    }
 }
 
-pub fn ambiguous_varargs_functions(name: IString, arguments: &[AnyFunction], option1: &FunctionPrototype, option2: &FunctionPrototype) -> Error {
-    let actual_arg_types = arguments.iter().map(AnyFunction::get_type).join(", ");
-
-    format_err!("Ambiguous function call: '{}({})' could refer to two or more function prototypes:\nA: {}\nB: {}\n",
-        name, actual_arg_types, option1, option2)
+#[derive(Debug, Clone, PartialEq)]
+pub struct ErrorFunctionSignature {
+    function_name: IString,
+    arg_types: Vec<GenType>,
+    render_variadic: bool,
 }
+
+impl ErrorFunctionSignature {
+    fn from_actual_args(function_name: IString, args: &[AnyFunction]) -> ErrorFunctionSignature {
+        let arg_types = args.iter().map(AnyFunction::get_type).collect();
+        ErrorFunctionSignature {
+            function_name,
+            arg_types,
+            render_variadic: false,
+        }
+    }
+}
+
+impl<'a> From<&'a FunctionPrototype> for ErrorFunctionSignature {
+    fn from(prototype: &'a FunctionPrototype) -> ErrorFunctionSignature {
+        let function_name = prototype.name().into();
+        let arg_types = prototype.collect_argument_types();
+        ErrorFunctionSignature {
+            function_name,
+            arg_types,
+            render_variadic: prototype.is_variadic(),
+        }
+    }
+}
+
+impl Display for ErrorFunctionSignature {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let arg_types = self.arg_types.iter().join(", ");
+        let maybe_variadic = if self.render_variadic {
+            "..."
+        } else {
+            ""
+        };
+        write!(f, "{}({}{})", self.function_name, arg_types, maybe_variadic)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct AmbiguousCall {
+    called: ErrorFunctionSignature,
+    option1: ErrorFunctionSignature,
+    option2: ErrorFunctionSignature,
+}
+
+impl AmbiguousCall {
+    fn new(function_name: IString, actual_args: &[AnyFunction], option1: &FunctionPrototype, option2: &FunctionPrototype) -> AmbiguousCall {
+        AmbiguousCall {
+            called: ErrorFunctionSignature::from_actual_args(function_name, actual_args),
+            option1: option1.into(),
+            option2: option2.into(),
+        }
+    }
+}
+
+impl Display for AmbiguousCall {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Called function: {}\nOption A: {}\nOption B: {}", 
+                self.called,
+                self.option1,
+                self.option2)
+    }
+}
+
+#[derive(Debug)]
+pub enum ErrorType {
+    NoSuchArgument(IString),
+    NoSuchMethod(ErrorFunctionSignature),
+    NoSuchModule(IString),
+    AmbibuousVarargsFunctionCall(AmbiguousCall),
+    InternalError(Error),
+}
+
+impl Display for ErrorType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            ErrorType::NoSuchArgument(ref name) => {
+                write!(f, "No such argument '{}' is in scope here", name)
+            }
+            ErrorType::NoSuchMethod(ref signature) => {
+                write!(f, "No such method with signature: {}", signature)
+            }
+            ErrorType::NoSuchModule(ref name) => {
+                write!(f, "No such module: '{}'", name)
+            }
+            ErrorType::AmbibuousVarargsFunctionCall(ref call) => {
+                write!(f, "Ambiguous function call, which could refer to multiple functions:\n{}", call)
+            }
+            ErrorType::InternalError(ref err) => {
+                write!(f, "Internal Error: {}", err)
+            }
+        }
+    }
+}
+
+#[derive(Debug, Fail)]
+pub struct CompileError {
+    source: SourceRef,
+    error_type: ErrorType,
+}
+
+impl CompileError {
+
+    fn new(source: SourceRef, error_type: ErrorType) -> CompileError {
+        CompileError {
+            source,
+            error_type,
+        }
+    }
+
+    pub fn internal_error(err: Error, source: SourceRef) -> CompileError {
+        CompileError::new(source, ErrorType::InternalError(err))
+    }
+
+    pub fn no_such_argument(name: IString, source_ref: SourceRef) -> CompileError {
+        CompileError::new(source_ref, ErrorType::NoSuchArgument(name))
+    }
+
+    pub fn no_such_module(name: IString, source_ref: SourceRef) -> CompileError {
+        CompileError::new(source_ref, ErrorType::NoSuchModule(name))
+    }
+
+    pub fn no_such_method(name: IString, arguments: &[AnyFunction], source_ref: SourceRef) -> CompileError {
+        let error_type = ErrorType::NoSuchMethod(ErrorFunctionSignature::from_actual_args(name, arguments));
+        CompileError::new(source_ref, error_type)
+    }
+
+    pub fn ambiguous_varargs_functions(name: IString, arguments: &[AnyFunction], option1: &FunctionPrototype, option2: &FunctionPrototype, source_ref: SourceRef) -> CompileError {
+        let call = AmbiguousCall::new(name, arguments, option1, option2);
+        let error_type = ErrorType::AmbibuousVarargsFunctionCall(call);
+        CompileError::new(source_ref, error_type)
+    }
+}
+
+impl Display for CompileError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Compilation Error: {}\n\n{}\n", self.error_type, self.source)
+    }
+}
+
 
 /// Used to display a region of a source file when there is an error
 pub struct SourceErrRegion<'a> {
