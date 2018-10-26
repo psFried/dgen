@@ -285,4 +285,8 @@ impl Interpreter {
     pub fn function_iterator(&self) -> impl Iterator<Item = &FunctionPrototype> {
         self.internal.function_iterator()
     }
+
+    pub fn module_iterator(&self) -> impl Iterator<Item = &Module> {
+        self.internal.modules.iter()
+    }
 }

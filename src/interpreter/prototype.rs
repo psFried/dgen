@@ -288,28 +288,63 @@ impl FunctionPrototype {
         }
         result
     }
+
+    pub fn get_source(&self) -> Option<SourceRef> {
+        match *self {
+            FunctionPrototype::Builtin(_) => None,
+            FunctionPrototype::Interpreted(ref int) => Some(int.source_ref.clone())
+        }
+    }
+
 }
 
 impl Display for FunctionPrototype {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // function name and argument list
-        f.write_str(self.name())?;
-        f.write_str("(")?;
-        let variadic = self.is_variadic();
-        let arg_count = self.get_arg_count();
-        for i in 0..arg_count {
-            if i > 0 {
-                f.write_str(", ")?;
+        // in the alternate form, we'll try to print out the whole source
+        if f.alternate() {
+            for line in self.get_description().lines() {
+                writeln!(f, "# {}", line)?;
             }
-            let (arg_name, arg_type) = self.get_arg(i);
-            write!(f, "{}: {}", arg_name, arg_type)?;
-            if variadic && i == arg_count.saturating_sub(1) {
-                f.write_str("...")?;
-            }
-        }
-        f.write_str(") - ")?;
 
-        f.write_str(self.get_description())
+            if let Some(source) = self.get_source() {
+                // alternate form for source renders the entire span without underlines
+                writeln!(f, "{:#}", source)
+            } else {
+                f.write_str(self.name())?;
+                f.write_str("(")?;
+                let variadic = self.is_variadic();
+                let arg_count = self.get_arg_count();
+                for i in 0..arg_count {
+                    if i > 0 {
+                        f.write_str(", ")?;
+                    }
+                    let (arg_name, arg_type) = self.get_arg(i);
+                    write!(f, "{}: {}", arg_name, arg_type)?;
+                    if variadic && i == arg_count.saturating_sub(1) {
+                        f.write_str("...")?;
+                    }
+                }
+                f.write_str(") - <builtin function>\n")
+            }
+        } else {
+            // function name and argument list
+            f.write_str(self.name())?;
+            f.write_str("(")?;
+            let variadic = self.is_variadic();
+            let arg_count = self.get_arg_count();
+            for i in 0..arg_count {
+                if i > 0 {
+                    f.write_str(", ")?;
+                }
+                let (arg_name, arg_type) = self.get_arg(i);
+                write!(f, "{}: {}", arg_name, arg_type)?;
+                if variadic && i == arg_count.saturating_sub(1) {
+                    f.write_str("...")?;
+                }
+            }
+            f.write_str(") - ")?;
+            f.write_str(self.get_description())
+        }
     }
 }
 

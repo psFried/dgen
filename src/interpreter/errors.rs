@@ -36,10 +36,16 @@ impl Display for SourceRef {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let source_name = self.source.description();
         let source_str = self.source.text();
-        let region = SourceErrRegion::new(&source_str, self.span.start);
-        let line_number = region.get_line_number();
 
-        write!(f, "{}:{}\n\n{}\n", source_name, line_number, region)
+        if f.alternate() {
+            let region = &source_str[self.span.start..self.span.end];
+            write!(f, "{}", region)
+        } else {
+            let region = SourceErrRegion::new(&source_str, self.span.start);
+            let line_number = region.get_line_number();
+
+            write!(f, "{}:{}\n\n{}\n", source_name, line_number, region)
+        }
     }
 }
 

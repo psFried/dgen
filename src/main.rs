@@ -13,8 +13,8 @@ mod cli_opts;
 
 use self::cli_opts::{CliOptions, SubCommand};
 use dgen::program::Runner;
-use dgen::interpreter::UnreadSource;
-use dgen::ProgramContext;
+use dgen::interpreter::{Interpreter, UnreadSource, Module};
+use dgen::{ProgramContext, FunctionPrototype};
 use failure::Error;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -54,7 +54,7 @@ fn main() {
     //eprintln!("sli args: {:#?}", args);
     let CliOptions {subcommand, mut files, ..} = args;
     match subcommand {
-        Some(SubCommand::ListFunctions { name }) => list_functions(name, verbosity),
+        Some(SubCommand::Help { function_name, module_name }) => print_function_help(function_name, module_name, verbosity),
         Some(SubCommand::RunProgram {
             program,
             iteration_count,
@@ -148,24 +148,90 @@ fn create_program(
     Ok(program)
 }
 
+fn has_matching_module(interpreter: &Interpreter, module_name: &str) -> Result<(), ()> {
+    if interpreter.module_iterator().any(|m| {
+        m.name.contains(module_name)
+    }) {
+        Ok(())
+    } else {
+        Err(())
+    }
+}
 
-fn list_functions(name: Option<String>, verbosity: Verbosity) {
-    use std::io::{stdout, Write};
-    use dgen::interpreter::Interpreter;
+fn list_modules(interpreter: &Interpreter) -> String {
+    use itertools::Itertools;
+    interpreter.module_iterator().map(|m| m.name.clone()).join("\n")
+}
 
+fn find_modules<'a>(interpreter: &'a Interpreter, module_name: &'a str, verbosity: Verbosity) -> impl Iterator<Item = &'a Module> {
+    let _ = has_matching_module(interpreter, module_name).map_err(|_| {
+        let other_modules = list_modules(interpreter);
+        format_err!("No module exists with name matching '{}'. Available modules are: \n\n{}\n", module_name, other_modules)
+    }).or_bail(verbosity);
+
+    interpreter.module_iterator().filter(move |m| {
+        m.name.contains(module_name)
+    })
+}
+
+fn print_function_help(function_name: Option<String>, module_name: Option<String>, verbosity: Verbosity) {
     let mut interpreter = Interpreter::new();
     interpreter.add_std_lib();
 
+    match (module_name, function_name) {
+        (Some(module), Some(function)) => {
+            let iter = find_modules(&interpreter, module.as_str(), verbosity);
+            for actual_module in iter {
+                println!("\nModule: {}", actual_module.name);
+                list_functions(actual_module.function_iterator(), Some(function.as_str()), verbosity);
+            }
+        }
+        (Some(module), None) => {
+            let iter = find_modules(&interpreter, module.as_str(), verbosity);
+            for actual_module in iter {
+                println!("\nModule: {}", actual_module.name);
+                list_functions(actual_module.function_iterator(), None, verbosity);
+            }
+        }
+        (None, Some(function)) => {
+            for module in interpreter.module_iterator() {
+                println!("\nModule: {}", module.name);
+                list_functions(module.function_iterator(), Some(function.as_str()), verbosity);
+            }
+        }
+        _ => {
+            // print some generic help and a listing of modules
+            println!("Available dgen modules: \n");
+            for module in interpreter.module_iterator() {
+                println!("{}", module.name);
+            }
+            println!("\nTo list all the functions in a specific module, run `dgen help --module <name>`");
+        }
+    }
+}
+
+fn list_functions<'a, 'b, I: Iterator<Item=&'a FunctionPrototype>>(function_iterator: I, function_name: Option<&'b str>, verbosity: Verbosity) {
+    use std::io::{stdout, Write};
+
     let out = stdout();
     let mut lock = out.lock();
-    for fun in interpreter.function_iterator() {
-        let should_print_help = name
-            .as_ref()
-            .map(|n| fun.name().contains(n))
-            .unwrap_or(true);
 
-        if should_print_help {
-            write!(&mut lock, "{}\n", fun).map_err(Into::into).or_bail(verbosity);
+    let mut filtered = function_iterator.filter(|fun| {
+        function_name.as_ref().map(|name| {
+            fun.name().contains(*name)
+        }).unwrap_or(true)
+    }).peekable();
+
+    if filtered.peek().is_none() {
+        writeln!(&mut lock, "No matching functions").map_err(Into::into).or_bail(verbosity);
+    } else {
+        writeln!(&mut lock, "").map_err(Into::into).or_bail(verbosity);
+        for fun in filtered {
+            if verbosity.is_verbose() {
+                writeln!(&mut lock, "{:#}", fun).map_err(Into::into).or_bail(verbosity);
+            } else {
+                writeln!(&mut lock, "{}", fun).map_err(Into::into).or_bail(verbosity);
+            }
         }
     }
 }

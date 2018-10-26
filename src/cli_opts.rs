@@ -33,9 +33,14 @@ impl CliOptions {
 pub enum SubCommand {
     /// Print information on available functions
     #[structopt(name = "help")]
-    ListFunctions {
+    Help {
+        /// Print information on all functions whose name contains the given string
         #[structopt(short = "f", long = "function")]
-        name: Option<String>,
+        function_name: Option<String>,
+
+        /// Print information on a specific module
+        #[structopt(short = "m", long = "module")]
+        module_name: Option<String>,
     },
 
     /// Run a program to generate some data
