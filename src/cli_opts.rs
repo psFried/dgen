@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use dgen::verbosity::Verbosity;
 
 #[derive(Debug, StructOpt)]
-#[structopt(name = "datagen", about = "Generate random data sets")]
+#[structopt(name = "dgen", about = "Generate random data sets")]
 pub struct CliOptions {
     /// Enable debug logging to stderr. Multiple occurrences will increase the verbosity. Contradicts `quiet` if both are supplied.
     /// The default verbosity will print errors and stacktraces to stderr.
@@ -15,7 +15,11 @@ pub struct CliOptions {
     pub quiet: u32,
 
     #[structopt(subcommand)]
-    pub subcommand: SubCommand,
+    pub subcommand: Option<SubCommand>,
+
+    /// Files to run (shortcut for `dgen run --lib file1 --lib file2 -f filen`)
+    #[structopt(parse(from_os_str))]
+    pub files: Vec<PathBuf>,
 }
 
 impl CliOptions {

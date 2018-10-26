@@ -51,9 +51,11 @@ fn main() {
         // backtraces won't get generated unless this variable is set
         std::env::set_var("RUST_BACKTRACE", "1")
     }
-    match args.subcommand {
-        SubCommand::ListFunctions { name } => list_functions(name, verbosity),
-        SubCommand::RunProgram {
+    //eprintln!("sli args: {:#?}", args);
+    let CliOptions {subcommand, mut files, ..} = args;
+    match subcommand {
+        Some(SubCommand::ListFunctions { name }) => list_functions(name, verbosity),
+        Some(SubCommand::RunProgram {
             program,
             iteration_count,
             program_file,
@@ -61,7 +63,7 @@ fn main() {
             libraries,
             no_std_lib,
             seed,
-        } => {
+        }) => {
             let source = get_program_source(program, program_file, stdin).or_bail(verbosity);
             let rng = create_rng(seed, verbosity);
             let program = create_program(
@@ -71,6 +73,23 @@ fn main() {
                 libraries,
                 rng,
                 !no_std_lib,
+            ).or_bail(verbosity);
+            run_program(program).or_bail(verbosity)
+        }
+        None => {
+            let program_file = files.pop().ok_or_else(|| {
+                format_err!("Must supply either a subcommand or a file to execute")
+            }).or_bail(verbosity);
+
+            let source = UnreadSource::file(program_file);
+            let runtime_context = ProgramContext::from_random_seed(verbosity);
+            let program = create_program(
+                source,
+                verbosity,
+                1,
+                files,
+                runtime_context,
+                true // to add the std library. This default can only be disabled when using the `run` subcommand
             ).or_bail(verbosity);
             run_program(program).or_bail(verbosity)
         }
