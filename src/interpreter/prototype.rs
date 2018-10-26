@@ -134,7 +134,7 @@ pub struct ArgumentTypes {
     pub types: Vec<GenType>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum FunctionPrototype {
     Builtin(&'static BuiltinFunctionPrototype),
     Interpreted(InterpretedFunctionPrototype),

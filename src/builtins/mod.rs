@@ -11,9 +11,10 @@ mod sequence;
 mod strings;
 mod to_string;
 
-use FunctionPrototype;
+use interpreter::Module;
+use ::BuiltinFunctionPrototype;
 
-pub const BUILTIN_FNS: &'static [&'static FunctionPrototype] = &[
+const BUILTIN_FNS: &'static [&'static BuiltinFunctionPrototype] = &[
     self::bin_length::BIN_LENGTH,
     self::byte_order::UINT_LITTLE_ENDIAN,
     self::byte_order::UINT_BIG_ENDIAN,
@@ -67,3 +68,8 @@ pub const BUILTIN_FNS: &'static [&'static FunctionPrototype] = &[
     self::sequence::DECIMAL_WRAPPING_SEQ,
     self::sequence::DECIMAL_SEQ,
 ];
+
+
+pub fn get_default_builtins_module() -> Module {
+    Module::new_builtin(BUILTIN_FNS.iter().map(|fun| *fun))
+}

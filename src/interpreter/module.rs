@@ -1,7 +1,7 @@
 use IString;
-use interpreter::prototype::{FunctionPrototype, InterpretedFunctionPrototype};
+use interpreter::prototype::{FunctionPrototype, BuiltinFunctionPrototype, InterpretedFunctionPrototype};
 use interpreter::ast::{WithSpan, MacroDef};
-use interpreter::Source;
+use interpreter::{Source, UnreadSource};
 use failure::Error;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -28,6 +28,20 @@ impl Module {
         }
 
         Ok(module)
+    }
+
+    pub fn new_builtin<I: Iterator<Item = &'static BuiltinFunctionPrototype>>(builtin_fns: I) -> Module {
+        use std::borrow::Cow;
+        let mut module = Module {
+            name: IString::from("dgen"),
+            source: Arc::new(Source::new(UnreadSource::Builtin("dgen", ""), Cow::Borrowed(""))),
+            functions: HashMap::with_capacity(64),
+        };
+
+        for fun in builtin_fns {
+            module.add_function(FunctionPrototype::Builtin(fun)).expect("Failed to add builtin function to builtin module");
+        }
+        module
     }
 
     pub fn combine(&mut self, Module {functions, ..}: Module) -> Result<(), Error> {

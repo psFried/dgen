@@ -4,7 +4,7 @@ use std::fmt::Debug;
 use std::rc::Rc;
 use ::{
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput, DynFun,
-    FunctionPrototype, GenType, ProgramContext, RunnableFunction,
+    GenType, ProgramContext, RunnableFunction,
 };
 
 #[derive(Debug)]
@@ -72,14 +72,14 @@ macro_rules! make_select_proto {
             Ok(any)
         }
 
-        pub const $select_name: &FunctionPrototype =
-            &FunctionPrototype::Builtin(&BuiltinFunctionPrototype {
+        pub const $select_name: &BuiltinFunctionPrototype =
+            &BuiltinFunctionPrototype {
                 function_name: "select",
                 description: "Randomly selects one of the input functions",
                 arguments: &[(SELECT_ARG, $gen_type)],
                 variadic: true,
                 create_fn: &$create_select_fn_name,
-            });
+            };
 
         fn $create_stable_select_fn_name(args: Arguments) -> CreateFunctionResult {
             let as_types = args.get_required_varargs(SELECT_ARG, 0, $convert_fun)?;
@@ -91,14 +91,14 @@ macro_rules! make_select_proto {
             Ok(any)
         }
 
-        pub const $stable_select_name: &FunctionPrototype =
-            &FunctionPrototype::Builtin(&BuiltinFunctionPrototype {
+        pub const $stable_select_name: &BuiltinFunctionPrototype =
+            &BuiltinFunctionPrototype {
                 function_name: "stable_select",
                 description: "Randomly selects one of the input functions and continues to select that same function forever",
                 arguments: &[(SELECT_ARG, $gen_type)],
                 variadic: true,
                 create_fn: &$create_stable_select_fn_name,
-            });
+            };
     };
 }
 

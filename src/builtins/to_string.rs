@@ -3,7 +3,7 @@ use std::fmt::{Debug, Display};
 use std::rc::Rc;
 use ::{
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput, DynFun,
-    FunctionPrototype, GenType, OutputType, ProgramContext, RunnableFunction,
+    GenType, OutputType, ProgramContext, RunnableFunction,
 };
 use IString;
 
@@ -58,13 +58,13 @@ fn create_to_string(args: Arguments) -> CreateFunctionResult {
 macro_rules! make_to_string {
     ($proto_name:ident, $gen_type:expr) => {
 
-        pub const $proto_name: &FunctionPrototype = &FunctionPrototype::Builtin(&BuiltinFunctionPrototype {
+        pub const $proto_name: &BuiltinFunctionPrototype = &BuiltinFunctionPrototype {
             function_name: "to_string",
             description: "Converts its input to a string using the default formating",
             arguments: &[(TO_STRING_PARAM, $gen_type)],
             variadic: false,
             create_fn: &create_to_string,
-        });
+        };
     };
 }
 

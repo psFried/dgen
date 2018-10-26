@@ -5,7 +5,7 @@ use std::rc::Rc;
 use IString;
 use {
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput,
-    DynCharFun, DynStringFun, DynUintFun, FunctionPrototype, GenType, ProgramContext,
+    DynCharFun, DynStringFun, DynUintFun, GenType, ProgramContext,
     RunnableFunction,
 };
 
@@ -55,14 +55,14 @@ fn create_string_gen(args: Arguments) -> CreateFunctionResult {
     })))
 }
 
-pub const STRING_GEN_BUILTIN: &FunctionPrototype =
-    &FunctionPrototype::Builtin(&BuiltinFunctionPrototype {
+pub const STRING_GEN_BUILTIN: &BuiltinFunctionPrototype =
+    &BuiltinFunctionPrototype {
         function_name: "string",
         description: "constructs a string using the given length and character generators",
         arguments: &[("length", GenType::Uint), ("characters", GenType::Char)],
         variadic: false,
         create_fn: &create_string_gen,
-    });
+    };
 
 #[derive(Debug)]
 struct StringLength {
@@ -84,14 +84,14 @@ fn create_str_len(args: Arguments) -> CreateFunctionResult {
     Ok(AnyFunction::Uint(Rc::new(StringLength { wrapped })))
 }
 
-pub const STRING_LENGTH_BUILTIN: &FunctionPrototype =
-    &FunctionPrototype::Builtin(&BuiltinFunctionPrototype {
+pub const STRING_LENGTH_BUILTIN: &BuiltinFunctionPrototype =
+    &BuiltinFunctionPrototype {
         function_name: "string_length",
         description: "returns the length in utf8-encoded bytes of the generated string",
         arguments: &[("string", GenType::String)],
         variadic: false,
         create_fn: &create_str_len,
-    });
+    };
 
 #[derive(Debug)]
 struct StringBytes {
@@ -151,15 +151,15 @@ fn create_string_bytes(args: Arguments) -> CreateFunctionResult {
     Ok(AnyFunction::Bin(Rc::new(StringBytes { encoding, string })))
 }
 
-pub const STRING_ENCODE_BUILTIN: &FunctionPrototype =
-    &FunctionPrototype::Builtin(&BuiltinFunctionPrototype {
+pub const STRING_ENCODE_BUILTIN: &BuiltinFunctionPrototype =
+    &BuiltinFunctionPrototype {
         function_name: "string_bytes",
         description:
             "encodes strings using the given encoding, provided as a WHATWG encoding label",
         arguments: &[("encoding", GenType::String), ("string", GenType::String)],
         variadic: false,
         create_fn: &create_string_bytes,
-    });
+    };
 
 #[cfg(test)]
 mod test {

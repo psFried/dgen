@@ -1,7 +1,7 @@
 use failure::Error;
 use std::rc::Rc;
 use ::{
-    AnyFunction, BuiltinFunctionPrototype, FunctionPrototype, CreateFunctionResult, DataGenOutput, DynUintFun,
+    AnyFunction, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput, DynUintFun,
     ProgramContext, RunnableFunction, GenType, Arguments
 };
 
@@ -49,10 +49,10 @@ fn create_char_gen(args: Arguments) -> CreateFunctionResult {
     })))
 }
 
-pub const CHAR_GEN_BUILTIN: &'static FunctionPrototype = &FunctionPrototype::Builtin(&BuiltinFunctionPrototype {
+pub const CHAR_GEN_BUILTIN: &BuiltinFunctionPrototype = &BuiltinFunctionPrototype {
     function_name: "char",
     description: "selects a single random character from within the provided range of unicode codepoints",
     arguments: &[(MIN_ARG, GenType::Uint), (MAX_ARG, GenType::Uint)],
     variadic: false,
     create_fn: &create_char_gen,
-});
+};

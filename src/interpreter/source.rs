@@ -116,6 +116,13 @@ impl Source {
         })
     }
 
+    pub fn new(original: UnreadSource, source_text: Cow<'static, str>) -> Source {
+        Source {
+            unread: original,
+            source_text,
+        }
+    }
+
     pub fn text(&self) -> &str {
         &self.source_text
     }

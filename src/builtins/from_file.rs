@@ -8,7 +8,7 @@ use std::io::{self, Read, Seek, SeekFrom};
 use std::rc::Rc;
 use ::{
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput,
-    DynStringFun, FunctionPrototype, GenType, ProgramContext, RunnableFunction,
+    DynStringFun, GenType, ProgramContext, RunnableFunction,
 };
 use IString;
 
@@ -261,7 +261,7 @@ fn create_words_fun(_: Arguments) -> CreateFunctionResult {
     create_file_fun(args)
 }
 
-pub const SELECT_FROM_FILE_BUILTIN: &FunctionPrototype = &FunctionPrototype::Builtin(&BuiltinFunctionPrototype {
+pub const SELECT_FROM_FILE_BUILTIN: &BuiltinFunctionPrototype = &BuiltinFunctionPrototype {
     function_name: "select_from_file",
     description: "Selects random regions from the given file, using the given delimiter (most commonly a newline)",
     arguments: &[
@@ -270,15 +270,15 @@ pub const SELECT_FROM_FILE_BUILTIN: &FunctionPrototype = &FunctionPrototype::Bui
     ],
     variadic: false,
     create_fn: &create_file_fun,
-});
+};
 
-pub const WORDS_BUILTIN: &FunctionPrototype = &FunctionPrototype::Builtin(&BuiltinFunctionPrototype {
+pub const WORDS_BUILTIN: &BuiltinFunctionPrototype = &BuiltinFunctionPrototype {
     function_name: "words",
     description: "Selects a random word from the unix words file (/usr/share/dict/words or /usr/dict/words)",
     arguments: &[],
     variadic: false,
     create_fn: &create_words_fun,
-});
+};
 
 #[cfg(test)]
 mod test {

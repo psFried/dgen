@@ -9,20 +9,15 @@ The language documentation is pretty sparse at the moment, but this will hopeful
 
 # Example
 
-The following program will print 10 random quoted words, separated by newlines:
+The following program will print 5 random quoted words, separated by newlines:
 
 ```
-$ dgen run -p 'repeat_delimited(10, double_quote(words()), "\n")'
+$ dgen run -p 'repeat_delimited(5, double_quote(words()), "\n")'
 "gule"
 "erugation"
 "avouchment"
 "hymnless"
 "reclusory"
-"deferral"
-"debauched"
-"unenervated"
-"charkhana"
-"sheatfish"
 ```
 
 dgen programs are invoked by calling `dgen run` and providing the program input in one of several ways:

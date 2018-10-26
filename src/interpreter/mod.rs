@@ -24,7 +24,6 @@ pub const MODULE_SEPARATOR_CHAR: char = '.';
 
 use self::ast::{Expr, FunctionCall, FunctionMapper, Program, WithSpan};
 use self::map::{create_memoized_fun, finish_mapped};
-use builtins::BUILTIN_FNS;
 use failure::Error;
 use IString;
 use {
@@ -87,16 +86,13 @@ impl Compiler {
     }
 
     fn find_function<'a>(&'a self, name: IString) -> impl Iterator<Item = &'a FunctionPrototype> {
-        let builtin_iter = builtin_functions(name.clone());
-        let module_iter = self.modules.iter().filter_map(move |module| module.find_function(&name)).flat_map(|funs| funs);
-        builtin_iter.chain(module_iter)
+        self.modules.iter().filter_map(move |module| module.find_function(&name)).flat_map(|funs| funs)
     }
 
     fn function_iterator(&self) -> impl Iterator<Item = &FunctionPrototype> {
         self.modules
             .iter()
             .flat_map(|module| module.function_iterator())
-            .chain(BUILTIN_FNS.iter().map(|f| *f))
     }
 
     fn get_module_mut(&mut self, name: &IString) -> Option<&mut Module> {
@@ -205,10 +201,6 @@ fn split_module_and_function(function_name: &str) -> Option<(IString, IString)> 
     })
 }
 
-fn builtin_functions<'a>(name: IString) -> impl Iterator<Item = &'a FunctionPrototype> {
-    BUILTIN_FNS.iter().filter(move |fun| fun.name() == &*name).map(|f| *f)
-}
-
 fn set_first_empty<T>(value: T, opt1: &mut Option<T>, opt2: &mut Option<T>) {
     if opt1.is_none() {
         *opt1 = Some(value);
@@ -270,8 +262,11 @@ pub struct Interpreter {
 
 impl Interpreter {
     pub fn new() -> Interpreter {
+        let mut internal = Compiler::new();
+        internal.add_module(::builtins::get_default_builtins_module()).expect("Failed to add builtins module to compiler");
+
         Interpreter {
-            internal: Compiler::new(),
+            internal,
         }
     }
 

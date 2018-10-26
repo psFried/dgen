@@ -4,7 +4,7 @@ use std::fmt::Debug;
 use std::rc::Rc;
 use {
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput, DynFun,
-    FunctionPrototype, GenType, ProgramContext, RunnableFunction,
+    GenType, ProgramContext, RunnableFunction,
 };
 
 #[derive(Debug)]
@@ -45,7 +45,7 @@ const SEQ_ARG_NAME: &str = "generator";
 
 macro_rules! make_seq_builtin {
     ($wrapping_name:ident, $non_wrapping_name:ident, $gen_type:expr, $any_fun_path:path, $convert_arg:path) => {
-        pub const $non_wrapping_name: &FunctionPrototype = {
+        pub const $non_wrapping_name: &BuiltinFunctionPrototype = {
 
             fn create_seq(args: Arguments) -> CreateFunctionResult {
                 let values = args.get_required_varargs(SEQ_ARG_NAME, 0, $convert_arg)?;
@@ -55,7 +55,7 @@ macro_rules! make_seq_builtin {
                     wrapping: false,
                 })))
             }
-            &FunctionPrototype::Builtin(&BuiltinFunctionPrototype {
+            &BuiltinFunctionPrototype {
                 function_name: "sequence",
                 description: "Iterates over the given generators in sequence. After it reaches the end, the final generator will continue to be selected forever",
                 arguments: &[
@@ -63,9 +63,10 @@ macro_rules! make_seq_builtin {
                 ],
                 variadic: true,
                 create_fn: &create_seq
-            })
+            }
         };
-        pub const $wrapping_name: &FunctionPrototype = {
+
+        pub const $wrapping_name: &BuiltinFunctionPrototype = {
 
             fn create_wrapping_seq(args: Arguments) -> CreateFunctionResult {
                 let values = args.get_required_varargs(SEQ_ARG_NAME, 0, $convert_arg)?;
@@ -75,7 +76,7 @@ macro_rules! make_seq_builtin {
                     wrapping: true,
                 })))
             }
-            &FunctionPrototype::Builtin(&BuiltinFunctionPrototype {
+            &BuiltinFunctionPrototype {
                 function_name: "wrapping_sequence",
                 description: "Iterates over the given generators in sequence, wrapping around after it reaches the end",
                 arguments: &[
@@ -83,7 +84,7 @@ macro_rules! make_seq_builtin {
                 ],
                 variadic: true,
                 create_fn: &create_wrapping_seq
-            })
+            }
         };
     };
 }

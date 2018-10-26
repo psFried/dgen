@@ -2,7 +2,7 @@ use failure::Error;
 use std::rc::Rc;
 use std::fmt::Debug;
 use ::{
-    AnyFunction, BuiltinFunctionPrototype, FunctionPrototype, CreateFunctionResult, DataGenOutput,
+    AnyFunction, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput,
     ProgramContext, RunnableFunction, GenType, Arguments, DynFun, OutputType
 };
 
@@ -43,7 +43,7 @@ macro_rules! make_numeric_builtin {
             Ok($any_fun_path(Rc::new(fun)))
         }
 
-        pub const $proto_name: &FunctionPrototype = &FunctionPrototype::Builtin(&BuiltinFunctionPrototype {
+        pub const $proto_name: &BuiltinFunctionPrototype = &BuiltinFunctionPrototype {
             function_name: $fun_name,
             description: "Generates a number between the given given minimum (inclusive) and maximum (exclusive)",
             arguments: &[
@@ -52,7 +52,7 @@ macro_rules! make_numeric_builtin {
             ],
             variadic: false,
             create_fn: &$create_fn_name,
-        });
+        };
 
     };
 }

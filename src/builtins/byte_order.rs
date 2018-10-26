@@ -4,7 +4,7 @@ use std::marker::PhantomData;
 use std::rc::Rc;
 use {
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput, DynFun,
-    FunctionPrototype, GenType, ProgramContext, RunnableFunction,
+    GenType, ProgramContext, RunnableFunction,
 };
 
 #[derive(Debug)]
@@ -61,13 +61,13 @@ macro_rules! make_num_to_binary {
         impl_runnable_function!($num_type, LittleEndian, $write_le_path);
         impl_runnable_function!($num_type, BigEndian, $write_be_path);
 
-        pub const $le_builtin_name: &FunctionPrototype =  {
+        pub const $le_builtin_name: &BuiltinFunctionPrototype =  {
             fn create_le(args: Arguments) -> CreateFunctionResult {
                 let num = args.required_arg(ARG_NAME, 0, $convert_input)?;
                 Ok(AnyFunction::Bin(Rc::new(new_little_endian(num))))
             }
 
-            &FunctionPrototype::Builtin(&BuiltinFunctionPrototype {
+            &BuiltinFunctionPrototype {
                         function_name: LITTLE_ENDIAN_FUNCTION_NAME,
                         description: "converts the input number into binary with little endian byte order. The binary returned will always be exactly 8 bytes long",
                         arguments: &[
@@ -75,16 +75,16 @@ macro_rules! make_num_to_binary {
                         ],
                         variadic: false,
                         create_fn: &create_le,
-            })
+            }
         };
 
-        pub const $be_builtin_name: &FunctionPrototype =  {
+        pub const $be_builtin_name: &BuiltinFunctionPrototype =  {
             fn create_be(args: Arguments) -> CreateFunctionResult {
                 let num = args.required_arg(ARG_NAME, 0, $convert_input)?;
                 Ok(AnyFunction::Bin(Rc::new(new_big_endian(num))))
             }
 
-            &FunctionPrototype::Builtin(&BuiltinFunctionPrototype {
+            &BuiltinFunctionPrototype {
                         function_name: BIG_ENDIAN_FUNCTION_NAME,
                         description: "converts the input number into binary with big endian byte order. The binary returned will always be exactly 8 bytes long",
                         arguments: &[
@@ -92,7 +92,7 @@ macro_rules! make_num_to_binary {
                         ],
                         variadic: false,
                         create_fn: &create_be,
-            })
+            }
         };
     };
 }
