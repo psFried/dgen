@@ -251,7 +251,7 @@ fn create_words_fun(_: Arguments) -> CreateFunctionResult {
         .map(|path| ConstString::new(*path))
         .ok_or_else(|| {
             format_err!(
-                "Could not find a words file in the usual places: {:?}",
+                "Could not find a words file in the usual places: {:?} Try using `select_from_file(String, String)` instead",
                 words_paths
             )
         })?;
