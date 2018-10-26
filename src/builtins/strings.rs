@@ -264,7 +264,7 @@ mod test {
 
     #[test]
     fn std_unicode_string_fun() {
-        let expected_output = "ༀʠㅰ⻆\u{1713}ⅻףּ𐌷﹗☔\u{243d}ᜇᜑᥤ慧\u{df1}ખ@䷪ǲ𐌚ℍṄﵗ㎕𐑩︲ᵕቢ\u{2429}☖㎱ඍ∯೦₮\u{20ed}⁺⁅␌ㇹ㈤ゼ⡀Ǜԇ𐎑𐎍\u{efd0}≈𥴘き﹛ᥚ數𐎁য়ﺂᚇ⫝⟏𝀀ਗ਼ΠᏲᥜჳស႔㠛𐎌პś﹀₾ㅉ⨏⇍☹\u{1885}擎⁽୮\u{fe09}ꀬˬꂩ෨﹊Ⓗភڊ깞ᜇ੯⻃\u{fe28}\u{a55}ԟ⼜";
+        let expected_output = "ༀʡㅱ⻇\u{1714}ⅼפּ𐌷﹗☔\u{243e}ᜇᜈ⤯뻳徻အ𐌇\u{c00}ⓕ\u{3101}⟪Ⓔℒலጴ꒽⧶◯Ѣㅉ \u{242a}☖㎲ඍ∯೦₮\u{20d3}\u{6e4}⽝\u{eb4}⽭ඊㇹ㈤ゼ⡀Ǜԇ𐎒𐎍\u{efd1}\u{fe07}ᙶ﹁き﹛\u{196e}\u{e64}෴Ɯꏕ\u{7a7}ᚇ⫞⟏𝀀ਜ਼ΠᏳᥜჴស႔㩎\u{af4}ὀァ㏔◉むዤβ⟙\u{ec8}ᢟ챞㍇⁽क\u{1007b}\u{fe09}ꇛɔ᧸ꂩ෨﹊";
         let input = r#"unicode_string(100)"#;
         test_program_success(1, input, expected_output);
     }
@@ -278,7 +278,7 @@ mod test {
 
     #[test]
     fn generate_ascii_strings() {
-        let expected_output = "w6U9vomgJ4gxen0XO";
+        let expected_output = "a6OqR822C3hoTTf1";
         let input = "alphanumeric_string(uint(0, 10))";
         test_program_success(4, input, expected_output);
     }
@@ -294,7 +294,7 @@ mod test {
 
             string(10, chars())
         "#;
-        let expected_output = "ausjmhaevg";
+        let expected_output = "auspoowhgc";
         test_program_success(1, input, expected_output);
     }
 }

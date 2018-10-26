@@ -8,18 +8,18 @@ use ::{
 #[derive(Debug)]
 struct CharGenerator {
     min_inclusive: DynUintFun,
-    max_exclusive: DynUintFun,
+    max_inclusive: DynUintFun,
 }
 
 impl RunnableFunction<char> for CharGenerator {
     fn gen_value(&self, context: &mut ProgramContext) -> Result<char, Error> {
         let min = self.min_inclusive.gen_value(context)?;
-        let max = self.max_exclusive.gen_value(context)?;
+        let max = self.max_inclusive.gen_value(context)?;
 
-        let as_u64 = context.gen_range(min, max);
+        let as_u64 = context.gen_range_inclusive(min, max);
 
         ::std::char::from_u32(as_u64 as u32).ok_or_else(|| {
-            format_err!("Invalid unicode codepoint: {}, generated from range: min_inclusive: {}, max_exclusive: {}", as_u64, min, max)
+            format_err!("Invalid unicode codepoint: {}, generated from range: min_inclusive: {}, max_inclusive: {}", as_u64, min, max)
         })
     }
 
@@ -45,7 +45,7 @@ fn create_char_gen(args: Arguments) -> CreateFunctionResult {
 
     Ok(AnyFunction::Char(Rc::new(CharGenerator {
         min_inclusive: min,
-        max_exclusive: max
+        max_inclusive: max
     })))
 }
 

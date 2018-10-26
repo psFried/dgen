@@ -21,7 +21,7 @@ impl<T> StableSelectFun<T> {
         } = *self;
         let mut index = index.borrow_mut();
         if index.is_none() {
-            *index = Some(ctx.gen_range(0, wrapped.len()));
+            *index = Some(ctx.gen_range_exclusive(0, wrapped.len()));
         }
 
         wrapped[index.unwrap()].clone()
@@ -45,7 +45,7 @@ struct SelectFun<T> {
 }
 
 fn select_fun<'a, 'b, T>(ctx: &'a mut ProgramContext, values: &'b [DynFun<T>]) -> &'b DynFun<T> {
-    let i = ctx.gen_range(0, values.len());
+    let i = ctx.gen_range_exclusive(0, values.len());
     &values[i]
 }
 

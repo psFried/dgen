@@ -161,21 +161,21 @@ impl Compiler {
 
     fn find_matching_function<'a, 'b>(
         &'a self,
-        source_ref: SourceRef,
+        caller_source_ref: SourceRef,
         name: IString,
         arguments: &'b [AnyFunction],
     ) -> Result<&'a FunctionPrototype, CompileError> {
         let name_clone = name.clone();
 
         if let Some((module_name, function_name)) = split_module_and_function(&*name) {
-            let matching_module = self.get_module(&module_name, &source_ref)?;
+            let matching_module = self.get_module(&module_name, &caller_source_ref)?;
             let function_iter = matching_module.find_function(&function_name).ok_or_else(|| {
-                CompileError::no_such_method(name, arguments, source_ref.clone())
+                CompileError::no_such_method(name, arguments, caller_source_ref.clone())
             })?;
-            filter_matching_arguments(name_clone, arguments, function_iter, &source_ref)
+            filter_matching_arguments(name_clone, arguments, function_iter, &caller_source_ref)
         } else {
             let iter = self.find_function(name);
-            filter_matching_arguments(name_clone, arguments, iter, &source_ref)
+            filter_matching_arguments(name_clone, arguments, iter, &caller_source_ref)
         }
     }
 
@@ -202,27 +202,59 @@ fn builtin_functions<'a>(name: IString) -> impl Iterator<Item = &'a FunctionProt
     BUILTIN_FNS.iter().filter(move |fun| fun.name() == &*name).map(|f| *f)
 }
 
-fn filter_matching_arguments<'a, I: Iterator<Item = &'a FunctionPrototype>>(name: IString, arguments: &[AnyFunction], iter: I, source_ref: &SourceRef) -> Result<&'a FunctionPrototype, CompileError> {
-    let mut current_best: Option<&'a FunctionPrototype> = None;
+fn set_first_empty<T>(value: T, opt1: &mut Option<T>, opt2: &mut Option<T>) {
+    if opt1.is_none() {
+        *opt1 = Some(value);
+    } else if opt2.is_none() {
+        *opt2 = Some(value)
+    }
+}
+
+fn choose_best_match<'a>(opt1: Option<&'a FunctionPrototype>, opt2: Option<&'a FunctionPrototype>, called_name: &IString, actual_args: &[AnyFunction], caller_source_ref: &SourceRef) -> Result<&'a FunctionPrototype, CompileError> {
+    match (opt1, opt2) {
+        (Some(a), Some(b)) => {
+            if a.is_variadic() && !b.is_variadic() {
+                Ok(b)
+            } else if !a.is_variadic() && b.is_variadic() {
+                Ok(a)
+            } else {
+                Err(CompileError::ambiguous_function_call(called_name.clone(), actual_args, a, b, caller_source_ref.clone()))
+            }
+        }
+        (Some(a), None) => Ok(a),
+        (None, Some(b)) => Ok(b),
+        (None, None) => {
+            Err(CompileError::no_such_method(called_name.clone(), actual_args, caller_source_ref.clone()))
+        }
+    }
+}
+
+fn filter_matching_arguments<'a, I: Iterator<Item = &'a FunctionPrototype>>(name: IString, arguments: &[AnyFunction], iter: I, caller_source_ref: &SourceRef) -> Result<&'a FunctionPrototype, CompileError> {
+    let mut first_from_same_module: Option<&'a FunctionPrototype> = None;
+    let mut second_from_same_module: Option<&'a FunctionPrototype> = None;
+
+    let mut first_from_other_module: Option<&'a FunctionPrototype> = None;
+    let mut second_from_other_module: Option<&'a FunctionPrototype> = None;
 
     for candidate in iter {
         if candidate.do_arguments_match(arguments) {
-            if !candidate.is_variadic() {
-                return Ok(candidate);
-            } else if current_best.is_none() {
-                current_best = Some(candidate);
-            } else {
-                let option1 = current_best.unwrap();
+            // whether the module of the caller is the same as the module of the candidate function
+            // if the candidate has no source_ref, then it means that it's a builtin function
+            let is_same_module = candidate.get_source().map(|source| source.module_name() == caller_source_ref.module_name()).unwrap_or(false);
 
-                return Err(CompileError::ambiguous_varargs_functions(
-                    name, arguments, option1, candidate, source_ref.clone()
-                ));
+            if is_same_module {
+                set_first_empty(candidate, &mut first_from_same_module, &mut second_from_same_module);
+            } else {
+                set_first_empty(candidate, &mut first_from_other_module, &mut second_from_other_module);
             }
         }
     }
-    current_best.ok_or_else(|| {
-        CompileError::no_such_method(name, arguments, source_ref.clone())
-    })
+
+    if first_from_same_module.is_some() {
+        choose_best_match(first_from_same_module, second_from_same_module, &name, arguments, caller_source_ref)
+    } else {
+        choose_best_match(first_from_other_module, second_from_other_module, &name, arguments, caller_source_ref)
+    }
 }
 
 pub struct Interpreter {
@@ -288,5 +320,83 @@ impl Interpreter {
 
     pub fn module_iterator(&self) -> impl Iterator<Item = &Module> {
         self.internal.modules.iter()
+    }
+
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use interpreter::errors::ErrorType;
+
+    macro_rules! assert_matches {
+        ($value:expr, $pattern:pat) => {
+            match $value {
+                $pattern => {}
+                ref other @ _ => {
+                    let expected = stringify!($pattern);
+                    panic!("Expected: '{}' but was: {:?}", expected, other)
+                }
+            }
+        };
+    }
+    
+    #[test]
+    fn ambiguous_calls_from_separate_modules() {
+        let lib1 = r##"
+        def foo(val: String) = val() { s ->
+            concat(s, s)
+        }; "##;
+        let lib2 = r##"
+        def foo(val: String) = concat("Two times the ", val, "!"); 
+        "##;
+
+        let mut subject = Interpreter::new();
+        subject.add_module(UnreadSource::Builtin("lib1", lib1)).expect("failed to add module");
+        subject.add_module(UnreadSource::Builtin("lib2", lib2)).expect("failed to add module");
+
+        // calling just plain "foo" should fail
+        let error = subject.eval(UnreadSource::Builtin("fail", r#"foo("wat?")"#)).expect_err("expected an error");
+        let compile_error = error.downcast::<CompileError>().expect("expected a compile error");
+        let error_type = compile_error.get_type();
+        assert_matches!(*error_type, ErrorType::AmbiguousFunctionCall(_));
+
+        // calling lib2.foo should compile 
+        let function = subject.eval(UnreadSource::Builtin("pass", r#"lib2.foo("wat?")"#)).expect("expected compilation to succeed");
+        let result = run_function(&function);
+        assert_eq!("Two times the wat?!", result.as_str());
+    }
+    
+    #[test]
+    fn calling_function_with_same_name_from_same_file_resolves_to_function_in_same_file() {
+        let lib1 = r##"
+        def foo(val: String) = val() { s ->
+            concat(s, s)
+        }; "##;
+        let lib2 = r##"
+        def foo(val: String) = concat("Two times the ", val, "!"); 
+
+        def bar(s: String) = foo(s);
+        "##;
+
+        let mut subject = Interpreter::new();
+        subject.add_module(UnreadSource::Builtin("lib1", lib1)).expect("failed to add module");
+        subject.add_module(UnreadSource::Builtin("lib2", lib2)).expect("failed to add module");
+
+        let function = subject.eval(UnreadSource::Builtin("pass", r#"bar("wat?")"#)).expect("expected compilation to succeed");
+        let result = run_function(&function);
+        assert_eq!("Two times the wat?!", result.as_str());
+    }
+
+    fn run_function(function: &AnyFunction) -> String {
+        use ::{DataGenOutput, ProgramContext};
+
+        let mut buffer = Vec::new();
+        {
+            let mut out = DataGenOutput::new(&mut buffer);
+            let mut context = ProgramContext::from_random_seed(::verbosity::NORMAL);
+            function.write_value(&mut context, &mut out).expect("failed to run function");
+        }
+        String::from_utf8(buffer).expect("Result was not valid utf8")
     }
 }

@@ -64,12 +64,44 @@ impl ProgramContext {
         self.rng.gen()
     }
 
-    pub fn gen_range<T: PartialOrd + SampleUniform>(
+    pub fn gen_range_exclusive<T: PartialOrd + Copy + SampleUniform>(
         &mut self,
         min_inclusive: T,
-        max_exclusive: T,
+        max_inclusive: T,
     ) -> T {
-        self.rng.gen_range(min_inclusive, max_exclusive)
+        use rand::distributions::Uniform;
+        let min = if min_inclusive < max_inclusive {
+            min_inclusive
+        } else {
+            max_inclusive
+        };
+        let max = if min_inclusive > max_inclusive {
+            min_inclusive
+        } else {
+            max_inclusive
+        };
+        let distribution = Uniform::new(min, max);
+        distribution.sample(&mut self.rng)
+    }
+
+    pub fn gen_range_inclusive<T: PartialOrd + Copy + SampleUniform>(
+        &mut self,
+        min_inclusive: T,
+        max_inclusive: T,
+    ) -> T {
+        use rand::distributions::Uniform;
+        let min = if min_inclusive < max_inclusive {
+            min_inclusive
+        } else {
+            max_inclusive
+        };
+        let max = if min_inclusive > max_inclusive {
+            min_inclusive
+        } else {
+            max_inclusive
+        };
+        let distribution = Uniform::new_inclusive(min, max);
+        distribution.sample(&mut self.rng)
     }
 
 

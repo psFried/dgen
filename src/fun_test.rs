@@ -9,13 +9,13 @@ const VERBOSITY: ::verbosity::Verbosity = ::verbosity::NORMAL;
 #[test]
 fn signed_integer_functions() {
     let input = r#"int(-9, +7)"#;
-    let expected_output = "-9";
+    let expected_output = "-6";
     test_program_success(1, input, expected_output);
 }
 
 #[test]
 fn declare_and_use_functions() {
-    let expected_output = "aw6IU9vomgJ42f1aT0XOE";
+    let expected_output = "aw6OqR822CZggJ42f1aT0";
     let input = r#"
         def foo(len: Uint) = alphanumeric_string(len);
         def bar() = foo(7);
@@ -42,7 +42,7 @@ fn use_binary_functions() {
 #[test]
 fn stable_select_a_generator() {
     let input = r#"stable_select(select("a", "b"), select("c", "d"))"#;
-    let expected_output = "aabbbbbbaa";
+    let expected_output = "aabbbbbaba";
     test_program_success(10, input, expected_output);
 }
 
@@ -66,7 +66,7 @@ fn declare_and_use_function_with_mapper() {
 
         concat(repeat_words(count()), repeat_words(count()))
     "#;
-    let expected = "2 : w6IU9\nw6IU9\nvomgJ\nvomgJ\n4 : 2f1aT\n2f1aT\n2f1aT\n0XOET\n0XOET\n0XOET\n9Vk0R\n9Vk0R\n9Vk0R\n";
+    let expected = "2 : w6OqR\nw6OqR\n822CZ\n822CZ\n3 : gJ42f\ngJ42f\n1aT0X\n1aT0X\n";
     test_program_success(1, input, expected);
 }
 
@@ -78,7 +78,7 @@ fn pass_mapped_function_as_function_argument() {
 
         compare_words(alphanumeric_string(1) { w -> repeat_delimited(3, w, ", ") } )
     "#;
-    let expected = "a, a, a != w, w, w\n6, 6, 6 != I, I, I\nU, U, U != 9, 9, 9\n";
+    let expected = "a, a, a != w, w, w\n6, 6, 6 != O, O, O\nq, q, q != R, R, R\n";
     test_program_success(1, input, expected);
 }
 

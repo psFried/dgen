@@ -30,6 +30,10 @@ impl SourceRef {
     pub fn description(&self) -> &str {
         self.source.description()
     }
+
+    pub fn module_name(&self) -> IString {
+        self.source.module_name()
+    }
 }
 
 impl Display for SourceRef {
@@ -50,10 +54,32 @@ impl Display for SourceRef {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub enum ShortSourceDescription {
+    Builtin,
+    Interpreted(SourceRef)
+}
+
+impl From<Option<SourceRef>> for ShortSourceDescription {
+    fn from(maybe_source: Option<SourceRef>) -> ShortSourceDescription {
+        maybe_source.map(|src| ShortSourceDescription::Interpreted(src)).unwrap_or(ShortSourceDescription::Builtin)
+    }
+}
+
+impl Display for ShortSourceDescription {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            ShortSourceDescription::Builtin => f.write_str("<builtin function>"),
+            ShortSourceDescription::Interpreted(ref source) => write!(f, "at {}:{}", source.description(), source.start_line_number())
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct ErrorFunctionSignature {
-    function_name: IString,
-    arg_types: Vec<GenType>,
-    render_variadic: bool,
+    pub function_name: IString,
+    pub arg_types: Vec<GenType>,
+    pub render_variadic: bool,
+    pub source: Option<ShortSourceDescription>,
 }
 
 impl ErrorFunctionSignature {
@@ -63,6 +89,7 @@ impl ErrorFunctionSignature {
             function_name,
             arg_types,
             render_variadic: false,
+            source: None
         }
     }
 }
@@ -75,6 +102,7 @@ impl<'a> From<&'a FunctionPrototype> for ErrorFunctionSignature {
             function_name,
             arg_types,
             render_variadic: prototype.is_variadic(),
+            source: Some(ShortSourceDescription::from(prototype.get_source())),
         }
     }
 }
@@ -87,15 +115,19 @@ impl Display for ErrorFunctionSignature {
         } else {
             ""
         };
-        write!(f, "{}({}{})", self.function_name, arg_types, maybe_variadic)
+        if let Some(source) = self.source.as_ref() {
+            write!(f, "{}({}{}) - {}", self.function_name, arg_types, maybe_variadic, source)
+        } else {
+            write!(f, "{}({}{})", self.function_name, arg_types, maybe_variadic)
+        }
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct AmbiguousCall {
-    called: ErrorFunctionSignature,
-    option1: ErrorFunctionSignature,
-    option2: ErrorFunctionSignature,
+    pub called: ErrorFunctionSignature,
+    pub option1: ErrorFunctionSignature,
+    pub option2: ErrorFunctionSignature,
 }
 
 impl AmbiguousCall {
@@ -122,7 +154,7 @@ pub enum ErrorType {
     NoSuchArgument(IString),
     NoSuchMethod(ErrorFunctionSignature),
     NoSuchModule(IString),
-    AmbibuousVarargsFunctionCall(AmbiguousCall),
+    AmbiguousFunctionCall(AmbiguousCall),
     InternalError(Error),
 }
 
@@ -138,7 +170,7 @@ impl Display for ErrorType {
             ErrorType::NoSuchModule(ref name) => {
                 write!(f, "No such module: '{}'", name)
             }
-            ErrorType::AmbibuousVarargsFunctionCall(ref call) => {
+            ErrorType::AmbiguousFunctionCall(ref call) => {
                 write!(f, "Ambiguous function call, which could refer to multiple functions:\n{}", call)
             }
             ErrorType::InternalError(ref err) => {
@@ -180,10 +212,14 @@ impl CompileError {
         CompileError::new(source_ref, error_type)
     }
 
-    pub fn ambiguous_varargs_functions(name: IString, arguments: &[AnyFunction], option1: &FunctionPrototype, option2: &FunctionPrototype, source_ref: SourceRef) -> CompileError {
+    pub fn ambiguous_function_call(name: IString, arguments: &[AnyFunction], option1: &FunctionPrototype, option2: &FunctionPrototype, source_ref: SourceRef) -> CompileError {
         let call = AmbiguousCall::new(name, arguments, option1, option2);
-        let error_type = ErrorType::AmbibuousVarargsFunctionCall(call);
+        let error_type = ErrorType::AmbiguousFunctionCall(call);
         CompileError::new(source_ref, error_type)
+    }
+
+    pub fn get_type(&self) -> &ErrorType {
+        &self.error_type
     }
 }
 

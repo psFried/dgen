@@ -11,14 +11,14 @@ use rand::distributions::uniform::SampleUniform;
 #[derive(Debug)]
 struct NumericGen<T> {
     min_inclusive: DynFun<T>,
-    max_exclusive: DynFun<T>,
+    max_inclusive: DynFun<T>,
 }
 
-impl<T: Debug + PartialOrd + SampleUniform + OutputType> RunnableFunction<T> for NumericGen<T> {
+impl<T: Debug + PartialOrd + Copy + SampleUniform + OutputType> RunnableFunction<T> for NumericGen<T> {
     fn gen_value(&self, ctx: &mut ProgramContext) -> Result<T, Error> {
         let min = self.min_inclusive.gen_value(ctx)?;
-        let max = self.max_exclusive.gen_value(ctx)?;
-        let result = ctx.gen_range(min, max);
+        let max = self.max_inclusive.gen_value(ctx)?;
+        let result = ctx.gen_range_inclusive(min, max);
         Ok(result)
     }
     
@@ -29,16 +29,16 @@ impl<T: Debug + PartialOrd + SampleUniform + OutputType> RunnableFunction<T> for
 }
 
 const MIN_PARAM: &str = "min_inclusive";
-const MAX_PARAM: &str = "max_exclusive";
+const MAX_PARAM: &str = "max_inclusive";
 
 macro_rules! make_numeric_builtin {
     ($proto_name:ident, $create_fn_name:ident, $gen_type:expr, $any_fun_path:path, $convert_fun:path, $fun_name:expr) => {
         
         fn $create_fn_name(args: Arguments) -> CreateFunctionResult {
-            let (min_inclusive, max_exclusive) = args.require_2_args(MIN_PARAM, $convert_fun, MAX_PARAM, $convert_fun)?;
+            let (min_inclusive, max_inclusive) = args.require_2_args(MIN_PARAM, $convert_fun, MAX_PARAM, $convert_fun)?;
             let fun = NumericGen {
                 min_inclusive,
-                max_exclusive
+                max_inclusive
             };
             Ok($any_fun_path(Rc::new(fun)))
         }

@@ -43,7 +43,7 @@ impl RandFileReader {
             ref region_offsets,
             ref delimiter,
         } = *self;
-        let region_idx = rng.gen_range(0, region_offsets.len() + 1);
+        let region_idx = rng.gen_range_inclusive(0, region_offsets.len());
         let region_start = if region_idx == 0 {
             0
         } else {
