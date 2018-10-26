@@ -55,6 +55,13 @@ impl Compiler {
         Ok(())
     }
 
+    fn remove_module(&mut self, module_name: &str) {
+        let index = self.modules.iter().position(|m| &*m.name == module_name);
+        if let Some(i) = index {
+            self.modules.remove(i);
+        }
+    }
+
     pub fn eval(&self, source: Arc<Source>, expr: &WithSpan<Expr>) -> CompileResult {
         self.eval_private(source, expr, &[])
     }
@@ -277,13 +284,11 @@ impl Interpreter {
     }
 
     pub fn add_module(&mut self, unread_source: UnreadSource) -> Result<(), Error> {
-        let source = Source::read(unread_source)?;
-        let module_name: IString = source.module_name();
-        let parsed = {
-            parser::parse_program(module_name, source.text())?
-        };
-        let module = Module::new(Arc::new(source), parsed.assignments)?;
-        self.internal.add_module(module)
+        self.eval_any(unread_source).map(|_| ())
+    }
+
+    pub fn has_module(&self, module_name: &str) -> bool {
+        self.module_iterator().any(|module| &*module.name == module_name)
     }
 
     pub fn eval(&mut self, unread_source: UnreadSource) -> CreateFunctionResult {
@@ -304,7 +309,12 @@ impl Interpreter {
 
         let source_ref = Arc::new(source);
         let module = Module::new(source_ref.clone(), assignments)?;
-        self.internal.add_module(module)?;
+
+        if self.has_module(&*module_name) {
+            bail!("A module with the name '{}' already exists and cannot be added twice. Consider giving the second module a different name", module_name);
+        } else {
+            self.internal.add_module(module)?;
+        }
 
         if let Some(expression) = expr {
             let function = self.internal.eval(source_ref, &expression)?;
@@ -312,6 +322,10 @@ impl Interpreter {
         } else {
             Ok(None)
         }
+    }
+
+    pub fn remove_module(&mut self, name: &str) {
+        self.internal.remove_module(name);
     }
 
     pub fn function_iterator(&self) -> impl Iterator<Item = &FunctionPrototype> {
@@ -386,6 +400,22 @@ mod test {
         let function = subject.eval(UnreadSource::Builtin("pass", r#"bar("wat?")"#)).expect("expected compilation to succeed");
         let result = run_function(&function);
         assert_eq!("Two times the wat?!", result.as_str());
+    }
+
+    #[test]
+    fn adding_the_same_library_twice_returns_error() {
+        let lib1 = r##"
+        def foo() = "foo";
+        "##;
+        let lib2 = r##"
+        def bar() = "bar";
+        "##;
+
+        let mut subject = Interpreter::new();
+        subject.add_module(UnreadSource::Builtin("same_module", lib1)).expect("failed to add module");
+        let error = subject.add_module(UnreadSource::Builtin("same_module", lib2)).expect_err("Expected adding second module to return an error");
+        let error_message = format!("{}", error);
+        assert!(error_message.contains("A module with the name 'same_module' already exists"), "wrong error message, actual: '{}'", error_message);
     }
 
     fn run_function(function: &AnyFunction) -> String {

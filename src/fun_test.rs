@@ -139,28 +139,6 @@ fn adding_a_library_that_defines_two_functions_with_the_same_signature_returns_e
     assert!(err_str.contains("Module 'default' contains multiple functions with the same signature"), "Error string was incorrect. Actual error: {}", err_str);
 }
 
-#[test]
-fn adding_multiple_default_modules_that_each_define_the_same_function_retuns_error() {
-    let lib1 = r##"
-    # the first foo function
-    def foo(i: Uint) = alphanumeric_string(i);
-    "##;
-
-    let lib2 = r##"
-    # the second foo function
-    def foo(i: Uint) = unicode_string(i);
-    "##;
-
-    let mut runner = Runner::new(VERBOSITY, 1, "bar()".to_owned(), create_context());
-    runner.add_library(UnreadSource::string(lib1)).expect("First lib should be added OK");
-
-    let result = runner.add_library(UnreadSource::string(lib2));
-    assert!(result.is_err());
-    let error = result.unwrap_err();
-    let err_str = format!("{}", error);
-    assert!(err_str.contains("Module 'default' contains multiple functions with the same signature"), "Error string was incorrect. Actual error: {}", err_str);
-}
-
 const RAND_SEED: &[u8; 16] = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 
 pub fn create_context() -> ProgramContext {

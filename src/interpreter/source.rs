@@ -17,7 +17,7 @@ pub enum UnreadSource {
     Stdin,
 }
 
-fn default_module_name() -> IString {
+pub fn default_module_name() -> IString {
     "default".into()
 }
 
