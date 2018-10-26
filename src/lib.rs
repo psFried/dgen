@@ -18,6 +18,7 @@ pub mod interpreter;
 pub mod program;
 mod types;
 mod writer;
+pub mod verbosity;
 
 #[cfg(test)]
 mod fun_test;

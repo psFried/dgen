@@ -1,14 +1,28 @@
 use std::path::PathBuf;
+use dgen::verbosity::Verbosity;
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "datagen", about = "Generate random data sets")]
 pub struct CliOptions {
-    /// Enable debug logging to stderr. Multiple occurrences will increase the verbosity
+    /// Enable debug logging to stderr. Multiple occurrences will increase the verbosity. Contradicts `quiet` if both are supplied.
+    /// The default verbosity will print errors and stacktraces to stderr.
     #[structopt(short = "V", parse(from_occurrences))]
-    pub debug: u64,
+    pub verbose: u32,
+
+    /// Make logging to stderr quieter. Contradicts `verbose` if both are supplied, so `dgen -VVV -qqq` would result in normal output.
+    /// Normally, two `-q`s is enough to suppress all stderr output.
+    #[structopt(short = "q", parse(from_occurrences))]
+    pub quiet: u32,
 
     #[structopt(subcommand)]
     pub subcommand: SubCommand,
+}
+
+impl CliOptions {
+    pub fn get_verbosity(&self) -> Verbosity {
+        let start = self.verbose + 2; // 2 is the default verbosity. `verbose` and `quiet` will adjust from there
+        start.saturating_sub(self.quiet).into()
+    }
 }
 
 #[derive(Debug, StructOpt)]

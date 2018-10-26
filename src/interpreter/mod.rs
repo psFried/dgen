@@ -6,6 +6,7 @@ mod module;
 pub(crate) mod parser;
 mod source;
 pub(crate) mod prototype;
+mod runtime_wrapper;
 
 #[cfg(test)]
 mod parse_test;
@@ -125,11 +126,11 @@ impl Compiler {
             .map(|bound| bound.value.clone());
 
         if resolved.is_none() {
-            let function = self.find_matching_function(source_ref.clone(), name, resolved_args.as_slice())?;
+            let function = self.find_matching_function(source_ref.clone(), name.clone(), resolved_args.as_slice())?;
             let res = function.apply(resolved_args, self, &source_ref)?;
             resolved = Some(res);
         }
-        let resolved = resolved.unwrap();
+        let resolved = runtime_wrapper::wrap(resolved.unwrap(), name.clone(), source_ref.clone());
 
         if let Some(mapper) = call.mapper.as_ref() {
             self.eval_mapped_function(source_ref.source, resolved, mapper, bound_args)

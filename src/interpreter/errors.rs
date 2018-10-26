@@ -19,6 +19,17 @@ impl SourceRef {
     pub fn new(source: Arc<Source>, span: Span) -> SourceRef {
         SourceRef { source, span }
     }
+
+    pub fn start_line_number(&self) -> usize {
+        let start_offset = self.span.start;
+        let source_str = self.source.text();
+        let err_region = SourceErrRegion::new(source_str, start_offset);
+        err_region.get_line_number()
+    }
+
+    pub fn description(&self) -> &str {
+        self.source.description()
+    }
 }
 
 impl Display for SourceRef {

@@ -1,8 +1,10 @@
 use failure::Error;
-use program::Program;
+use program::Runner;
 use writer::DataGenOutput;
 use ProgramContext;
 use interpreter::UnreadSource;
+
+const VERBOSITY: ::verbosity::Verbosity = ::verbosity::NORMAL;
 
 #[test]
 fn signed_integer_functions() {
@@ -104,14 +106,14 @@ fn calling_a_function_with_module_name() {
         def foo() = "lib2foo";
     "##;
 
-    let mut runner = Program::new(2, 1, "lib2.foo()".to_owned(), create_context());
+    let mut runner = Runner::new(VERBOSITY, 1, "lib2.foo()".to_owned(), create_context());
     runner.add_library(UnreadSource::Builtin("lib1", lib1)).unwrap();
     runner.add_library(UnreadSource::Builtin("lib2", lib2)).unwrap();
 
     let result = run_to_string(runner);
     assert_eq!("lib2foo", &result);
 
-    let mut runner = Program::new(2, 1, "lib1.foo()".to_owned(), create_context());
+    let mut runner = Runner::new(VERBOSITY, 1, "lib1.foo()".to_owned(), create_context());
     runner.add_library(UnreadSource::Builtin("lib1", lib1)).unwrap();
     runner.add_library(UnreadSource::Builtin("lib2", lib2)).unwrap();
 
@@ -129,7 +131,7 @@ fn adding_a_library_that_defines_two_functions_with_the_same_signature_returns_e
     def foo(i: Uint) = unicode_string(i);
     "##;
 
-    let mut runner = Program::new(2, 1, "bar()".to_owned(), create_context());
+    let mut runner = Runner::new(VERBOSITY, 1, "bar()".to_owned(), create_context());
     let result = runner.add_library(lib.to_owned());
     assert!(result.is_err());
     let error = result.unwrap_err();
@@ -149,7 +151,7 @@ fn adding_multiple_default_modules_that_each_define_the_same_function_retuns_err
     def foo(i: Uint) = unicode_string(i);
     "##;
 
-    let mut runner = Program::new(2, 1, "bar()".to_owned(), create_context());
+    let mut runner = Runner::new(VERBOSITY, 1, "bar()".to_owned(), create_context());
     runner.add_library(UnreadSource::string(lib1)).expect("First lib should be added OK");
 
     let result = runner.add_library(UnreadSource::string(lib2));
@@ -162,13 +164,13 @@ fn adding_multiple_default_modules_that_each_define_the_same_function_retuns_err
 const RAND_SEED: &[u8; 16] = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 
 pub fn create_context() -> ProgramContext {
-    ProgramContext::from_seed(*RAND_SEED)
+    ProgramContext::from_seed(*RAND_SEED, ::verbosity::NORMAL)
 }
 pub fn run_program(iterations: u64, program: &str) -> Result<Vec<u8>, Error> {
     let mut out = Vec::new();
     {
         let mut output = DataGenOutput::new(&mut out);
-        let mut prog = Program::new(2, iterations, program.to_owned(), create_context());
+        let mut prog = Runner::new(VERBOSITY, iterations, program.to_owned(), create_context());
         prog.add_std_lib();
         prog.run(&mut output)?;
     }
@@ -176,7 +178,7 @@ pub fn run_program(iterations: u64, program: &str) -> Result<Vec<u8>, Error> {
     Ok(out)
 }
 
-fn run_to_string(runner: Program) -> String {
+fn run_to_string(runner: Runner) -> String {
     let mut out = Vec::new();
     {
         let mut output = DataGenOutput::new(&mut out);

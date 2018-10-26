@@ -12,25 +12,28 @@ extern crate dgen;
 mod cli_opts;
 
 use self::cli_opts::{CliOptions, SubCommand};
-use dgen::program::Program;
+use dgen::program::Runner;
 use dgen::interpreter::UnreadSource;
 use dgen::ProgramContext;
 use failure::Error;
 use std::path::PathBuf;
 use structopt::StructOpt;
+use dgen::verbosity::Verbosity;
 
 
 trait OrBail<T> {
-    fn or_bail(self, verbosity: u64) -> T;
+    fn or_bail(self, verbosity: Verbosity) -> T;
 }
 
 impl<T> OrBail<T> for Result<T, Error> {
-    fn or_bail(self, verbosity: u64) -> T {
+    fn or_bail(self, verbosity: Verbosity) -> T {
         match self {
             Ok(t) => t,
             Err(e) => {
-                eprintln!("Error: {}", e);
-                if print_backtraces(verbosity) {
+                if verbosity.should_print_error() {
+                    eprintln!("Error: {}", e);
+                }
+                if verbosity.should_print_debug_stacktrace() {
                     eprintln!("cause: {}", e.cause());
                     eprintln!("backtrace: {}", e.backtrace());
                 }
@@ -43,8 +46,8 @@ impl<T> OrBail<T> for Result<T, Error> {
 fn main() {
     // this call will print help and exit if --help is passed or args are invalid
     let args = CliOptions::from_args();
-    let verbosity = args.debug;
-    if print_backtraces(verbosity) {
+    let verbosity = args.get_verbosity();
+    if verbosity.should_print_debug_stacktrace() {
         // backtraces won't get generated unless this variable is set
         std::env::set_var("RUST_BACKTRACE", "1")
     }
@@ -60,7 +63,7 @@ fn main() {
             seed,
         } => {
             let source = get_program_source(program, program_file, stdin).or_bail(verbosity);
-            let rng = create_rng(seed);
+            let rng = create_rng(seed, verbosity);
             let program = create_program(
                 source,
                 verbosity,
@@ -74,11 +77,11 @@ fn main() {
     }
 }
 
-fn create_rng(seed: Option<String>) -> ProgramContext {
+fn create_rng(seed: Option<String>, verbosity: Verbosity) -> ProgramContext {
     seed.map(|s| {
         let resolved_seed = string_to_byte_array(s);
-        ProgramContext::from_seed(resolved_seed)
-    }).unwrap_or_else(|| ProgramContext::from_random_seed())
+        ProgramContext::from_seed(resolved_seed, verbosity)
+    }).unwrap_or_else(|| ProgramContext::from_random_seed(verbosity))
 }
 
 fn string_to_byte_array(string: String) -> [u8; 16] {
@@ -109,13 +112,13 @@ fn get_program_source(
 
 fn create_program(
     program_source: UnreadSource,
-    verbosity: u64,
+    verbosity: Verbosity,
     iterations: u64,
     libraries: Vec<PathBuf>,
     rng: ProgramContext,
     add_std_lib: bool,
-) -> Result<Program, Error> {
-    let mut program = Program::new(verbosity, iterations, program_source, rng);
+) -> Result<Runner, Error> {
+    let mut program = Runner::new(verbosity, iterations, program_source, rng);
 
     if add_std_lib {
         program.add_std_lib();
@@ -126,11 +129,8 @@ fn create_program(
     Ok(program)
 }
 
-fn print_backtraces(verbosity: u64) -> bool {
-    verbosity >= 2
-}
 
-fn list_functions(name: Option<String>, verbosity: u64) {
+fn list_functions(name: Option<String>, verbosity: Verbosity) {
     use std::io::{stdout, Write};
     use dgen::interpreter::Interpreter;
 
@@ -151,7 +151,7 @@ fn list_functions(name: Option<String>, verbosity: u64) {
     }
 }
 
-fn run_program(program: Program) -> Result<(), Error> {
+fn run_program(program: Runner) -> Result<(), Error> {
     let sout = std::io::stdout();
     // lock stdout once at the beginning so we don't have to keep locking/unlocking it
     let mut lock = sout.lock();
