@@ -71,12 +71,12 @@ impl OutputType for bool {
 }
 impl OutputType for IString {
     fn write_output(&self, writer: &mut DataGenOutput) -> Result<u64, Error> {
-        writer.write_string(self).map_err(Into::into)
+        writer.write_str(&*self).map_err(Into::into)
     }
 }
 impl OutputType for str {
     fn write_output(&self, writer: &mut DataGenOutput) -> Result<u64, Error> {
-        writer.write_string(self).map_err(Into::into)
+        writer.write_str(self).map_err(Into::into)
     }
 }
 impl OutputType for Vec<u8> {

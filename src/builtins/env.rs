@@ -5,7 +5,7 @@ use std::rc::Rc;
 use IString;
 use {
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput,
-    DynStringFun, FunctionPrototype, GenType, ProgramContext, RunnableFunction,
+    DynStringFun, GenType, ProgramContext, RunnableFunction,
 };
 
 fn create_env_map() -> HashMap<IString, IString> {
@@ -47,7 +47,7 @@ fn create_env(args: Arguments) -> CreateFunctionResult {
     })))
 }
 
-pub const ENV_VAR: &FunctionPrototype = &FunctionPrototype::Builtin(&BuiltinFunctionPrototype {
+pub const ENV_VAR: &BuiltinFunctionPrototype = &BuiltinFunctionPrototype {
     function_name: "env",
     description: "Returns the value of the given env variable, throws an error if the env var is not set",
     arguments: &[
@@ -55,7 +55,7 @@ pub const ENV_VAR: &FunctionPrototype = &FunctionPrototype::Builtin(&BuiltinFunc
     ],
     variadic: false,
     create_fn: &create_env,
-});
+};
 
 #[cfg(test)]
 mod test {

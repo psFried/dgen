@@ -8,7 +8,7 @@ use std::io::{self, Read, Seek, SeekFrom};
 use std::rc::Rc;
 use ::{
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput,
-    DynStringFun, FunctionPrototype, GenType, ProgramContext, RunnableFunction,
+    DynStringFun, GenType, ProgramContext, RunnableFunction,
 };
 use IString;
 
@@ -43,7 +43,7 @@ impl RandFileReader {
             ref region_offsets,
             ref delimiter,
         } = *self;
-        let region_idx = rng.gen_range(0, region_offsets.len() + 1);
+        let region_idx = rng.gen_range_inclusive(0, region_offsets.len());
         let region_start = if region_idx == 0 {
             0
         } else {
@@ -223,53 +223,6 @@ fn find_region_offsets(file: &mut File, delimiter: &str) -> Result<Vec<u64>, io:
     Ok(result)
 }
 
-// pub fn select_from_file_fun() -> BuiltinFunctionCreator {
-//     let args = ArgsBuilder::new()
-//         .arg("delimiter", GeneratorType::String)
-//         .arg("file_path", GeneratorType::String)
-//         .build();
-//     BuiltinFunctionCreator {
-//         name: SELECT_FROM_FILE_FUN_NAME.into(),
-//         description: "Selects random regions from the given file, using the given delimiter (most commonly a newline)",
-//         args,
-//         create_fn: &create_select
-//     }
-// }
-// fn create_select(mut args: Vec<GeneratorArg>, _: &ProgramContext) -> Result<GeneratorArg, Error> {
-//     let delimiter = args.pop().unwrap().as_string();
-//     let path = args.pop().unwrap().as_string();
-//     Ok(GeneratorArg::String(SelectFromFile::new(path, delimiter)))
-// }
-
-// pub fn words_fun() -> BuiltinFunctionCreator {
-//     BuiltinFunctionCreator {
-//         name: "words".into(),
-//         description: "Selects a random word from the unix words file (/usr/share/dict/words or /usr/dict/words)",
-//         args: FunctionArgs::empty(),
-//         create_fn: &create_words_fun
-//     }
-// }
-
-// fn create_words_fun(_: Vec<GeneratorArg>, _: &ProgramContext) -> Result<GeneratorArg, Error> {
-//     use generator::constant::ConstantStringGenerator;
-//     use std::path::Path;
-
-//     let words_paths = ["/usr/share/dict/words", "/usr/dict/words"];
-//     let path = words_paths
-//         .iter()
-//         .filter(|path| Path::new(path).is_file())
-//         .next()
-//         .map(|path| ConstantStringGenerator::new(*path))
-//         .ok_or_else(|| {
-//             format_err!(
-//                 "Could not find a words file in the usual places: {:?}",
-//                 words_paths
-//             )
-//         })?;
-//     let delimiter = ConstantStringGenerator::new("\n");
-
-//     Ok(GeneratorArg::String(SelectFromFile::new(path, delimiter)))
-// }
 
 const FILEPATH_PARAM: &str = "filepath";
 const DELIMITER_PARAM: &str = "delimiter";
@@ -298,7 +251,7 @@ fn create_words_fun(_: Arguments) -> CreateFunctionResult {
         .map(|path| ConstString::new(*path))
         .ok_or_else(|| {
             format_err!(
-                "Could not find a words file in the usual places: {:?}",
+                "Could not find a words file in the usual places: {:?} Try using `select_from_file(String, String)` instead",
                 words_paths
             )
         })?;
@@ -308,7 +261,7 @@ fn create_words_fun(_: Arguments) -> CreateFunctionResult {
     create_file_fun(args)
 }
 
-pub const SELECT_FROM_FILE_BUILTIN: &FunctionPrototype = &FunctionPrototype::Builtin(&BuiltinFunctionPrototype {
+pub const SELECT_FROM_FILE_BUILTIN: &BuiltinFunctionPrototype = &BuiltinFunctionPrototype {
     function_name: "select_from_file",
     description: "Selects random regions from the given file, using the given delimiter (most commonly a newline)",
     arguments: &[
@@ -317,26 +270,27 @@ pub const SELECT_FROM_FILE_BUILTIN: &FunctionPrototype = &FunctionPrototype::Bui
     ],
     variadic: false,
     create_fn: &create_file_fun,
-});
+};
 
-pub const WORDS_BUILTIN: &FunctionPrototype = &FunctionPrototype::Builtin(&BuiltinFunctionPrototype {
+pub const WORDS_BUILTIN: &BuiltinFunctionPrototype = &BuiltinFunctionPrototype {
     function_name: "words",
     description: "Selects a random word from the unix words file (/usr/share/dict/words or /usr/dict/words)",
     arguments: &[],
     variadic: false,
     create_fn: &create_words_fun,
-});
+};
 
 #[cfg(test)]
 mod test {
     use super::*;
     use ::ConstString;
+    use verbosity;
 
     const RAND_SEED: &[u8; 16] = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 
     #[test]
     fn produces_words_from_file_with_lf_line_endings() {
-        let mut rng = ProgramContext::from_seed(*RAND_SEED);
+        let mut rng = ProgramContext::from_seed(*RAND_SEED, verbosity::NORMAL);
         let path_gen = ConstString::new("test-data/simple-words.txt")
             .require_string()
             .unwrap();
@@ -352,7 +306,7 @@ mod test {
 
     #[test]
     fn produces_words_from_file_with_crlf_line_endings() {
-        let mut rng = ProgramContext::from_seed(*RAND_SEED);
+        let mut rng = ProgramContext::from_seed(*RAND_SEED, verbosity::NORMAL);
         let path_gen = ConstString::new("test-data/crlf-words.txt")
             .require_string()
             .unwrap();

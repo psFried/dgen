@@ -3,7 +3,7 @@ use std::rc::Rc;
 use IString;
 use {
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput, DynFun,
-    DynUintFun, FunctionPrototype, GenType, ProgramContext, RunnableFunction,
+    DynUintFun, GenType, ProgramContext, RunnableFunction,
 };
 
 #[derive(Debug)]
@@ -102,8 +102,8 @@ fn create_bin_repeat_delim(args: Arguments) -> CreateFunctionResult {
     Ok(AnyFunction::Bin(Rc::new(fun)))
 }
 
-pub const REPEAT_DELIM_BUILTIN: &FunctionPrototype =
-    &FunctionPrototype::Builtin(&BuiltinFunctionPrototype {
+pub const REPEAT_DELIM_BUILTIN: &BuiltinFunctionPrototype =
+    &BuiltinFunctionPrototype {
         function_name: "repeat_delimited",
         description:
             "Formats the output by repeating the given generator separated by the delimiter",
@@ -116,10 +116,10 @@ pub const REPEAT_DELIM_BUILTIN: &FunctionPrototype =
         ],
         variadic: false,
         create_fn: &create_repeat_delim,
-    });
+    };
 
-pub const REPEAT_DELIM_BIN_BUILTIN: &FunctionPrototype =
-    &FunctionPrototype::Builtin(&BuiltinFunctionPrototype {
+pub const REPEAT_DELIM_BIN_BUILTIN: &BuiltinFunctionPrototype =
+    &BuiltinFunctionPrototype {
         function_name: "repeat_delimited",
         description:
             "Formats the output by repeating the given generator separated by the delimiter",
@@ -132,7 +132,7 @@ pub const REPEAT_DELIM_BIN_BUILTIN: &FunctionPrototype =
         ],
         variadic: false,
         create_fn: &create_bin_repeat_delim,
-    });
+    };
 
 #[cfg(test)]
 mod test {

@@ -1,12 +1,12 @@
 
 # Generates a random character representing the ascii digits 0-9
-def digit_char() = char(48, 58);
+def digit_char() = char(48, 57);
 
 # Generates a random lowercase character in the range a-z
-def lowercase_ascii_char() = char(97, 123);
+def lowercase_ascii_char() = char(97, 122);
 
 # Generates a random uppercase character in the range A-Z
-def uppercase_ascii_char() = char(65, 91);
+def uppercase_ascii_char() = char(65, 90);
 
 # Generates a random ascii alphanumeric character
 def ascii_alphanumeric_char() = select(lowercase_ascii_char(), uppercase_ascii_char(), digit_char());

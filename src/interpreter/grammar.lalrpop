@@ -13,6 +13,13 @@ Comma<E>: Vec<E> = {
     <v0:(<E> ",")*> <e1:E?> => v0.into_iter().chain(e1).collect()
 };
 
+WithSpan<E>: ast::WithSpan<E> = {
+    <start:@L> <e:E> <end:@R> => ast::WithSpan {
+        span: ast::Span { start, end },
+        value: e,
+    }
+}
+
 BooleanLiteral: bool = {
     "true" => true,
     "false" => false
@@ -63,17 +70,21 @@ BinLiteral: Vec<u8> = {
     }
 }
 
-pub Expr: ast::Expr = {
-    <c:Comment*> <b:BinLiteral> => ast::Expr::BinaryLiteral(b),
-    <c:Comment*> <l:CharLiteral> => ast::Expr::CharLiteral(l),
-    <c:Comment*> <b:BooleanLiteral> => ast::Expr::BooleanLiteral(b),
-    <c:Comment*> <s:StringLiteral> => ast::Expr::StringLiteral(s),
-    <c:Comment*> <i:IntLiteral> => ast::Expr::IntLiteral(i),
-    <c:Comment*> <i:SignedIntLiteral> => ast::Expr::SignedIntLiteral(i),
-    <c:Comment*> <d:DecimalLiteral> => ast::Expr::DecimalLiteral(d),
-    <c:Comment*> <f:FunctionCall> => ast::Expr::Function(f),
-    <c:Comment*> <n:FunctionName> => ast::Expr::ArgumentUsage(n)
+ExprInner: ast::Expr = {
+    <b:BinLiteral> => ast::Expr::BinaryLiteral(b),
+    <l:CharLiteral> => ast::Expr::CharLiteral(l),
+    <b:BooleanLiteral> => ast::Expr::BooleanLiteral(b),
+    <s:StringLiteral> => ast::Expr::StringLiteral(s),
+    <i:IntLiteral> => ast::Expr::IntLiteral(i),
+    <i:SignedIntLiteral> => ast::Expr::SignedIntLiteral(i),
+    <d:DecimalLiteral> => ast::Expr::DecimalLiteral(d),
+    <f:FunctionCall> => ast::Expr::Function(f),
+    <n:FunctionName> => ast::Expr::ArgumentUsage(n)
 };
+
+pub Expr: ast::WithSpan<ast::Expr> = {
+    <c:Comment*> <e:WithSpan<ExprInner>> <c2:Comment*> => e
+}
 
 FunctionCall: ast::FunctionCall = {
     <n:FunctionName>"(" <a:Comma<Expr>> ")" => ast::FunctionCall { function_name: n, args: a, mapper: None },
@@ -90,7 +101,7 @@ FunctionCall: ast::FunctionCall = {
 };
 
 FunctionName: IString = {
-    <s:r"[a-zA-Z]+\w*"> => s.into()
+    <s:r"[a-zA-Z]+[a-zA-Z0-9_]*(\.[a-zA-Z0-9_]+)?"> => s.into()
 };
 
 GenType: GenType = {
@@ -107,8 +118,18 @@ MacroArg: ast::MacroArgument = {
     <n:FunctionName> ":" <t:GenType>  => ast::MacroArgument {name: n, arg_type: t}
 }
 
-DefineMacro: ast::MacroDef = {
-    <c:Comment*> "def" <n:FunctionName> "(" <args:Comma<MacroArg>> ")" "=" <e:Expr> ";" => ast::MacroDef { name: n, args: args, body: e, doc_comments: process_doc_comments(c) }
+DefineMacro: ast::WithSpan<ast::MacroDef> = {
+    <c:Comment*> <start:@L> "def" <n:FunctionName> "(" <args:Comma<MacroArg>> ")" "=" <e:Expr> ";" <end:@R> => {
+        ast::WithSpan {
+            span: ast::Span {start, end },
+            value: ast::MacroDef { 
+                name: n, 
+                args: args, 
+                body: e, 
+                doc_comments: process_doc_comments(c) 
+            }
+        }
+    }
 }
 
 

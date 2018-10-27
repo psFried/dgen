@@ -1,17 +1,12 @@
-use interpreter::ast::{Expr, MacroArgument, MacroDef};
-use interpreter::Compiler;
+use interpreter::ast::{WithSpan, Expr, MacroArgument, MacroDef};
+use interpreter::{Source, SourceRef, Compiler, CompileResult, CompileError};
 use ::{AnyFunction, Arguments, GenType};
 use std::fmt::{self, Debug, Display};
 use IString;
+use std::sync::Arc;
 
 use failure::Error;
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct SourceRef {
-    filename: IString,
-    line: u32,
-    column: u32,
-}
 
 pub type CreateFunctionResult = Result<AnyFunction, Error>;
 
@@ -24,10 +19,11 @@ pub trait FunProto {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct InterpretedFunctionPrototype {
+    source_ref: SourceRef,
     function_name: IString,
     arguments: Vec<MacroArgument>,
     doc_comments: String, // no point in interning these
-    body: Expr,
+    body: WithSpan<Expr>,
 }
 
 impl FunProto for InterpretedFunctionPrototype {
@@ -49,27 +45,30 @@ impl FunProto for InterpretedFunctionPrototype {
     }
 }
 
-impl From<MacroDef> for InterpretedFunctionPrototype {
-    fn from(macro_def: MacroDef) -> InterpretedFunctionPrototype {
-        InterpretedFunctionPrototype::new(macro_def)
-    }
-}
 
 impl InterpretedFunctionPrototype {
-    fn new(macro_def: MacroDef) -> InterpretedFunctionPrototype {
+    pub fn new(source: Arc<Source>, macro_def: WithSpan<MacroDef>) -> InterpretedFunctionPrototype {
+        let WithSpan {
+            span,
+            value,
+        } = macro_def;
+
         let MacroDef {
             doc_comments,
             name,
             args,
             body,
-        } = macro_def;
+        } = value;
+
         InterpretedFunctionPrototype {
+            source_ref: SourceRef::new(source, span),
             function_name: name,
             doc_comments,
             arguments: args,
             body,
         }
     }
+
     fn bind_arguments(&self, mut args: Vec<AnyFunction>) -> Vec<BoundArgument> {
         args.drain(..).enumerate().map(|(i, value)| {
             // the bounds check should have been taken care previously of by the type checking
@@ -79,9 +78,10 @@ impl InterpretedFunctionPrototype {
         }).collect()
     }
 
-    fn apply(&self, args: Vec<AnyFunction>, compiler: &Compiler) -> CreateFunctionResult {
+    fn apply(&self, args: Vec<AnyFunction>, compiler: &Compiler) -> CompileResult {
         let bound_args = self.bind_arguments(args);
-        compiler.eval_private(&self.body, bound_args.as_slice())
+        let source = self.source_ref.source.clone();
+        compiler.eval_private(source, &self.body, bound_args.as_slice()).map_err(Into::into)
     }
 }
 
@@ -134,7 +134,7 @@ pub struct ArgumentTypes {
     pub types: Vec<GenType>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum FunctionPrototype {
     Builtin(&'static BuiltinFunctionPrototype),
     Interpreted(InterpretedFunctionPrototype),
@@ -248,9 +248,13 @@ impl FunctionPrototype {
         }
     }
 
-    pub fn apply(&self, arguments: Vec<AnyFunction>, compiler: &Compiler) -> CreateFunctionResult {
+    pub fn apply(&self, arguments: Vec<AnyFunction>, compiler: &Compiler, source_ref: &SourceRef) -> Result<AnyFunction, CompileError> {
         match *self {
-            FunctionPrototype::Builtin(ref builtin) => builtin.apply(arguments),
+            FunctionPrototype::Builtin(ref builtin) => {
+                builtin.apply(arguments).map_err(|err| {
+                    CompileError::internal_error(err, source_ref.clone())
+                })
+            }
             FunctionPrototype::Interpreted(ref int) => int.apply(arguments, compiler),
         }
     }
@@ -275,28 +279,72 @@ impl FunctionPrototype {
             FunctionPrototype::Interpreted(ref int) => int.get_description(),
         }
     }
+
+    pub fn collect_argument_types(&self) -> Vec<GenType> {
+        let arg_count = self.get_arg_count();
+        let mut result = Vec::with_capacity(arg_count);
+        for i in 0..arg_count {
+            result.push(self.get_arg(i).1);
+        }
+        result
+    }
+
+    pub fn get_source(&self) -> Option<SourceRef> {
+        match *self {
+            FunctionPrototype::Builtin(_) => None,
+            FunctionPrototype::Interpreted(ref int) => Some(int.source_ref.clone())
+        }
+    }
+
 }
 
 impl Display for FunctionPrototype {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // function name and argument list
-        f.write_str(self.name())?;
-        f.write_str("(")?;
-        let variadic = self.is_variadic();
-        let arg_count = self.get_arg_count();
-        for i in 0..arg_count {
-            if i > 0 {
-                f.write_str(", ")?;
+        // in the alternate form, we'll try to print out the whole source
+        if f.alternate() {
+            for line in self.get_description().lines() {
+                writeln!(f, "# {}", line)?;
             }
-            let (arg_name, arg_type) = self.get_arg(i);
-            write!(f, "{}: {}", arg_name, arg_type)?;
-            if variadic && i == arg_count.saturating_sub(1) {
-                f.write_str("...")?;
-            }
-        }
-        f.write_str(") - ")?;
 
-        f.write_str(self.get_description())
+            if let Some(source) = self.get_source() {
+                // alternate form for source renders the entire span without underlines
+                writeln!(f, "{:#}", source)
+            } else {
+                f.write_str(self.name())?;
+                f.write_str("(")?;
+                let variadic = self.is_variadic();
+                let arg_count = self.get_arg_count();
+                for i in 0..arg_count {
+                    if i > 0 {
+                        f.write_str(", ")?;
+                    }
+                    let (arg_name, arg_type) = self.get_arg(i);
+                    write!(f, "{}: {}", arg_name, arg_type)?;
+                    if variadic && i == arg_count.saturating_sub(1) {
+                        f.write_str("...")?;
+                    }
+                }
+                f.write_str(") - <builtin function>\n")
+            }
+        } else {
+            // function name and argument list
+            f.write_str(self.name())?;
+            f.write_str("(")?;
+            let variadic = self.is_variadic();
+            let arg_count = self.get_arg_count();
+            for i in 0..arg_count {
+                if i > 0 {
+                    f.write_str(", ")?;
+                }
+                let (arg_name, arg_type) = self.get_arg(i);
+                write!(f, "{}: {}", arg_name, arg_type)?;
+                if variadic && i == arg_count.saturating_sub(1) {
+                    f.write_str("...")?;
+                }
+            }
+            f.write_str(") - ")?;
+            f.write_str(self.get_description())
+        }
     }
 }
 

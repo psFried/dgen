@@ -2,7 +2,7 @@ use failure::Error;
 use std::rc::Rc;
 use {
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput,
-    DynBinFun, FunctionPrototype, GenType, ProgramContext, RunnableFunction,
+    DynBinFun, GenType, ProgramContext, RunnableFunction,
 };
 
 #[derive(Debug)]
@@ -28,14 +28,14 @@ fn create_bin_len(args: Arguments) -> CreateFunctionResult {
     Ok(AnyFunction::Uint(Rc::new(BinLength(bin))))
 }
 
-pub const BIN_LENGTH: &FunctionPrototype = &FunctionPrototype::Builtin(&BuiltinFunctionPrototype {
+pub const BIN_LENGTH: &BuiltinFunctionPrototype = &BuiltinFunctionPrototype {
     function_name: "bin_length",
     description:
         "returns the length of the given binary as a Uint. Mostly useful in mapped functions",
     arguments: &[("binary", GenType::Bin)],
     variadic: false,
     create_fn: &create_bin_len,
-});
+};
 
 #[cfg(test)]
 mod test {

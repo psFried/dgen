@@ -2,7 +2,7 @@ use failure::Error;
 use std::rc::Rc;
 use {
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput,
-    DynBinFun, DynStringFun, FunctionPrototype, GenType, IString, ProgramContext, RunnableFunction,
+    DynBinFun, DynStringFun, GenType, IString, ProgramContext, RunnableFunction,
 };
 
 #[derive(Debug)]
@@ -69,23 +69,24 @@ fn create_concat_bin(args: Arguments) -> CreateFunctionResult {
     let funs = args.get_required_varargs(CONCAT_ARG_NAME, 0, AnyFunction::require_bin)?;
     Ok(AnyFunction::Bin(Rc::new(Concat { funs })))
 }
-pub const CONCAT_BUILTIN: &FunctionPrototype =
-    &FunctionPrototype::Builtin(&BuiltinFunctionPrototype {
+
+pub const CONCAT_BUILTIN: &BuiltinFunctionPrototype =
+    &BuiltinFunctionPrototype {
         function_name: "concat",
         description: "concatenates the input strings into a single output string",
         arguments: &[(CONCAT_ARG_NAME, GenType::String)],
         variadic: true,
         create_fn: &create_concat,
-    });
+    };
 
-pub const CONCAT_BIN_BUILTIN: &FunctionPrototype =
-    &FunctionPrototype::Builtin(&BuiltinFunctionPrototype {
+pub const CONCAT_BIN_BUILTIN: &BuiltinFunctionPrototype =
+    &BuiltinFunctionPrototype {
         function_name: "concat",
         description: "concatenates the input bytes into a single output",
         arguments: &[(CONCAT_ARG_NAME, GenType::Bin)],
         variadic: true,
         create_fn: &create_concat_bin,
-    });
+    };
 
 #[cfg(test)]
 mod test {

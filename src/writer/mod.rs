@@ -50,6 +50,10 @@ impl<'a> DataGenOutput<'a> {
         self.writer.write_all(bytes).map(|()| bytes.len() as u64)
     }
 
+    pub fn write_str(&mut self, value: &str) -> io::Result<u64> {
+        self.write_bytes(value.as_bytes())
+    }
+
     pub fn write_string<D: Display + ?Sized>(&mut self, value: &D) -> io::Result<u64> {
         let start = self.writer.get_num_bytes_written();
         self.writer

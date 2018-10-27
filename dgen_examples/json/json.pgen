@@ -1,3 +1,4 @@
+#!dgen
 # This file is runnable as it is since it ends with an expression.
 # Running this will generate a random json object or array
 # To run this, execute: `pgen run -f pgen_examples/json/json.pgen`
@@ -9,7 +10,7 @@ def json_number() = select(
 );
 
 # generates random double quoted strings
-def json_string() = double_quote(alphanumeric_string(uint(0, 50)));
+def json_string() = single_or_double_quote(alphanumeric_string(uint(0, 50)));
 
 # generates either a string or a number
 def string_or_number() = select(json_string(), json_number());
@@ -17,8 +18,20 @@ def string_or_number() = select(json_string(), json_number());
 # generates either a string or a number, and continues to always generate that same type (but with different values)
 def stable_string_or_number() = stable_select(json_string(), json_number());
 
-# creates a random double quoted string to use as a key
-def json_key() = double_quote(alphanumeric_string(uint(2, 20)));
+# Surrounds the given string with either single or double quotes 
+def single_or_double_quote(value: String) = select(
+    double_quote(value),
+    surround(value, "'")
+);
+
+# creates a random string to use as a key. It may be surrounded by either single or double quotes, or remain unquoted
+def json_key() = select(
+    single_or_double_quote(alphanumeric_string(uint(1, 20))),
+    concat( # unquoted json keys must start with either a letter or an underscore
+        select(uppercase_ascii_string(1), lowercase_ascii_string(1), "_"),
+        alphanumeric_string(uint(0, 19))
+    )
+);
 
 # formats a json array, using whatever function is passed in the generate the values
 def json_array(value: String) = repeat_delimited(
