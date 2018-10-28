@@ -33,9 +33,22 @@ impl RunnableFunction<IString> for StringGenerator {
         out: &mut DataGenOutput,
     ) -> Result<u64, Error> {
         let len = self.length_gen.gen_value(context)?;
+        let mut iterations = 0;
         let mut total = 0;
-        for _ in 0..len {
-            total += self.char_gen.write_value(context, out)?;
+        let mut buffer = [0; 1024];
+        while iterations < len {
+            let mut buffered_len = 0;
+            while buffered_len < (buffer.len() - 6) && iterations < len {
+                iterations += 1;
+                let buffer_slice = &mut buffer[buffered_len..];
+                let value = self.char_gen.gen_value(context)?;
+                let char_len = {
+                    value.encode_utf8(buffer_slice).len()
+                };
+                buffered_len += char_len;
+            }
+            let slice = &buffer[..buffered_len as usize];
+            total += out.write_bytes(slice)?;
         }
         Ok(total)
     }

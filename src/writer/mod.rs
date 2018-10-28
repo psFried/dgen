@@ -1,10 +1,10 @@
 use encoding::ByteWriter;
 use std::fmt::Display;
-use std::io::{self, Write};
+use std::io::{self, Write, BufWriter};
 use OutputType;
 
 pub struct TrackingWriter<'a> {
-    delegate: &'a mut Write,
+    delegate: BufWriter<&'a mut Write>,
     num_written: u64,
 }
 
@@ -25,7 +25,7 @@ impl<'a> Write for TrackingWriter<'a> {
 impl<'a> TrackingWriter<'a> {
     pub fn new(delegate: &'a mut Write) -> TrackingWriter<'a> {
         TrackingWriter {
-            delegate,
+            delegate: BufWriter::new(delegate),
             num_written: 0,
         }
     }
