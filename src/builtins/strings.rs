@@ -48,7 +48,8 @@ impl RunnableFunction<IString> for StringGenerator {
                 buffered_len += char_len;
             }
             let slice = &buffer[..buffered_len as usize];
-            total += out.write_bytes(slice)?;
+            let as_str = unsafe { ::std::str::from_utf8_unchecked(slice) };
+            total += out.write_str(as_str)?;
         }
         Ok(total)
     }
