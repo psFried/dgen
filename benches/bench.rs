@@ -9,7 +9,7 @@ use dgen::interpreter::UnreadSource;
 use dgen::{DataGenOutput, Interpreter, ProgramContext};
 use encoding::{ByteWriter, EncoderTrap, Encoding};
 use rand::prng::XorShiftRng;
-use rand::{FromEntropy, Rand};
+use rand::{FromEntropy, Rand, Rng};
 use std::fmt;
 use std::io::{self, Write};
 
@@ -106,29 +106,26 @@ fn char_benchmark_unicode(c: &mut Criterion) {
 const SEED: [u8; 16] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 const OUT_CAPACITY: usize = 32 * 1024;
 
-
 macro_rules! make_string_bench {
-    ($str_len:tt) => {
-        {
-            let program = stringify!(string($str_len, ascii_alphanumeric_char()));
-            let mut interpreter = ::dgen::Interpreter::new();
-            interpreter.add_std_lib();
-            let compiled = interpreter
-                .eval(UnreadSource::Builtin("test", program))
-                .unwrap();
-            let mut context = ProgramContext::from_seed(SEED, ::dgen::verbosity::NORMAL);
-            let mut out = Vec::with_capacity(OUT_CAPACITY);
+    ($str_len:tt) => {{
+        let program = stringify!(string($str_len, ascii_alphanumeric_char()));
+        let mut interpreter = ::dgen::Interpreter::new();
+        interpreter.add_std_lib();
+        let compiled = interpreter
+            .eval(UnreadSource::Builtin("test", program))
+            .unwrap();
+        let mut context = ProgramContext::from_seed(SEED, ::dgen::verbosity::NORMAL);
+        let mut out = Vec::with_capacity(OUT_CAPACITY);
 
-            let fun_name = stringify!(ascii_string_$str_len);
-            Fun::new(fun_name, move |b, i| {
-                b.iter(|| {
-                    out.clear();
-                    let mut real_out = DataGenOutput::new(&mut out);
-                    compiled.write_value(&mut context, &mut real_out).unwrap();
-                })
+        let fun_name = stringify!(ascii_string_$str_len);
+        Fun::new(fun_name, move |b, i| {
+            b.iter(|| {
+                out.clear();
+                let mut real_out = DataGenOutput::new(&mut out);
+                compiled.write_value(&mut context, &mut real_out).unwrap();
             })
-        }
-    };
+        })
+    }};
 }
 fn string_gen_benches(c: &mut Criterion) {
     let fun_1000 = make_string_bench!(1000);
@@ -140,7 +137,47 @@ fn string_gen_benches(c: &mut Criterion) {
     c.bench_functions("ascii_alphanumeric_string", functions, ());
 }
 
-criterion_group!(benches, string_gen_benches);
+struct RandomBytes(Vec<u8>);
+impl RandomBytes {
+    fn with_length(len: usize) -> RandomBytes {
+        let mut rng = XorShiftRng::from_entropy();
+        let mut vec = vec![0; len];
+        rng.fill(vec.as_mut_slice());
+        RandomBytes(vec)
+    }
+    fn as_slice(&self) -> &[u8] {
+        self.0.as_slice()
+    }
+}
+impl fmt::Debug for RandomBytes {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "RandomBytes(length={})", self.0.len())
+    }
+}
+
+fn writer_benches(c: &mut Criterion) {
+    let mut rng = XorShiftRng::from_entropy();
+    let mut bytes = Vec::with_capacity(8 * 1024);
+
+    let sizes = &[1, 3, 8, 24, 128, 512, 4096];
+    let inputs = sizes
+        .iter().cloned()
+        .map(RandomBytes::with_length).collect::<Vec<RandomBytes>>();
+
+    c.bench_function_over_inputs(
+        "datagen_output",
+        move |bencher, input| {
+            bencher.iter(|| {
+                bytes.clear();
+                let mut out = DataGenOutput::new(&mut bytes);
+                out.write_bytes(input.as_slice()).unwrap()
+            });
+        },
+        inputs,
+    );
+}
+
+criterion_group!(benches, string_gen_benches, writer_benches);
 //criterion_group!(benches, char_benchmark_ascii, char_benchmark_unicode, string_bench_ascii, string_bench_unicode);
 criterion_main!(benches);
 
