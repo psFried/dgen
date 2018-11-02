@@ -1,4 +1,4 @@
 # uses both the http and json libraries to generate an http post request with a json payload
-# to run this, execute: `dgen run --lib dgen_examples/http/http-lib.pgen --lib dgen_examples/json/json.pgen -f dgen_examples/http_with_json.dgen`
+# to run this, execute: `dgen --lib dgen_examples/http/http-lib.pgen --lib dgen_examples/json/json.pgen -f dgen_examples/http_with_json.dgen`
 
 post_request("notarealhost.notarealtld", "/foo/bar", json_object())

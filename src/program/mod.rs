@@ -2,7 +2,6 @@ mod help;
 
 use failure::Error;
 use interpreter::{Interpreter, UnreadSource};
-use verbosity::Verbosity;
 use writer::DataGenOutput;
 use ProgramContext;
 
@@ -26,17 +25,17 @@ impl DgenCommand for Runner {
 }
 
 impl Runner {
-    pub fn new<T: Into<UnreadSource>>(
-        _verbosity: Verbosity,
+    pub fn new<S: Into<UnreadSource>>(
         iterations: u64,
-        source: T,
+        source: S,
         runtime_context: ProgramContext,
+        interpreter: Interpreter,
     ) -> Runner {
         Runner {
             iterations,
             source: source.into(),
             runtime_context,
-            interpreter: Interpreter::new(),
+            interpreter,
         }
     }
 

@@ -122,7 +122,7 @@ Second file
 def double(string: String) = concat("Two times the ", string, "!");
 ```
 
-When you run `dgen run --lib foo.dgen --lib bar.dgen -p 'double("wat?")'` you'll get the following error:
+When you run `dgen --lib foo.dgen --lib bar.dgen -p 'double("wat?")'` you'll get the following error:
 ```
 Error: Compilation Error: Ambiguous function call, which could refer to multiple functions:
 Called function: double(String)

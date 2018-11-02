@@ -1,25 +1,18 @@
 #[macro_use]
 extern crate structopt;
-#[macro_use]
 extern crate failure;
 extern crate dgen;
-extern crate itertools;
-extern crate lalrpop_util;
-extern crate rand;
-extern crate regex;
-extern crate string_cache;
 
 mod cli_opts;
 
-use self::cli_opts::{CliOptions, SubCommand};
-use dgen::interpreter::{Interpreter, UnreadSource};
+use self::cli_opts::{CliOptions, SubCommand, HelpOptions};
+use dgen::interpreter::Interpreter;
 use dgen::program::{DgenCommand, Help, Runner};
+use dgen::repl::Repl;
 use dgen::verbosity::Verbosity;
 use dgen::{DataGenOutput, ProgramContext};
-use dgen::repl::Repl;
 use failure::Error;
 use std::io;
-use std::path::PathBuf;
 use structopt::StructOpt;
 
 trait OrBail<T> {
@@ -46,75 +39,61 @@ impl<T> OrBail<T> for Result<T, Error> {
 
 fn main() {
     // this call will print help and exit if --help is passed or args are invalid
-    let args = CliOptions::from_args();
+    let mut args = CliOptions::from_args();
     let verbosity = args.get_verbosity();
     if verbosity.should_print_debug_stacktrace() {
         // backtraces won't get generated unless this variable is set
         std::env::set_var("RUST_BACKTRACE", "1")
     }
-    //eprintln!("sli args: {:#?}", args);
-    let CliOptions {
-        subcommand,
-        mut files,
-        ..
-    } = args;
+
+    let interpreter = create_interpreter(&args);
+
+    let subcommand = args.subcommand.take();
     match subcommand {
-        Some(SubCommand::Help {
+        Some(SubCommand::Help(HelpOptions {
             function_name,
             module_name,
-        }) => print_function_help(function_name, module_name, verbosity),
-        Some(SubCommand::RunProgram {
-            program,
-            iteration_count,
-            program_file,
-            stdin,
-            libraries,
-            no_std_lib,
-            seed,
-        }) => {
-            let source = get_program_source(program, program_file, stdin).or_bail(verbosity);
-            let rng = create_rng(seed, verbosity);
-            let program = create_program(
-                source,
-                verbosity,
-                iteration_count,
-                libraries,
-                rng,
-                !no_std_lib,
-            ).or_bail(verbosity);
-            run_program(program).or_bail(verbosity)
+        })) => {
+            print_function_help(function_name, module_name, interpreter, verbosity);
         }
         None => {
-            if files.is_empty() {
-                let repl = Repl::new(ProgramContext::from_random_seed(verbosity));
-                repl.run().map_err(Into::into).or_bail(verbosity);
-            } else {
-                let program_file = files.pop().unwrap();
+            let context = create_context(&args);
 
-                let source = UnreadSource::file(program_file);
-                let runtime_context = ProgramContext::from_random_seed(verbosity);
-                let program = create_program(
-                    source,
-                    verbosity,
-                    1,
-                    files,
-                    runtime_context,
-                    true, // to add the std library. This default can only be disabled when using the `run` subcommand
-                ).or_bail(verbosity);
-                run_program(program).or_bail(verbosity)
+            if let Some(program_source) = args.get_program_source() {
+                let iterations = args.iteration_count;
+                let runner = Runner::new(iterations, program_source, context, interpreter);
+                run_program(runner).or_bail(verbosity);
+            } else {
+                let repl = Repl::new(context, interpreter);
+                repl.run().or_bail(verbosity);
             }
         }
     }
 }
 
-fn create_rng(seed: Option<String>, verbosity: Verbosity) -> ProgramContext {
-    seed.map(|s| {
-        let resolved_seed = string_to_byte_array(s);
-        ProgramContext::from_seed(resolved_seed, verbosity)
-    }).unwrap_or_else(|| ProgramContext::from_random_seed(verbosity))
+fn create_interpreter(options: &CliOptions) -> Interpreter {
+    let verbosity = options.get_verbosity();
+    let mut interpreter = Interpreter::new();
+    if !options.no_std_lib {
+        interpreter.add_std_lib();
+    }
+    for lib in options.get_library_sources() {
+        interpreter.add_module(lib).or_bail(verbosity);
+    }
+    interpreter
 }
 
-fn string_to_byte_array(string: String) -> [u8; 16] {
+fn create_context(args: &CliOptions) -> ProgramContext {
+    let verbosity = args.get_verbosity();
+    args.seed
+        .as_ref()
+        .map(|s| {
+            let resolved_seed = string_to_byte_array(s);
+            ProgramContext::from_seed(resolved_seed, verbosity)
+        }).unwrap_or_else(|| ProgramContext::from_random_seed(verbosity))
+}
+
+fn string_to_byte_array(string: &str) -> [u8; 16] {
     let mut result = [0u8; 16];
     for (i, byte) in string.as_bytes().iter().enumerate().take(16) {
         result[i] = *byte;
@@ -122,54 +101,15 @@ fn string_to_byte_array(string: String) -> [u8; 16] {
     result
 }
 
-fn get_program_source(
-    program_string: Option<String>,
-    program_file: Option<PathBuf>,
-    stdin: bool,
-) -> Result<UnreadSource, Error> {
-    let maybe_source = if stdin {
-        Some(UnreadSource::stdin())
-    } else if program_string.is_some() {
-        program_string.map(Into::into)
-    } else if program_file.is_some() {
-        program_file.map(Into::into)
-    } else {
-        None
-    };
-
-    maybe_source.ok_or_else(|| format_err!("Must specify one of program, program-file, or stdin"))
-}
-
-fn create_program(
-    program_source: UnreadSource,
-    verbosity: Verbosity,
-    iterations: u64,
-    libraries: Vec<PathBuf>,
-    rng: ProgramContext,
-    add_std_lib: bool,
-) -> Result<Runner, Error> {
-    let mut program = Runner::new(verbosity, iterations, program_source, rng);
-
-    if add_std_lib {
-        program.add_std_lib();
-    }
-    for lib in libraries {
-        program.add_library(UnreadSource::file(lib))?;
-    }
-    Ok(program)
-}
-
 fn print_function_help(
     function_name: Option<String>,
     module_name: Option<String>,
+    mut interpreter: Interpreter,
     verbosity: Verbosity,
 ) {
-    let mut interpreter = Interpreter::new();
-    interpreter.add_std_lib();
-
     let help = Help::new(
-        function_name,
         module_name,
+        function_name,
         &mut interpreter,
         verbosity.is_verbose(),
     );

@@ -44,10 +44,7 @@ fn execute_fn(function: AnyFunction, context: &mut ProgramContext) -> Result<(),
 }
 
 impl Repl {
-    pub fn new(context: ProgramContext) -> Repl {
-        let mut interpreter = Interpreter::new();
-        interpreter.add_std_lib();
-
+    pub fn new(context: ProgramContext, interpreter: Interpreter) -> Repl {
         Repl {
             context,
             interpreter,
@@ -81,7 +78,6 @@ impl Repl {
 
     fn handle_new_input(&mut self, new_input: String) -> Result<(), Error> {
         if self.handle_meta_command(new_input.as_str()) {
-            println!("Handled metacommand");
             return Ok(());
         }
 
@@ -138,15 +134,6 @@ impl Repl {
 
     fn show(&mut self) {
         println!("# Current Source: \n {}", self.module_source);
-
-        if let Some(m) = self.interpreter.get_module(MODULE_NAME) {
-            println!("# Functions in scope: ");
-            for fun in m.function_iterator() {
-                println!("{}", fun);
-            }
-        } else {
-            println!("# No functions in module");
-        }
     }
 
     fn help(&mut self) {
@@ -176,11 +163,6 @@ impl Repl {
         self.module_source.push_str(self.partial_source.as_str());
         self.partial_source.clear();
     }
-}
-
-fn get_second_word(line: &str) -> Option<&str> {
-    let line = line.trim();
-    line.split("\\s+").nth(1)
 }
 
 #[derive(Debug)]
