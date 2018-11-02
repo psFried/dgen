@@ -19,7 +19,7 @@ pub(crate) mod grammar {
 pub use self::source::{Source, UnreadSource};
 pub use self::module::Module;
 pub use self::errors::{CompileError, SourceRef};
-
+pub use self::parser::DgenParseError;
 pub const MODULE_SEPARATOR_CHAR: char = '.';
 
 use self::ast::{Expr, FunctionCall, FunctionMapper, Program, WithSpan};
@@ -317,6 +317,10 @@ impl Interpreter {
         } else {
             Ok(None)
         }
+    }
+
+    pub fn get_module(&self, module_name: &str) -> Option<&Module> {
+        self.module_iterator().find(|m| &*m.name == module_name)
     }
 
     pub fn remove_module(&mut self, name: &str) {

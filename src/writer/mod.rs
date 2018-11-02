@@ -93,3 +93,10 @@ impl<'a> ByteWriter for DataGenOutput<'a> {
             .expect("Failed to write output of encoded string");
     }
 }
+
+
+impl<'a> ::std::fmt::Write for DataGenOutput<'a> {
+    fn write_str(&mut self, s: &str) -> ::std::fmt::Result {
+        self.write_str(s).map(|_| ()).map_err(|_| ::std::fmt::Error)
+    }
+}

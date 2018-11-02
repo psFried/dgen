@@ -10,7 +10,9 @@ extern crate lalrpop_util;
 extern crate rand;
 extern crate regex;
 extern crate string_cache;
+extern crate rustyline;
 
+pub mod repl;
 mod arguments;
 pub(crate) mod builtins;
 mod context;

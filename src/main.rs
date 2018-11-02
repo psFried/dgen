@@ -2,24 +2,25 @@
 extern crate structopt;
 #[macro_use]
 extern crate failure;
+extern crate dgen;
 extern crate itertools;
 extern crate lalrpop_util;
 extern crate rand;
 extern crate regex;
 extern crate string_cache;
-extern crate dgen;
 
 mod cli_opts;
 
 use self::cli_opts::{CliOptions, SubCommand};
-use dgen::program::Runner;
-use dgen::interpreter::{Interpreter, UnreadSource, Module};
-use dgen::{ProgramContext, FunctionPrototype};
+use dgen::interpreter::{Interpreter, UnreadSource};
+use dgen::program::{DgenCommand, Help, Runner};
+use dgen::verbosity::Verbosity;
+use dgen::{DataGenOutput, ProgramContext};
+use dgen::repl::Repl;
 use failure::Error;
+use std::io;
 use std::path::PathBuf;
 use structopt::StructOpt;
-use dgen::verbosity::Verbosity;
-
 
 trait OrBail<T> {
     fn or_bail(self, verbosity: Verbosity) -> T;
@@ -34,7 +35,7 @@ impl<T> OrBail<T> for Result<T, Error> {
                     eprintln!("Error: {}", e);
                 }
                 if verbosity.should_print_debug_stacktrace() {
-                    eprintln!("cause: {}", e.cause());
+                    eprintln!("cause: {}", e.as_fail());
                     eprintln!("backtrace: {}", e.backtrace());
                 }
                 ::std::process::exit(1);
@@ -52,9 +53,16 @@ fn main() {
         std::env::set_var("RUST_BACKTRACE", "1")
     }
     //eprintln!("sli args: {:#?}", args);
-    let CliOptions {subcommand, mut files, ..} = args;
+    let CliOptions {
+        subcommand,
+        mut files,
+        ..
+    } = args;
     match subcommand {
-        Some(SubCommand::Help { function_name, module_name }) => print_function_help(function_name, module_name, verbosity),
+        Some(SubCommand::Help {
+            function_name,
+            module_name,
+        }) => print_function_help(function_name, module_name, verbosity),
         Some(SubCommand::RunProgram {
             program,
             iteration_count,
@@ -77,21 +85,24 @@ fn main() {
             run_program(program).or_bail(verbosity)
         }
         None => {
-            let program_file = files.pop().ok_or_else(|| {
-                format_err!("Must supply either a subcommand or a file to execute")
-            }).or_bail(verbosity);
+            if files.is_empty() {
+                let repl = Repl::new(ProgramContext::from_random_seed(verbosity));
+                repl.run().map_err(Into::into).or_bail(verbosity);
+            } else {
+                let program_file = files.pop().unwrap();
 
-            let source = UnreadSource::file(program_file);
-            let runtime_context = ProgramContext::from_random_seed(verbosity);
-            let program = create_program(
-                source,
-                verbosity,
-                1,
-                files,
-                runtime_context,
-                true // to add the std library. This default can only be disabled when using the `run` subcommand
-            ).or_bail(verbosity);
-            run_program(program).or_bail(verbosity)
+                let source = UnreadSource::file(program_file);
+                let runtime_context = ProgramContext::from_random_seed(verbosity);
+                let program = create_program(
+                    source,
+                    verbosity,
+                    1,
+                    files,
+                    runtime_context,
+                    true, // to add the std library. This default can only be disabled when using the `run` subcommand
+                ).or_bail(verbosity);
+                run_program(program).or_bail(verbosity)
+            }
         }
     }
 }
@@ -148,92 +159,25 @@ fn create_program(
     Ok(program)
 }
 
-fn has_matching_module(interpreter: &Interpreter, module_name: &str) -> Result<(), ()> {
-    if interpreter.module_iterator().any(|m| {
-        m.name.contains(module_name)
-    }) {
-        Ok(())
-    } else {
-        Err(())
-    }
-}
-
-fn list_modules(interpreter: &Interpreter) -> String {
-    use itertools::Itertools;
-    interpreter.module_iterator().map(|m| m.name.clone()).join("\n")
-}
-
-fn find_modules<'a>(interpreter: &'a Interpreter, module_name: &'a str, verbosity: Verbosity) -> impl Iterator<Item = &'a Module> {
-    let _ = has_matching_module(interpreter, module_name).map_err(|_| {
-        let other_modules = list_modules(interpreter);
-        format_err!("No module exists with name matching '{}'. Available modules are: \n\n{}\n", module_name, other_modules)
-    }).or_bail(verbosity);
-
-    interpreter.module_iterator().filter(move |m| {
-        m.name.contains(module_name)
-    })
-}
-
-fn print_function_help(function_name: Option<String>, module_name: Option<String>, verbosity: Verbosity) {
+fn print_function_help(
+    function_name: Option<String>,
+    module_name: Option<String>,
+    verbosity: Verbosity,
+) {
     let mut interpreter = Interpreter::new();
     interpreter.add_std_lib();
 
-    match (module_name, function_name) {
-        (Some(module), Some(function)) => {
-            let iter = find_modules(&interpreter, module.as_str(), verbosity);
-            for actual_module in iter {
-                println!("\nModule: {}", actual_module.name);
-                list_functions(actual_module.function_iterator(), Some(function.as_str()), verbosity);
-            }
-        }
-        (Some(module), None) => {
-            let iter = find_modules(&interpreter, module.as_str(), verbosity);
-            for actual_module in iter {
-                println!("\nModule: {}", actual_module.name);
-                list_functions(actual_module.function_iterator(), None, verbosity);
-            }
-        }
-        (None, Some(function)) => {
-            for module in interpreter.module_iterator() {
-                println!("\nModule: {}", module.name);
-                list_functions(module.function_iterator(), Some(function.as_str()), verbosity);
-            }
-        }
-        _ => {
-            // print some generic help and a listing of modules
-            println!("Available dgen modules: \n");
-            for module in interpreter.module_iterator() {
-                println!("{}", module.name);
-            }
-            println!("\nTo list all the functions in a specific module, run `dgen help --module <name>`");
-        }
-    }
-}
+    let help = Help::new(
+        function_name,
+        module_name,
+        &mut interpreter,
+        verbosity.is_verbose(),
+    );
+    let sout = io::stdout();
+    let mut lock = sout.lock();
+    let mut out = DataGenOutput::new(&mut lock);
 
-fn list_functions<'a, 'b, I: Iterator<Item=&'a FunctionPrototype>>(function_iterator: I, function_name: Option<&'b str>, verbosity: Verbosity) {
-    use std::io::{stdout, Write};
-
-    let out = stdout();
-    let mut lock = out.lock();
-
-    let mut filtered = function_iterator.filter(|fun| {
-        function_name.as_ref().map(|name| {
-            fun.name().contains(*name)
-        }).unwrap_or(true)
-    }).peekable();
-
-    if filtered.peek().is_none() {
-        writeln!(&mut lock, "No matching functions").map_err(Into::into).or_bail(verbosity);
-    } else {
-        writeln!(&mut lock, "").map_err(Into::into).or_bail(verbosity);
-        for fun in filtered {
-            if verbosity.is_verbose() {
-                writeln!(&mut lock, "{:#}", fun).map_err(Into::into).or_bail(verbosity);
-            } else {
-                writeln!(&mut lock, "{}", fun).map_err(Into::into).or_bail(verbosity);
-            }
-        }
-    }
+    help.execute(&mut out).or_bail(verbosity);
 }
 
 fn run_program(program: Runner) -> Result<(), Error> {

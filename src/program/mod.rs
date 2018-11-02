@@ -1,15 +1,28 @@
-use failure::Error;
-use writer::DataGenOutput;
+mod help;
 
-use ::interpreter::{Interpreter, UnreadSource};
+use failure::Error;
+use interpreter::{Interpreter, UnreadSource};
 use verbosity::Verbosity;
-use ::ProgramContext;
+use writer::DataGenOutput;
+use ProgramContext;
+
+pub use self::help::Help;
+
+pub trait DgenCommand: Sized {
+    fn execute(self, out: &mut DataGenOutput) -> Result<(), Error>;
+}
 
 pub struct Runner {
     iterations: u64,
     source: UnreadSource,
     runtime_context: ProgramContext,
     interpreter: Interpreter,
+}
+
+impl DgenCommand for Runner {
+    fn execute(self, out: &mut DataGenOutput) -> Result<(), Error> {
+        self.run(out)
+    }
 }
 
 impl Runner {
@@ -62,18 +75,17 @@ fn handle_error(context: &mut ProgramContext, error: &Error) {
 
     if let Some(mut out) = context.error_output(::verbosity::VERBOSE) {
         writeln!(out, "Program Runtime Error: {}", error).expect(MUY_MALO);
-    } 
+    }
     if let Some(mut out) = context.error_output(::verbosity::DGEN_DEBUG) {
         writeln!(out, "{}", error.backtrace()).expect(MUY_MALO);
     }
-
 
     if let Some(program_error) = context.reset_error() {
         // program_error should not generally indicate an error/bug in dgen itself
         // it is generally caused by invalid code that was passed to the interpreter
         if let Some(mut out) = context.error_output(::verbosity::QUIET) {
             writeln!(out, "{}", program_error).expect(MUY_MALO);
-        }  
+        }
     }
 }
 

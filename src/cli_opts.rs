@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use dgen::verbosity::Verbosity;
 
 #[derive(Debug, StructOpt)]
-#[structopt(name = "dgen", about = "A language and interpreter for generating pseudo-random data", after_help = "Run `dgen <subcommand> --help` for help on specific subcommands")]
+#[structopt(name = "dgen", about = "A language and interpreter for generating pseudo-random data", after_help = "Run `dgen <subcommand> --help` for help on specific subcommands\nrun `dgen` without any arguments to enter the interactive shell")]
 pub struct CliOptions {
     /// Output move information to stderr. Multiple occurrences will increase the verbosity. Contradicts `quiet` if both are supplied.
     /// The default verbosity will print errors and stacktraces to stderr.
