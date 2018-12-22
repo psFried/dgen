@@ -9,18 +9,18 @@ extern crate itertools;
 extern crate lalrpop_util;
 extern crate rand;
 extern crate regex;
-extern crate string_cache;
 extern crate rustyline;
+extern crate string_cache;
 
-pub mod repl;
 mod arguments;
 pub(crate) mod builtins;
 mod context;
 pub mod interpreter;
 pub mod program;
+pub mod repl;
 mod types;
-mod writer;
 pub mod verbosity;
+mod writer;
 
 #[cfg(test)]
 mod fun_test;
@@ -28,11 +28,11 @@ mod fun_test;
 pub use self::arguments::Arguments;
 pub use self::context::ProgramContext;
 pub use self::interpreter::ast::GenType;
-pub use self::interpreter::{Interpreter, Source};
 pub use self::interpreter::prototype::{
     BoundArgument, BuiltinFunctionCreator, BuiltinFunctionPrototype, CreateFunctionResult,
     FunctionPrototype, InterpretedFunctionPrototype,
 };
+pub use self::interpreter::{Interpreter, Source};
 pub use self::types::{
     ConstBin, ConstBoolean, ConstChar, ConstDecimal, ConstInt, ConstString, ConstUint, OutputType,
 };
@@ -52,7 +52,7 @@ pub trait RunnableFunction<T>: Debug {
         &self,
         context: &mut ProgramContext,
         output: &mut DataGenOutput,
-    ) -> Result<u64, Error>;
+    ) -> Result<(), Error>;
 }
 
 pub type DynFun<T> = Rc<RunnableFunction<T>>;
@@ -93,7 +93,7 @@ impl AnyFunction {
         &self,
         context: &mut ProgramContext,
         output: &mut DataGenOutput,
-    ) -> Result<u64, Error> {
+    ) -> Result<(), Error> {
         match *self {
             AnyFunction::String(ref fun) => fun.write_value(context, output),
             AnyFunction::Char(ref fun) => fun.write_value(context, output),

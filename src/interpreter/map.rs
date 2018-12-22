@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use std::fmt::{self, Debug};
 use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, Ordering};
-use ::{AnyFunction, DataGenOutput, DynFun, ProgramContext, RunnableFunction};
+use {AnyFunction, DataGenOutput, DynFun, ProgramContext, RunnableFunction};
 
 pub struct Resetter {
     value: AtomicBool,
@@ -87,7 +87,7 @@ impl<T: Clone> RunnableFunction<T> for MemoizedFunction<T> {
         Ok(self.memoized.borrow().value.as_ref().cloned().unwrap())
     }
 
-    fn write_value(&self, ctx: &mut ProgramContext, out: &mut DataGenOutput) -> Result<u64, Error> {
+    fn write_value(&self, ctx: &mut ProgramContext, out: &mut DataGenOutput) -> Result<(), Error> {
         let MemoizedFunction {
             ref wrapped,
             ref memoized,
@@ -124,7 +124,7 @@ impl<T> RunnableFunction<T> for WrappedMemoizedFunction<T> {
         self.resetter.reset();
         self.usage.gen_value(ctx)
     }
-    fn write_value(&self, ctx: &mut ProgramContext, out: &mut DataGenOutput) -> Result<u64, Error> {
+    fn write_value(&self, ctx: &mut ProgramContext, out: &mut DataGenOutput) -> Result<(), Error> {
         self.resetter.reset();
         self.usage.write_value(ctx, out)
     }

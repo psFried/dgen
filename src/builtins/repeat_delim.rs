@@ -16,19 +16,17 @@ struct RepeatDelimited<T> {
 }
 
 impl<T> RepeatDelimited<T> {
-    fn do_write(&self, ctx: &mut ProgramContext, out: &mut DataGenOutput) -> Result<u64, Error> {
+    fn do_write(&self, ctx: &mut ProgramContext, out: &mut DataGenOutput) -> Result<(), Error> {
         let count = self.count.gen_value(ctx)?;
-        let mut total = 0;
         self.prefix.write_value(ctx, out)?;
 
         for i in 0..count {
             if i > 0 {
-                total += self.delimiter.write_value(ctx, out)?;
+                self.delimiter.write_value(ctx, out)?;
             }
-            total += self.repeated.write_value(ctx, out)?;
+            self.repeated.write_value(ctx, out)?;
         }
-        total += self.suffix.write_value(ctx, out)?;
-        Ok(total)
+        self.suffix.write_value(ctx, out)
     }
 }
 
@@ -44,7 +42,7 @@ impl RunnableFunction<IString> for RepeatDelimited<IString> {
         Ok(str_val.into())
     }
 
-    fn write_value(&self, ctx: &mut ProgramContext, out: &mut DataGenOutput) -> Result<u64, Error> {
+    fn write_value(&self, ctx: &mut ProgramContext, out: &mut DataGenOutput) -> Result<(), Error> {
         self.do_write(ctx, out)
     }
 }
@@ -58,7 +56,7 @@ impl RunnableFunction<Vec<u8>> for RepeatDelimited<Vec<u8>> {
         Ok(buffer)
     }
 
-    fn write_value(&self, ctx: &mut ProgramContext, out: &mut DataGenOutput) -> Result<u64, Error> {
+    fn write_value(&self, ctx: &mut ProgramContext, out: &mut DataGenOutput) -> Result<(), Error> {
         self.do_write(ctx, out)
     }
 }
@@ -102,37 +100,33 @@ fn create_bin_repeat_delim(args: Arguments) -> CreateFunctionResult {
     Ok(AnyFunction::Bin(Rc::new(fun)))
 }
 
-pub const REPEAT_DELIM_BUILTIN: &BuiltinFunctionPrototype =
-    &BuiltinFunctionPrototype {
-        function_name: "repeat_delimited",
-        description:
-            "Formats the output by repeating the given generator separated by the delimiter",
-        arguments: &[
-            (COUNT_PARAM, GenType::Uint),
-            (PREFIX_PARAM, GenType::String),
-            (TO_REPEAT_PARAM, GenType::String),
-            (DELIMITER_PARAM, GenType::String),
-            (SUFFIX_PARAM, GenType::String),
-        ],
-        variadic: false,
-        create_fn: &create_repeat_delim,
-    };
+pub const REPEAT_DELIM_BUILTIN: &BuiltinFunctionPrototype = &BuiltinFunctionPrototype {
+    function_name: "repeat_delimited",
+    description: "Formats the output by repeating the given generator separated by the delimiter",
+    arguments: &[
+        (COUNT_PARAM, GenType::Uint),
+        (PREFIX_PARAM, GenType::String),
+        (TO_REPEAT_PARAM, GenType::String),
+        (DELIMITER_PARAM, GenType::String),
+        (SUFFIX_PARAM, GenType::String),
+    ],
+    variadic: false,
+    create_fn: &create_repeat_delim,
+};
 
-pub const REPEAT_DELIM_BIN_BUILTIN: &BuiltinFunctionPrototype =
-    &BuiltinFunctionPrototype {
-        function_name: "repeat_delimited",
-        description:
-            "Formats the output by repeating the given generator separated by the delimiter",
-        arguments: &[
-            (COUNT_PARAM, GenType::Uint),
-            (PREFIX_PARAM, GenType::Bin),
-            (TO_REPEAT_PARAM, GenType::Bin),
-            (DELIMITER_PARAM, GenType::Bin),
-            (SUFFIX_PARAM, GenType::Bin),
-        ],
-        variadic: false,
-        create_fn: &create_bin_repeat_delim,
-    };
+pub const REPEAT_DELIM_BIN_BUILTIN: &BuiltinFunctionPrototype = &BuiltinFunctionPrototype {
+    function_name: "repeat_delimited",
+    description: "Formats the output by repeating the given generator separated by the delimiter",
+    arguments: &[
+        (COUNT_PARAM, GenType::Uint),
+        (PREFIX_PARAM, GenType::Bin),
+        (TO_REPEAT_PARAM, GenType::Bin),
+        (DELIMITER_PARAM, GenType::Bin),
+        (SUFFIX_PARAM, GenType::Bin),
+    ],
+    variadic: false,
+    create_fn: &create_bin_repeat_delim,
+};
 
 #[cfg(test)]
 mod test {

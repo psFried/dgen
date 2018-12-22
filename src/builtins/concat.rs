@@ -28,12 +28,11 @@ impl RunnableFunction<IString> for Concat<DynStringFun> {
         &self,
         context: &mut ProgramContext,
         out: &mut DataGenOutput,
-    ) -> Result<u64, Error> {
-        let mut total = 0;
+    ) -> Result<(), Error> {
         for fun in self.funs.iter() {
-            total += fun.write_value(context, out)?;
+            fun.write_value(context, out)?;
         }
-        Ok(total)
+        Ok(())
     }
 }
 
@@ -49,12 +48,11 @@ impl RunnableFunction<Vec<u8>> for Concat<DynBinFun> {
         Ok(buffer)
     }
 
-    fn write_value(&self, ctx: &mut ProgramContext, out: &mut DataGenOutput) -> Result<u64, Error> {
-        let mut total = 0;
+    fn write_value(&self, ctx: &mut ProgramContext, out: &mut DataGenOutput) -> Result<(), Error> {
         for fun in self.funs.iter() {
-            total += fun.write_value(ctx, out)?;
+            fun.write_value(ctx, out)?;
         }
-        Ok(total)
+        Ok(())
     }
 }
 
@@ -70,23 +68,21 @@ fn create_concat_bin(args: Arguments) -> CreateFunctionResult {
     Ok(AnyFunction::Bin(Rc::new(Concat { funs })))
 }
 
-pub const CONCAT_BUILTIN: &BuiltinFunctionPrototype =
-    &BuiltinFunctionPrototype {
-        function_name: "concat",
-        description: "concatenates the input strings into a single output string",
-        arguments: &[(CONCAT_ARG_NAME, GenType::String)],
-        variadic: true,
-        create_fn: &create_concat,
-    };
+pub const CONCAT_BUILTIN: &BuiltinFunctionPrototype = &BuiltinFunctionPrototype {
+    function_name: "concat",
+    description: "concatenates the input strings into a single output string",
+    arguments: &[(CONCAT_ARG_NAME, GenType::String)],
+    variadic: true,
+    create_fn: &create_concat,
+};
 
-pub const CONCAT_BIN_BUILTIN: &BuiltinFunctionPrototype =
-    &BuiltinFunctionPrototype {
-        function_name: "concat",
-        description: "concatenates the input bytes into a single output",
-        arguments: &[(CONCAT_ARG_NAME, GenType::Bin)],
-        variadic: true,
-        create_fn: &create_concat_bin,
-    };
+pub const CONCAT_BIN_BUILTIN: &BuiltinFunctionPrototype = &BuiltinFunctionPrototype {
+    function_name: "concat",
+    description: "concatenates the input bytes into a single output",
+    arguments: &[(CONCAT_ARG_NAME, GenType::Bin)],
+    variadic: true,
+    create_fn: &create_concat_bin,
+};
 
 #[cfg(test)]
 mod test {

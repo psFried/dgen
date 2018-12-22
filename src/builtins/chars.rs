@@ -1,8 +1,8 @@
 use failure::Error;
 use std::rc::Rc;
-use ::{
-    AnyFunction, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput, DynUintFun,
-    ProgramContext, RunnableFunction, GenType, Arguments
+use {
+    AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput,
+    DynUintFun, GenType, ProgramContext, RunnableFunction,
 };
 
 #[derive(Debug)]
@@ -27,7 +27,7 @@ impl RunnableFunction<char> for CharGenerator {
         &self,
         context: &mut ProgramContext,
         output: &mut DataGenOutput,
-    ) -> Result<u64, Error> {
+    ) -> Result<(), Error> {
         let value = self.gen_value(context)?;
         output.write(&value)
     }
@@ -45,13 +45,14 @@ fn create_char_gen(args: Arguments) -> CreateFunctionResult {
 
     Ok(AnyFunction::Char(Rc::new(CharGenerator {
         min_inclusive: min,
-        max_inclusive: max
+        max_inclusive: max,
     })))
 }
 
 pub const CHAR_GEN_BUILTIN: &BuiltinFunctionPrototype = &BuiltinFunctionPrototype {
     function_name: "char",
-    description: "selects a single random character from within the provided range of unicode codepoints",
+    description:
+        "selects a single random character from within the provided range of unicode codepoints",
     arguments: &[(MIN_ARG, GenType::Uint), (MAX_ARG, GenType::Uint)],
     variadic: false,
     create_fn: &create_char_gen,

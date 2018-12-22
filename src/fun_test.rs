@@ -1,8 +1,8 @@
 use failure::Error;
+use interpreter::{Interpreter, UnreadSource};
 use program::Runner;
 use writer::DataGenOutput;
 use ProgramContext;
-use interpreter::{Interpreter, UnreadSource};
 
 #[test]
 fn signed_integer_functions() {
@@ -104,16 +104,34 @@ fn calling_a_function_with_module_name() {
         def foo() = "lib2foo";
     "##;
 
-    let mut runner = Runner::new(1, "lib2.foo()".to_owned(), create_context(), Interpreter::new());
-    runner.add_library(UnreadSource::Builtin("lib1", lib1)).unwrap();
-    runner.add_library(UnreadSource::Builtin("lib2", lib2)).unwrap();
+    let mut runner = Runner::new(
+        1,
+        "lib2.foo()".to_owned(),
+        create_context(),
+        Interpreter::new(),
+    );
+    runner
+        .add_library(UnreadSource::Builtin("lib1", lib1))
+        .unwrap();
+    runner
+        .add_library(UnreadSource::Builtin("lib2", lib2))
+        .unwrap();
 
     let result = run_to_string(runner);
     assert_eq!("lib2foo", &result);
 
-    let mut runner = Runner::new(1, "lib1.foo()".to_owned(), create_context(), Interpreter::new());
-    runner.add_library(UnreadSource::Builtin("lib1", lib1)).unwrap();
-    runner.add_library(UnreadSource::Builtin("lib2", lib2)).unwrap();
+    let mut runner = Runner::new(
+        1,
+        "lib1.foo()".to_owned(),
+        create_context(),
+        Interpreter::new(),
+    );
+    runner
+        .add_library(UnreadSource::Builtin("lib1", lib1))
+        .unwrap();
+    runner
+        .add_library(UnreadSource::Builtin("lib2", lib2))
+        .unwrap();
 
     let result = run_to_string(runner);
     assert_eq!("lib1foo", &result);
@@ -134,7 +152,11 @@ fn adding_a_library_that_defines_two_functions_with_the_same_signature_returns_e
     assert!(result.is_err());
     let error = result.unwrap_err();
     let err_str = format!("{}", error);
-    assert!(err_str.contains("Module 'default' contains multiple functions with the same signature"), "Error string was incorrect. Actual error: {}", err_str);
+    assert!(
+        err_str.contains("Module 'default' contains multiple functions with the same signature"),
+        "Error string was incorrect. Actual error: {}",
+        err_str
+    );
 }
 
 const RAND_SEED: &[u8; 16] = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
@@ -146,7 +168,12 @@ pub fn run_program(iterations: u64, program: &str) -> Result<Vec<u8>, Error> {
     let mut out = Vec::new();
     {
         let mut output = DataGenOutput::new(&mut out);
-        let mut prog = Runner::new(iterations, program.to_owned(), create_context(), Interpreter::new());
+        let mut prog = Runner::new(
+            iterations,
+            program.to_owned(),
+            create_context(),
+            Interpreter::new(),
+        );
         prog.add_std_lib();
         prog.run(&mut output)?;
     }

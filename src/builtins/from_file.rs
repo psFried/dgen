@@ -143,7 +143,7 @@ impl RunnableFunction<IString> for SelectFromFile {
         &self,
         ctx: &mut ProgramContext,
         output: &mut DataGenOutput,
-    ) -> Result<u64, Error> {
+    ) -> Result<(), Error> {
         let SelectFromFile {
             ref file_path_gen,
             ref delimiter_gen,

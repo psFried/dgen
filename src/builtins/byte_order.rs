@@ -46,11 +46,11 @@ macro_rules! impl_runnable_function {
                 &self,
                 context: &mut ProgramContext,
                 out: &mut DataGenOutput,
-            ) -> Result<u64, Error> {
+            ) -> Result<(), Error> {
                 let num = self.number.gen_value(context)?;
                 let mut buffer = [0; 8];
                 $write_bytes(&mut buffer[..], num);
-                out.write_bytes(&buffer).map_err(Into::into)
+                out.write_bytes(&buffer)
             }
         }
     };

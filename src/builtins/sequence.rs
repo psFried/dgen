@@ -36,7 +36,7 @@ impl<T: Debug> RunnableFunction<T> for Sequence<T> {
         &self,
         context: &mut ProgramContext,
         out: &mut DataGenOutput,
-    ) -> Result<u64, Error> {
+    ) -> Result<(), Error> {
         self.next_function().write_value(context, out)
     }
 }

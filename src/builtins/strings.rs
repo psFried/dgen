@@ -30,25 +30,27 @@ impl RunnableFunction<IString> for StringGenerator {
         &self,
         context: &mut ProgramContext,
         out: &mut DataGenOutput,
-    ) -> Result<u64, Error> {
+    ) -> Result<(), Error> {
         let len = self.length_gen.gen_value(context)?;
         let mut iterations = 0;
-        let mut total = 0;
         let mut buffer = [0; 1024];
         while iterations < len {
             let mut buffered_len = 0;
+            // a single code point could theoretically require up to 6 bytes as utf-8, so we make sure to stop once
+            // we're within 6 bytes of the end of the buffer
             while buffered_len < (buffer.len() - 6) && iterations < len {
                 iterations += 1;
                 let buffer_slice = &mut buffer[buffered_len..];
                 let value = self.char_gen.gen_value(context)?;
                 let char_len = { value.encode_utf8(buffer_slice).len() };
                 buffered_len += char_len;
+
             }
             let slice = &buffer[..buffered_len as usize];
             let as_str = unsafe { ::std::str::from_utf8_unchecked(slice) };
-            total += out.write_str(as_str)?;
+            out.write_str(as_str)?;
         }
-        Ok(total)
+        Ok(())
     }
 }
 
@@ -83,7 +85,7 @@ impl RunnableFunction<u64> for StringLength {
     fn gen_value(&self, ctx: &mut ProgramContext) -> Result<u64, Error> {
         self.wrapped.gen_value(ctx).map(|value| value.len() as u64)
     }
-    fn write_value(&self, ctx: &mut ProgramContext, out: &mut DataGenOutput) -> Result<u64, Error> {
+    fn write_value(&self, ctx: &mut ProgramContext, out: &mut DataGenOutput) -> Result<(), Error> {
         let len = self.wrapped.gen_value(ctx)?.len() as u64;
         out.write(&len)
     }
@@ -128,7 +130,7 @@ impl RunnableFunction<Vec<u8>> for StringBytes {
         &self,
         context: &mut ProgramContext,
         out: &mut DataGenOutput,
-    ) -> Result<u64, Error> {
+    ) -> Result<(), Error> {
         let encoding_label = self.encoding.gen_value(context)?;
         if let Some(encoding) = encoding_from_whatwg_label(&*encoding_label) {
             let value = self.string.gen_value(context)?;
@@ -290,18 +292,4 @@ mod test {
         test_program_success(4, input, expected_output);
     }
 
-    #[test]
-    fn use_custom_string_function() {
-        let input = r#"
-            def consonants() = select('b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 
-                    'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z');
-            def vowels() = select('a', 'e', 'i', 'o', 'u');
-
-            def chars() = select(vowels(), consonants());
-
-            string(10, chars())
-        "#;
-        let expected_output = "auspoowhgc";
-        test_program_success(1, input, expected_output);
-    }
 }
