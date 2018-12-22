@@ -6,11 +6,11 @@ use std::fmt::{self, Debug};
 use std::fs::File;
 use std::io::{self, Read, Seek, SeekFrom};
 use std::rc::Rc;
-use ::{
+use crate::{
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput,
     DynStringFun, GenType, ProgramContext, RunnableFunction,
 };
-use IString;
+use crate::IString;
 
 struct RandFileReader {
     file: File,
@@ -241,7 +241,7 @@ fn create_file_fun(args: Arguments) -> CreateFunctionResult {
 
 fn create_words_fun(_: Arguments) -> CreateFunctionResult {
     use std::path::Path;
-    use ::ConstString;
+    use crate::ConstString;
 
     let words_paths = ["/usr/share/dict/words", "/usr/dict/words"];
     let path = words_paths
@@ -283,8 +283,8 @@ pub const WORDS_BUILTIN: &BuiltinFunctionPrototype = &BuiltinFunctionPrototype {
 #[cfg(test)]
 mod test {
     use super::*;
-    use ::ConstString;
-    use verbosity;
+    use crate::ConstString;
+    use crate::verbosity;
 
     const RAND_SEED: &[u8; 16] = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 

@@ -1,9 +1,9 @@
-use ::interpreter::ast::{
+use crate::interpreter::ast::{
     Expr, FunctionCall, FunctionMapper, GenType, MacroArgument, MacroDef, Program, WithSpan, Span,
 };
-use ::interpreter::grammar::ExprParser;
-use ::interpreter::parser::parse_program;
-use IString;
+use crate::interpreter::grammar::ExprParser;
+use crate::interpreter::parser::parse_program;
+use crate::IString;
 
 #[test]
 fn parses_boolean_literal_false_token() {

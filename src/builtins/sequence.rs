@@ -2,7 +2,7 @@ use failure::Error;
 use std::cell::RefCell;
 use std::fmt::Debug;
 use std::rc::Rc;
-use {
+use crate::{
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput, DynFun,
     GenType, ProgramContext, RunnableFunction,
 };
@@ -134,7 +134,7 @@ make_seq_builtin!(
 
 #[cfg(test)]
 mod test {
-    use fun_test::{assert_bin_output_is_expected, test_program_success};
+    use crate::fun_test::{assert_bin_output_is_expected, test_program_success};
 
     #[test]
     fn char_wrapping_sequence() {

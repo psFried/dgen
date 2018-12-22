@@ -1,6 +1,6 @@
 use failure::Error;
 use std::rc::Rc;
-use {
+use crate::{
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput,
     DynBinFun, GenType, ProgramContext, RunnableFunction,
 };
@@ -35,7 +35,7 @@ pub const BIN_LENGTH: &BuiltinFunctionPrototype = &BuiltinFunctionPrototype {
 
 #[cfg(test)]
 mod test {
-    use fun_test::test_program_success;
+    use crate::fun_test::test_program_success;
 
     #[test]
     fn bin_length_returns_length_of_binary() {

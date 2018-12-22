@@ -2,7 +2,7 @@ use byteorder::{BigEndian, ByteOrder, LittleEndian};
 use failure::Error;
 use std::marker::PhantomData;
 use std::rc::Rc;
-use {
+use crate::{
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput, DynFun,
     GenType, ProgramContext, RunnableFunction,
 };
@@ -128,7 +128,7 @@ make_num_to_binary!(
 
 #[cfg(test)]
 mod test {
-    use fun_test::assert_bin_output_is_expected;
+    use crate::fun_test::assert_bin_output_is_expected;
 
     #[test]
     fn int_is_converted_to_big_endian_binary() {

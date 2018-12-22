@@ -1,7 +1,7 @@
-use IString;
-use interpreter::prototype::{FunctionPrototype, BuiltinFunctionPrototype, InterpretedFunctionPrototype};
-use interpreter::ast::{WithSpan, MacroDef};
-use interpreter::{Source, UnreadSource};
+use crate::IString;
+use crate::interpreter::prototype::{FunctionPrototype, BuiltinFunctionPrototype, InterpretedFunctionPrototype};
+use crate::interpreter::ast::{WithSpan, MacroDef};
+use crate::interpreter::{Source, UnreadSource};
 use failure::Error;
 use std::collections::HashMap;
 use std::sync::Arc;

@@ -25,8 +25,8 @@ pub const MODULE_SEPARATOR_CHAR: char = '.';
 use self::ast::{Expr, FunctionCall, FunctionMapper, Program, WithSpan};
 use self::map::{create_memoized_fun, finish_mapped};
 use failure::Error;
-use IString;
-use {
+use crate::IString;
+use crate::{
     AnyFunction, BoundArgument, ConstBin, ConstBoolean, ConstChar, ConstDecimal, ConstInt,
     ConstString, ConstUint, CreateFunctionResult, FunctionPrototype,
 };
@@ -263,7 +263,7 @@ pub struct Interpreter {
 impl Interpreter {
     pub fn new() -> Interpreter {
         let mut internal = Compiler::new();
-        internal.add_module(::builtins::get_default_builtins_module()).expect("Failed to add builtins module to compiler");
+        internal.add_module(crate::builtins::get_default_builtins_module()).expect("Failed to add builtins module to compiler");
 
         Interpreter {
             internal,
@@ -340,7 +340,7 @@ impl Interpreter {
 #[cfg(test)]
 mod test {
     use super::*;
-    use interpreter::errors::ErrorType;
+    use crate::interpreter::errors::ErrorType;
 
     macro_rules! assert_matches {
         ($value:expr, $pattern:pat) => {
@@ -418,12 +418,12 @@ mod test {
     }
 
     fn run_function(function: &AnyFunction) -> String {
-        use ::{DataGenOutput, ProgramContext};
+        use crate::{DataGenOutput, ProgramContext};
 
         let mut buffer = Vec::new();
         {
             let mut out = DataGenOutput::new(&mut buffer);
-            let mut context = ProgramContext::from_random_seed(::verbosity::NORMAL);
+            let mut context = ProgramContext::from_random_seed(crate::verbosity::NORMAL);
             function.write_value(&mut context, &mut out).expect("failed to run function");
         }
         String::from_utf8(buffer).expect("Result was not valid utf8")

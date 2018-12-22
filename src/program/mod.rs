@@ -1,9 +1,9 @@
 mod help;
 
 use failure::Error;
-use interpreter::{Interpreter, UnreadSource};
-use writer::DataGenOutput;
-use ProgramContext;
+use crate::interpreter::{Interpreter, UnreadSource};
+use crate::writer::DataGenOutput;
+use crate::ProgramContext;
 
 pub use self::help::Help;
 
@@ -72,17 +72,17 @@ impl Runner {
 fn handle_error(context: &mut ProgramContext, error: &Error) {
     use std::fmt::Write;
 
-    if let Some(mut out) = context.error_output(::verbosity::VERBOSE) {
+    if let Some(mut out) = context.error_output(crate::verbosity::VERBOSE) {
         writeln!(out, "Program Runtime Error: {}", error).expect(MUY_MALO);
     }
-    if let Some(mut out) = context.error_output(::verbosity::DGEN_DEBUG) {
+    if let Some(mut out) = context.error_output(crate::verbosity::DGEN_DEBUG) {
         writeln!(out, "{}", error.backtrace()).expect(MUY_MALO);
     }
 
     if let Some(program_error) = context.reset_error() {
         // program_error should not generally indicate an error/bug in dgen itself
         // it is generally caused by invalid code that was passed to the interpreter
-        if let Some(mut out) = context.error_output(::verbosity::QUIET) {
+        if let Some(mut out) = context.error_output(crate::verbosity::QUIET) {
             writeln!(out, "{}", program_error).expect(MUY_MALO);
         }
     }

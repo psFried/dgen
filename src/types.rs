@@ -1,7 +1,7 @@
 use failure::Error;
 use std::rc::Rc;
-use IString;
-use {AnyFunction, DataGenOutput, ProgramContext, RunnableFunction};
+use crate::IString;
+use crate::{AnyFunction, DataGenOutput, ProgramContext, RunnableFunction};
 
 macro_rules! create_const_type {
     ($const_struct_name:ident, $output_type:ty, $any_type:path) => {

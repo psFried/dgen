@@ -1,5 +1,5 @@
-use interpreter::ast::{self, process_string_escapes, process_doc_comments};
-use ::{IString, GenType};
+use crate::interpreter::ast::{self, process_string_escapes, process_doc_comments};
+use crate::{IString, GenType};
 use std::str::FromStr;
 use lalrpop_util::ParseError;
 

@@ -1,8 +1,8 @@
 use failure::Error;
 use std::fmt::{Debug, Display};
 use std::rc::Rc;
-use IString;
-use {
+use crate::IString;
+use crate::{
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput, DynFun,
     GenType, OutputType, ProgramContext, RunnableFunction,
 };

@@ -2,7 +2,7 @@ use failure::Error;
 use std::cell::RefCell;
 use std::fmt::Debug;
 use std::rc::Rc;
-use {
+use crate::{
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput, DynFun,
     GenType, ProgramContext, RunnableFunction,
 };

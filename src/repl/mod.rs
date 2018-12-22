@@ -1,9 +1,9 @@
 use failure::Error;
-use interpreter::{DgenParseError, Interpreter, UnreadSource};
+use crate::interpreter::{DgenParseError, Interpreter, UnreadSource};
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 use std::io::{self, Write};
-use {AnyFunction, DataGenOutput, ProgramContext};
+use crate::{AnyFunction, DataGenOutput, ProgramContext};
 
 const MAX_EMPTY_LINES: u32 = 2;
 

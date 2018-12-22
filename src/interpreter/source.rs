@@ -2,7 +2,7 @@ use failure::Error;
 use std::borrow::Cow;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
-use IString;
+use crate::IString;
 
 
 #[derive(Clone, Debug, PartialEq)]

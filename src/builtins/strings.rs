@@ -2,8 +2,8 @@ use encoding::label::encoding_from_whatwg_label;
 use encoding::EncoderTrap;
 use failure::Error;
 use std::rc::Rc;
-use IString;
-use {
+use crate::IString;
+use crate::{
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput,
     DynCharFun, DynStringFun, DynUintFun, GenType, ProgramContext, RunnableFunction,
 };
@@ -172,7 +172,7 @@ pub const STRING_ENCODE_BUILTIN: &BuiltinFunctionPrototype = &BuiltinFunctionPro
 
 #[cfg(test)]
 mod test {
-    use fun_test::{assert_bin_output_is_expected, run_program, test_program_success};
+    use crate::fun_test::{assert_bin_output_is_expected, run_program, test_program_success};
 
     #[test]
     fn utf8_bytes_returns_encoded_string() {

@@ -1,8 +1,8 @@
 use failure::Error;
-use interpreter::{Interpreter, UnreadSource};
-use program::Runner;
-use writer::DataGenOutput;
-use ProgramContext;
+use crate::interpreter::{Interpreter, UnreadSource};
+use crate::program::Runner;
+use crate::writer::DataGenOutput;
+use crate::ProgramContext;
 
 #[test]
 fn signed_integer_functions() {
@@ -162,7 +162,7 @@ fn adding_a_library_that_defines_two_functions_with_the_same_signature_returns_e
 const RAND_SEED: &[u8; 16] = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 
 pub fn create_context() -> ProgramContext {
-    ProgramContext::from_seed(*RAND_SEED, ::verbosity::NORMAL)
+    ProgramContext::from_seed(*RAND_SEED, crate::verbosity::NORMAL)
 }
 pub fn run_program(iterations: u64, program: &str) -> Result<Vec<u8>, Error> {
     let mut out = Vec::new();

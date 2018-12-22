@@ -1,7 +1,7 @@
 use failure::Error;
-use interpreter::{Interpreter, Module};
-use program::DgenCommand;
-use {DataGenOutput, FunctionPrototype};
+use crate::interpreter::{Interpreter, Module};
+use crate::program::DgenCommand;
+use crate::{DataGenOutput, FunctionPrototype};
 
 
 pub struct Help<'a> {

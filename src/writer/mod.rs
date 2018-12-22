@@ -1,8 +1,8 @@
 use encoding::ByteWriter;
 use std::fmt::Display;
 use std::io::{self, Write};
-use OutputType;
-use ProgramContext;
+use crate::OutputType;
+use crate::ProgramContext;
 use failure::Error;
 
 pub struct TrackingWriter<'a> {
@@ -57,7 +57,7 @@ impl<'a> DataGenOutput<'a> {
     }
 
     pub fn write_string<D: Display + ?Sized>(&mut self, value: &D) -> Result<(), Error> {
-        let start = self.writer.get_num_bytes_written();
+        let _start = self.writer.get_num_bytes_written();
         self.writer
             .write_fmt(format_args!("{}", value))
             .map_err(|_| {
@@ -73,7 +73,7 @@ impl<'a> DataGenOutput<'a> {
     where
         F: FnOnce(&mut DataGenOutput) -> Result<T, ::failure::Error>,
     {
-        let start = self.writer.get_num_bytes_written();
+        let _start = self.writer.get_num_bytes_written();
         let _ = fun(self)?;
         Ok(())
     }

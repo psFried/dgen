@@ -1,6 +1,6 @@
 use failure::Error;
 use std::rc::Rc;
-use {
+use crate::{
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput,
     DynUintFun, GenType, ProgramContext, RunnableFunction,
 };

@@ -1,8 +1,8 @@
 use failure::Error;
-use interpreter::SourceRef;
+use crate::interpreter::SourceRef;
 use std::fmt::Debug;
 use std::rc::Rc;
-use {AnyFunction, DataGenOutput, DynFun, IString, ProgramContext, RunnableFunction};
+use crate::{AnyFunction, DataGenOutput, DynFun, IString, ProgramContext, RunnableFunction};
 
 #[derive(Debug)]
 pub struct RuntimeWrapper<T: Debug + 'static> {

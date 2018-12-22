@@ -1,10 +1,10 @@
 use failure::Error;
-use interpreter::ast::Program;
-use interpreter::errors::SourceErrRegion;
-use interpreter::grammar::ProgramParser;
+use crate::interpreter::ast::Program;
+use crate::interpreter::errors::SourceErrRegion;
+use crate::interpreter::grammar::ProgramParser;
 use lalrpop_util::ParseError;
 use std::fmt::{self, Display};
-use IString;
+use crate::IString;
 
 #[derive(Fail, Debug)]
 pub struct DgenParseError {

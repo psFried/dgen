@@ -2,8 +2,8 @@ use failure::Error;
 
 use std::collections::HashMap;
 use std::rc::Rc;
-use IString;
-use {
+use crate::IString;
+use crate::{
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput,
     DynStringFun, GenType, ProgramContext, RunnableFunction,
 };
@@ -61,7 +61,7 @@ pub const ENV_VAR: &BuiltinFunctionPrototype = &BuiltinFunctionPrototype {
 
 #[cfg(test)]
 mod test {
-    use fun_test::test_program_success;
+    use crate::fun_test::test_program_success;
 
     #[test]
     fn returns_the_value_of_an_environment_variable() {

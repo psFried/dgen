@@ -1,6 +1,6 @@
 use std::fmt::{self, Display};
 use std::str::Chars;
-use ::IString;
+use crate::IString;
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct Span {

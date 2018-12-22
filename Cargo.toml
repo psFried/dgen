@@ -11,6 +11,7 @@ license = "MIT"
 keywords = [ "generator", "data", "test", "random", "dsl" ]
 categories = [ "command-line-utilities", "development-tools::testing", "encoding", "parsing", "template-engine" ]
 autobenches = false
+edition = "2018"
 
 [profile.release]
 debug = true

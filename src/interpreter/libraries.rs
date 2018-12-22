@@ -1,4 +1,4 @@
-use ::interpreter::UnreadSource;
+use crate::interpreter::UnreadSource;
 
 macro_rules! include_lib {
     ($name:expr, $filename:expr) => {

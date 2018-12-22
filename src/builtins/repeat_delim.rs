@@ -1,7 +1,7 @@
 use failure::Error;
 use std::rc::Rc;
-use IString;
-use {
+use crate::IString;
+use crate::{
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput, DynFun,
     DynUintFun, GenType, ProgramContext, RunnableFunction,
 };
@@ -130,7 +130,7 @@ pub const REPEAT_DELIM_BIN_BUILTIN: &BuiltinFunctionPrototype = &BuiltinFunction
 
 #[cfg(test)]
 mod test {
-    use fun_test::{assert_bin_output_is_expected, test_program_success};
+    use crate::fun_test::{assert_bin_output_is_expected, test_program_success};
 
     #[test]
     fn repeat_delimited_creates_string_output() {

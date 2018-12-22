@@ -123,7 +123,7 @@ fn print_function_help(
 fn run_program(program: Runner) -> Result<(), Error> {
     let sout = std::io::stdout();
     // lock stdout once at the beginning so we don't have to keep locking/unlocking it
-    let mut lock = sout.lock();
+    let lock = sout.lock();
     let mut buf_writer = ::std::io::BufWriter::new(lock);
     let mut output = dgen::DataGenOutput::new(&mut buf_writer);
 

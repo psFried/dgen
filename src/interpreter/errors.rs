@@ -1,12 +1,12 @@
-use ::IString;
+use crate::IString;
 use failure::Error;
-use ::AnyFunction;
-use ::FunctionPrototype;
+use crate::AnyFunction;
+use crate::FunctionPrototype;
 use itertools::Itertools;
 use std::fmt::{self, Display};
 use std::sync::Arc;
-use interpreter::ast::{GenType, Span};
-use interpreter::Source;
+use crate::interpreter::ast::{GenType, Span};
+use crate::interpreter::Source;
 
 
 #[derive(Debug, Clone, PartialEq)]

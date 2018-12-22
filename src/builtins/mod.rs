@@ -11,8 +11,8 @@ mod sequence;
 mod strings;
 mod to_string;
 
-use interpreter::Module;
-use ::BuiltinFunctionPrototype;
+use crate::interpreter::Module;
+use crate::BuiltinFunctionPrototype;
 
 const BUILTIN_FNS: &'static [&'static BuiltinFunctionPrototype] = &[
     self::bin_length::BIN_LENGTH,
