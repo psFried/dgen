@@ -17,7 +17,7 @@ const OUT_CAPACITY: usize = 32 * 1024;
 
 macro_rules! make_string_bench {
     ($str_len:tt) => {{
-        let program = stringify!(string($str_len, ascii_alphanumeric_char()));
+        let program = stringify!(alphanumeric_string($str_len));
         let mut interpreter = Interpreter::new();
         interpreter.add_std_lib();
         let compiled = interpreter
@@ -36,14 +36,43 @@ macro_rules! make_string_bench {
         })
     }};
 }
-fn string_gen_benches(c: &mut Criterion) {
-    let fun_1000 = make_string_bench!(1000);
-    let fun_100 = make_string_bench!(100);
-    let fun_10 = make_string_bench!(10);
 
-    let functions = vec![fun_10, fun_100, fun_1000];
+fn create_string_benchmark<I: fmt::Debug + 'static>(program: &'static str) -> Fun<I> {
+        let mut interpreter = Interpreter::new();
+        interpreter.add_std_lib();
+        let compiled = interpreter
+            .eval(UnreadSource::Builtin("test", program))
+            .unwrap();
+        let mut context = ProgramContext::from_seed(SEED, ::dgen::verbosity::NORMAL);
+        let mut out = Vec::with_capacity(OUT_CAPACITY);
 
-    c.bench_functions("ascii_alphanumeric_string", functions, ());
+        Fun::new(program, move |b, _| {
+            b.iter(|| {
+                out.clear();
+                let mut real_out = DataGenOutput::new(&mut out);
+                compiled.write_value(&mut context, &mut real_out).unwrap();
+            })
+        })
+}
+
+fn homogeneous_string_benches(c: &mut Criterion) {
+    let functions = vec![
+        create_string_benchmark("lowercase_ascii_string(16)"),
+        create_string_benchmark("lowercase_ascii_string(128)"),
+        create_string_benchmark("lowercase_ascii_string(1024)")
+    ];
+
+    c.bench_functions("heterogeneous_strings", functions, ());
+}
+
+fn heterogeneous_string_benches(c: &mut Criterion) {
+    let functions = vec![
+        create_string_benchmark("alphanumeric_string(16)"),
+        create_string_benchmark("alphanumeric_string(128)"),
+        create_string_benchmark("alphanumeric_string(1024)")
+    ];
+
+    c.bench_functions("heterogeneous_strings", functions, ());
 }
 
 #[derive(Clone)]
@@ -68,13 +97,13 @@ impl fmt::Debug for RandomBytes {
 fn writer_benches(c: &mut Criterion) {
     let mut bytes = Vec::with_capacity(8 * 1024);
 
-    let sizes = &[1, 8, 24, 256, 4096];
+    let sizes = &[1, 16, 256, 4096];
     let inputs = sizes
         .iter()
         .cloned()
         .map(RandomBytes::with_length)
         .collect::<Vec<RandomBytes>>();
-    
+
     c.bench_function_over_inputs(
         "datagen_output",
         move |bencher, input| {
@@ -101,5 +130,5 @@ fn writer_benches(c: &mut Criterion) {
     );
 }
 
-criterion_group!(benches, writer_benches, string_gen_benches);
+criterion_group!(benches, writer_benches, heterogeneous_string_benches, homogeneous_string_benches);
 criterion_main!(benches);

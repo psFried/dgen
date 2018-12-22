@@ -1,27 +1,42 @@
-use encoding::label::encoding_from_whatwg_label;
-use encoding::EncoderTrap;
-use failure::Error;
-use std::rc::Rc;
 use crate::IString;
 use crate::{
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput,
     DynCharFun, DynStringFun, DynUintFun, GenType, ProgramContext, RunnableFunction,
 };
+use encoding::label::encoding_from_whatwg_label;
+use encoding::EncoderTrap;
+use failure::Error;
+use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct StringGenerator {
     length_gen: DynUintFun,
-    char_gen: DynCharFun,
+    min_cp_inclusive: DynUintFun,
+    max_cp_inclusive: DynUintFun,
+}
+
+impl StringGenerator {
+    fn gen_char(&self, context: &mut ProgramContext) -> Result<char, Error> {
+        let min = self.min_cp_inclusive.gen_value(context)?;
+        let max = self.max_cp_inclusive.gen_value(context)?;
+
+        let as_u64 = context.gen_range_inclusive(min, max);
+
+        ::std::char::from_u32(as_u64 as u32).ok_or_else(|| {
+            format_err!("Invalid unicode codepoint: {}, generated from range: min_inclusive: {}, max_inclusive: {}", as_u64, min, max)
+        })
+    }
 }
 
 impl RunnableFunction<IString> for StringGenerator {
     fn gen_value(&self, context: &mut ProgramContext) -> Result<IString, Error> {
-        let len = self.length_gen.gen_value(context)?;
-        let mut buf = String::with_capacity(len as usize);
+        let num_iterations = self.length_gen.gen_value(context)? as usize;
 
-        for _ in 0..len {
-            let character = self.char_gen.gen_value(context)?;
-            buf.push(character);
+        let mut buf = String::with_capacity(num_iterations);
+
+        for _ in 0..num_iterations {
+            let c = self.gen_char(context)?;
+            buf.push(c);
         }
         Ok(buf.into())
     }
@@ -31,47 +46,53 @@ impl RunnableFunction<IString> for StringGenerator {
         context: &mut ProgramContext,
         out: &mut DataGenOutput,
     ) -> Result<(), Error> {
-        let len = self.length_gen.gen_value(context)?;
-        let mut iterations = 0;
-        let mut buffer = [0; 1024];
-        while iterations < len {
-            let mut buffered_len = 0;
-            // a single code point could theoretically require up to 6 bytes as utf-8, so we make sure to stop once
-            // we're within 6 bytes of the end of the buffer
-            while buffered_len < (buffer.len() - 6) && iterations < len {
-                iterations += 1;
-                let buffer_slice = &mut buffer[buffered_len..];
-                let value = self.char_gen.gen_value(context)?;
-                let char_len = { value.encode_utf8(buffer_slice).len() };
-                buffered_len += char_len;
+        let num_iterations = self.length_gen.gen_value(context)? as usize;
 
+        let mut i = 0;
+
+        while i < num_iterations {
+            let mut buf = [0u8; 1024];
+            let mut buf_end = 0;
+
+            while i < num_iterations && buf_end < (buf.len() - 6) {
+                let c = self.gen_char(context)?;
+                let slice = c.encode_utf8(&mut buf[buf_end..]);
+                i += slice.len();
+                buf_end += slice.len();
             }
-            let slice = &buffer[..buffered_len as usize];
-            let as_str = unsafe { ::std::str::from_utf8_unchecked(slice) };
+            let as_str = unsafe { ::std::str::from_utf8_unchecked(&buf[..buf_end]) };
             out.write_str(as_str)?;
         }
+
         Ok(())
     }
 }
 
 fn create_string_gen(args: Arguments) -> CreateFunctionResult {
-    let (length, chars) = args.require_2_args(
+    let (length_gen, min_cp_inclusive, max_cp_inclusive) = args.require_3_args(
         "length",
         AnyFunction::require_uint,
-        "characters",
-        AnyFunction::require_char,
+        "min_codepoint_inclusive",
+        AnyFunction::require_uint,
+        "max_codepoint_inclusive",
+        AnyFunction::require_uint,
     )?;
-
     Ok(AnyFunction::String(Rc::new(StringGenerator {
-        length_gen: length,
-        char_gen: chars,
+        length_gen,
+        max_cp_inclusive,
+        min_cp_inclusive,
     })))
 }
 
 pub const STRING_GEN_BUILTIN: &BuiltinFunctionPrototype = &BuiltinFunctionPrototype {
     function_name: "string",
-    description: "constructs a string using the given length and character generators",
-    arguments: &[("length", GenType::Uint), ("characters", GenType::Char)],
+    description:
+        "constructs a string using the given length and min and max code point values inclusive",
+    arguments: &[
+        ("length", GenType::Uint),
+        ("min_codepoint_inclusive", GenType::Uint),
+        ("max_codepoint_inclusive", GenType::Uint),
+    ],
     variadic: false,
     create_fn: &create_string_gen,
 };

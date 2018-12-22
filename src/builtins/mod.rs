@@ -22,7 +22,7 @@ const BUILTIN_FNS: &'static [&'static BuiltinFunctionPrototype] = &[
     self::byte_order::INT_BIG_ENDIAN,
     self::byte_order::DECIMAL_LITTLE_ENDIAN,
     self::byte_order::DECIMAL_BIG_ENDIAN,
-    self::chars::CHAR_GEN_BUILTIN,
+    //self::chars::CHAR_GEN_BUILTIN,
     self::env::ENV_VAR,
     self::strings::STRING_GEN_BUILTIN,
     self::strings::STRING_LENGTH_BUILTIN,

@@ -1,4 +1,7 @@
 
+# Generates a random string with a single codepoint
+def char(min: Uint, max: Uint) = string(1, min, max);
+
 # Generates a random character representing the ascii digits 0-9
 def digit_char() = char(48, 57);
 

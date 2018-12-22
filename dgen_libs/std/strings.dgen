@@ -1,16 +1,18 @@
 
 
 # Generates a string of random alphanumeric characters, using the given length generator
-def alphanumeric_string(length: Uint) = string(length, ascii_alphanumeric_char());
+def alphanumeric_string(length: Uint) = repeat(length, ascii_alphanumeric_char());
 
 # Generates a string of random lowercase ascii letters (a-z), using the given length generator
-def lowercase_ascii_string(length: Uint) = string(length, lowercase_ascii_char());
+def lowercase_ascii_string(length: Uint) = string(length, 97, 122);
 
 # Generates a string of random uppercase ascii letters (A-Z), using the given length generator
-def uppercase_ascii_string(length: Uint) = string(length, uppercase_ascii_char());
+def uppercase_ascii_string(length: Uint) = string(length, 65, 90);
 
-# Generates a string of random characters from the unicode basic multilingual plane
-def unicode_string(length: Uint) = string(length, unicode_char());
+# Generates a string of random codepoints from the unicode basic multilingual plane.
+# The string generated is NOT guaranteed to be valid UTF-8 because it may contain
+# invalid surrogate pairs. This is commonly referred to as WTF-8
+def unicode_string(length: Uint) = repeat(length, unicode_char());
 
 # adds a newline character to the end of the input
 def trailing_newline(input: String) = concat(input, "\n");
