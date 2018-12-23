@@ -102,16 +102,6 @@ macro_rules! make_select_proto {
     };
 }
 
-make_select_proto!(
-    SELECT_CHAR_BUILTIN,
-    create_select_char,
-    STABLE_SELECT_CHAR_BUILTIN,
-    create_stable_select_char,
-    GenType::Char,
-    AnyFunction::Char,
-    char,
-    AnyFunction::require_char
-);
 
 make_select_proto!(
     SELECT_STRING_BUILTIN,

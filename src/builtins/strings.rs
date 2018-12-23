@@ -1,7 +1,7 @@
 use crate::IString;
 use crate::{
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput,
-    DynCharFun, DynStringFun, DynUintFun, GenType, ProgramContext, RunnableFunction,
+    DynStringFun, DynUintFun, GenType, ProgramContext, RunnableFunction,
 };
 use encoding::label::encoding_from_whatwg_label;
 use encoding::EncoderTrap;

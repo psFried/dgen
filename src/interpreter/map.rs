@@ -137,7 +137,6 @@ impl<T: 'static> WrappedMemoizedFunction<T> {
 
 pub fn finish_mapped(resolved: AnyFunction, resetter: Rc<Resetter>) -> AnyFunction {
     match resolved {
-        AnyFunction::Char(fun) => AnyFunction::Char(WrappedMemoizedFunction::new(fun, resetter)),
         AnyFunction::String(fun) => {
             AnyFunction::String(WrappedMemoizedFunction::new(fun, resetter))
         }
@@ -158,7 +157,6 @@ pub fn create_memoized_fun(input: AnyFunction) -> (AnyFunction, Rc<Resetter>) {
     let reset_to_return = resetter.clone();
 
     let fun_to_return = match input {
-        AnyFunction::Char(fun) => AnyFunction::Char(MemoizedFunction::new(fun, resetter)),
         AnyFunction::String(fun) => AnyFunction::String(MemoizedFunction::new(fun, resetter)),
         AnyFunction::Boolean(fun) => AnyFunction::Boolean(MemoizedFunction::new(fun, resetter)),
         AnyFunction::Decimal(fun) => AnyFunction::Decimal(MemoizedFunction::new(fun, resetter)),

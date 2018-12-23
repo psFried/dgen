@@ -48,16 +48,6 @@ StringLiteral: IString = {
     }
 };
 
-CharLiteral: char = {
-    <c:r"'[^']+'"> =>? {
-        process_string_escapes(&c[1..(c.len() - 1)]).map_err(|e| {
-            eprintln!("invalid char literal: {}", e);
-            ParseError::User { error: e}
-        }).map(|s| s.chars().next().unwrap())
-    }
-}
-
-
 BinLiteral: Vec<u8> = {
     "[" <b:Comma<IntLiteral>> "]" =>? {
         b.into_iter().map(|i| {
@@ -72,7 +62,6 @@ BinLiteral: Vec<u8> = {
 
 ExprInner: ast::Expr = {
     <b:BinLiteral> => ast::Expr::BinaryLiteral(b),
-    <l:CharLiteral> => ast::Expr::CharLiteral(l),
     <b:BooleanLiteral> => ast::Expr::BooleanLiteral(b),
     <s:StringLiteral> => ast::Expr::StringLiteral(s),
     <i:IntLiteral> => ast::Expr::IntLiteral(i),
@@ -110,7 +99,6 @@ GenType: GenType = {
     "Int" => GenType::Int,
     "Boolean" => GenType::Boolean,
     "Float" => GenType::Decimal,
-    "Char" => GenType::Char,
     "Bin" => GenType::Bin,
 }
 

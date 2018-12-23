@@ -34,7 +34,7 @@ pub use self::interpreter::prototype::{
 };
 pub use self::interpreter::{Interpreter, Source};
 pub use self::types::{
-    ConstBin, ConstBoolean, ConstChar, ConstDecimal, ConstInt, ConstString, ConstUint, OutputType,
+    ConstBin, ConstBoolean, ConstDecimal, ConstInt, ConstString, ConstUint, OutputType,
 };
 pub use self::writer::DataGenOutput;
 
@@ -58,7 +58,6 @@ pub trait RunnableFunction<T>: Debug {
 pub type DynFun<T> = Rc<RunnableFunction<T>>;
 
 pub type DynStringFun = DynFun<IString>;
-pub type DynCharFun = DynFun<char>;
 pub type DynUintFun = DynFun<u64>;
 pub type DynIntFun = DynFun<i64>;
 pub type DynDecimalFun = DynFun<f64>;
@@ -68,7 +67,6 @@ pub type DynBinFun = DynFun<Vec<u8>>;
 #[derive(Debug, Clone)]
 pub enum AnyFunction {
     String(DynStringFun),
-    Char(DynCharFun),
     Uint(DynUintFun),
     Int(DynIntFun),
     Decimal(DynDecimalFun),
@@ -80,7 +78,6 @@ impl AnyFunction {
     pub fn get_type(&self) -> GenType {
         match *self {
             AnyFunction::String(_) => GenType::String,
-            AnyFunction::Char(_) => GenType::Char,
             AnyFunction::Uint(_) => GenType::Uint,
             AnyFunction::Int(_) => GenType::Int,
             AnyFunction::Decimal(_) => GenType::Decimal,
@@ -96,7 +93,6 @@ impl AnyFunction {
     ) -> Result<(), Error> {
         match *self {
             AnyFunction::String(ref fun) => fun.write_value(context, output),
-            AnyFunction::Char(ref fun) => fun.write_value(context, output),
             AnyFunction::Uint(ref fun) => fun.write_value(context, output),
             AnyFunction::Int(ref fun) => fun.write_value(context, output),
             AnyFunction::Decimal(ref fun) => fun.write_value(context, output),
@@ -131,7 +127,6 @@ macro_rules! type_conversions {
 
 type_conversions!{
     [as_string, require_string, DynStringFun, AnyFunction::String],
-    [as_char, require_char, DynCharFun, AnyFunction::Char],
     [as_int, require_int, DynIntFun, AnyFunction::Int],
     [as_uint, require_uint, DynUintFun, AnyFunction::Uint],
     [as_decimal, require_decimal, DynDecimalFun, AnyFunction::Decimal],

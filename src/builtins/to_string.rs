@@ -45,7 +45,6 @@ fn create_to_string(args: Arguments) -> CreateFunctionResult {
     match fun {
         str_fun @ AnyFunction::String(_) => Ok(str_fun),
         AnyFunction::Boolean(fun) => Ok(ToString::new(fun)),
-        AnyFunction::Char(fun) => Ok(ToString::new(fun)),
         AnyFunction::Decimal(fun) => Ok(ToString::new(fun)),
         AnyFunction::Int(fun) => Ok(ToString::new(fun)),
         AnyFunction::Uint(fun) => Ok(ToString::new(fun)),
@@ -66,7 +65,6 @@ macro_rules! make_to_string {
 }
 
 make_to_string!(BOOLEAN_TO_STRING_BUILTIN, GenType::Boolean);
-make_to_string!(CHAR_TO_STRING_BUILTIN, GenType::Char);
 make_to_string!(DECIMAL_TO_STRING_BUILTIN, GenType::Decimal);
 make_to_string!(INT_TO_STRING_BUILTIN, GenType::Int);
 make_to_string!(UINT_TO_STRING_BUILTIN, GenType::Uint);

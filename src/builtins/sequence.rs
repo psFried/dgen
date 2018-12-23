@@ -90,13 +90,6 @@ macro_rules! make_seq_builtin {
 }
 
 make_seq_builtin!(
-    CHAR_WRAPPING_SEQ,
-    CHAR_SEQ,
-    GenType::Char,
-    AnyFunction::Char,
-    AnyFunction::require_char
-);
-make_seq_builtin!(
     STRING_WRAPPING_SEQ,
     STRING_SEQ,
     GenType::String,
@@ -137,18 +130,18 @@ mod test {
     use crate::fun_test::{assert_bin_output_is_expected, test_program_success};
 
     #[test]
-    fn char_wrapping_sequence() {
+    fn string_wrapping_sequence() {
         let program = r##"
-        wrapping_sequence('a', 'b', 'c')
+        wrapping_sequence("a", "b", "c")
         "##;
         let expected = "abcab";
         test_program_success(5, program, expected);
     }
 
     #[test]
-    fn char_sequence() {
+    fn string_sequence() {
         let program = r##"
-        sequence('a', 'b', 'c')
+        sequence("a", "b", "c")
         "##;
         let expected = "abccc";
         test_program_success(5, program, expected);

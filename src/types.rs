@@ -33,7 +33,6 @@ macro_rules! create_const_type {
 }
 
 create_const_type!(ConstBoolean, bool, AnyFunction::Boolean);
-create_const_type!(ConstChar, char, AnyFunction::Char);
 create_const_type!(ConstString, IString, AnyFunction::String);
 create_const_type!(ConstUint, u64, AnyFunction::Uint);
 create_const_type!(ConstInt, i64, AnyFunction::Int);
@@ -44,11 +43,6 @@ pub trait OutputType {
     fn write_output(&self, writer: &mut DataGenOutput) -> Result<(), Error>;
 }
 
-impl OutputType for char {
-    fn write_output(&self, writer: &mut DataGenOutput) -> Result<(), Error> {
-        writer.write_string(self)
-    }
-}
 impl OutputType for i64 {
     fn write_output(&self, writer: &mut DataGenOutput) -> Result<(), Error> {
         writer.write_string(self)

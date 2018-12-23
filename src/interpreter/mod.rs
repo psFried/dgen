@@ -27,7 +27,7 @@ use self::map::{create_memoized_fun, finish_mapped};
 use failure::Error;
 use crate::IString;
 use crate::{
-    AnyFunction, BoundArgument, ConstBin, ConstBoolean, ConstChar, ConstDecimal, ConstInt,
+    AnyFunction, BoundArgument, ConstBin, ConstBoolean, ConstDecimal, ConstInt,
     ConstString, ConstUint, CreateFunctionResult, FunctionPrototype,
 };
 use std::sync::Arc;
@@ -80,7 +80,6 @@ impl Compiler {
             Expr::IntLiteral(ref lit) => Ok(ConstUint::new(*lit)),
             Expr::SignedIntLiteral(ref lit) => Ok(ConstInt::new(*lit)),
             Expr::DecimalLiteral(ref lit) => Ok(ConstDecimal::new(*lit)),
-            Expr::CharLiteral(ref lit) => Ok(ConstChar::new(*lit)),
             Expr::BinaryLiteral(ref lit) => Ok(ConstBin::new(lit.clone())),
         }
     }

@@ -10,7 +10,6 @@ pub struct Span {
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
 pub enum GenType {
-    Char,
     String,
     Uint,
     Int,
@@ -22,7 +21,6 @@ pub enum GenType {
 impl GenType {
     pub fn display_name(&self) -> &'static str {
         match *self {
-            GenType::Char => "Char",
             GenType::String => "String",
             GenType::Uint => "Uint",
             GenType::Int => "Int",
@@ -61,7 +59,6 @@ pub enum Expr {
     SignedIntLiteral(i64),
     DecimalLiteral(f64),
     BooleanLiteral(bool),
-    CharLiteral(char),
     BinaryLiteral(Vec<u8>),
 }
 

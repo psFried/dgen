@@ -23,9 +23,6 @@ pub fn wrap(
         AnyFunction::Bin(fun) => {
             AnyFunction::Bin(RuntimeWrapper::new(fun, function_name, source_ref))
         }
-        AnyFunction::Char(fun) => {
-            AnyFunction::Char(RuntimeWrapper::new(fun, function_name, source_ref))
-        }
         AnyFunction::String(fun) => {
             AnyFunction::String(RuntimeWrapper::new(fun, function_name, source_ref))
         }
