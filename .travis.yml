@@ -8,7 +8,7 @@ jobs:
   include:
     - stage: "test"
       name: "Test Linux"
-      script: "cargo test"
+      script: "cargo test && ./test-examples.sh"
       rust: stable
       os: linux
     - stage: "test"

@@ -7,7 +7,7 @@ def tld() = select("com", "co", "org", "net", "io");
 
 # generates a random hostname
 def hostname() = concat(
-    repeat_delimited(uint(1, 3), lowercase_ascii_string(uint(4, 20)), "."),
+    repeat_delimited(uint(1, 3), lowercase_ascii_chars(uint(4, 20)), "."),
     ".",
     tld()
 );
@@ -19,7 +19,7 @@ def path() = concat(
 );
 
 # generates the body to use with put/post requests
-def request_body() = unicode_string(uint(10, 100));
+def request_body() = unicode_chars(uint(10, 100));
 
 
 # This is the final expression, which will get evaluated as the actual program to run.

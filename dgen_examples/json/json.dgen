@@ -18,7 +18,7 @@ def string_or_number() = select(json_string(), json_number());
 # generates either a string or a number, and continues to always generate that same type (but with different values)
 def stable_string_or_number() = stable_select(json_string(), json_number());
 
-# Surrounds the given string with either single or double quotes 
+# Surrounds the given string with either single or double quotes
 def single_or_double_quote(value: String) = select(
     double_quote(value),
     surround(value, "'")
@@ -28,7 +28,7 @@ def single_or_double_quote(value: String) = select(
 def json_key() = select(
     single_or_double_quote(ascii_alphanumeric_chars(uint(1, 20))),
     concat( # unquoted json keys must start with either a letter or an underscore
-        select(uppercase_ascii_string(1), lowercase_ascii_string(1), "_"),
+        select(uppercase_ascii_chars(1), lowercase_ascii_chars(1), "_"),
         ascii_alphanumeric_chars(uint(0, 19))
     )
 );
