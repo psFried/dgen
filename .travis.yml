@@ -4,20 +4,20 @@ cache: cargo
 env:
   global:
   - RUST_BACKTRACE=1
-rust:
-- stable
-os:
-- linux
-- osx
-- windows
 jobs:
   include:
     - stage: "test"
       name: "Test"
       script: "cargo test"
+      rust: stable
+      os: linux
+    - os: windows
+    - os: osx
     - stage: "test"
       name: "Benchmarks"
       script: "cargo bench"
+      rust: stable
+      os: linux
     - stage: "deploy"
       name: "Publish Release"
       script: "cargo build --release && mkdir -p target/artifacts/${TRAVIS_OS_NAME} && mv target/release/dgen target/artifacts/${TRAVIS_OS_NAME}/"
@@ -31,6 +31,9 @@ jobs:
         on:
           repo: psFried/dgen
           tags: true
+      os: linux
+    - os: windows
+    - os: osx
 stages:
   - test
   - name: deploy
