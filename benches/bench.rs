@@ -15,51 +15,29 @@ use std::io::Write;
 const SEED: [u8; 16] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 const OUT_CAPACITY: usize = 32 * 1024;
 
-macro_rules! make_string_bench {
-    ($str_len:tt) => {{
-        let program = stringify!(alphanumeric_string($str_len));
-        let mut interpreter = Interpreter::new();
-        interpreter.add_std_lib();
-        let compiled = interpreter
-            .eval(UnreadSource::Builtin("test", program))
-            .unwrap();
-        let mut context = ProgramContext::from_seed(SEED, ::dgen::verbosity::NORMAL);
-        let mut out = Vec::with_capacity(OUT_CAPACITY);
-
-        let fun_name = stringify!(ascii_string_$str_len);
-        Fun::new(fun_name, move |b, _| {
-            b.iter(|| {
-                out.clear();
-                let mut real_out = DataGenOutput::new(&mut out);
-                compiled.write_value(&mut context, &mut real_out).unwrap();
-            })
-        })
-    }};
-}
-
 fn create_string_benchmark<I: fmt::Debug + 'static>(program: &'static str) -> Fun<I> {
-        let mut interpreter = Interpreter::new();
-        interpreter.add_std_lib();
-        let compiled = interpreter
-            .eval(UnreadSource::Builtin("test", program))
-            .unwrap();
-        let mut context = ProgramContext::from_seed(SEED, ::dgen::verbosity::NORMAL);
-        let mut out = Vec::with_capacity(OUT_CAPACITY);
+    let mut interpreter = Interpreter::new();
+    interpreter.add_std_lib();
+    let compiled = interpreter
+        .eval(UnreadSource::Builtin("test", program))
+        .unwrap();
+    let mut context = ProgramContext::from_seed(SEED, ::dgen::verbosity::NORMAL);
+    let mut out = Vec::with_capacity(OUT_CAPACITY);
 
-        Fun::new(program, move |b, _| {
-            b.iter(|| {
-                out.clear();
-                let mut real_out = DataGenOutput::new(&mut out);
-                compiled.write_value(&mut context, &mut real_out).unwrap();
-            })
+    Fun::new(program, move |b, _| {
+        b.iter(|| {
+            out.clear();
+            let mut real_out = DataGenOutput::new(&mut out);
+            compiled.write_value(&mut context, &mut real_out).unwrap();
         })
+    })
 }
 
 fn homogeneous_string_benches(c: &mut Criterion) {
     let functions = vec![
         create_string_benchmark("lowercase_ascii_string(16)"),
         create_string_benchmark("lowercase_ascii_string(128)"),
-        create_string_benchmark("lowercase_ascii_string(1024)")
+        create_string_benchmark("lowercase_ascii_string(1024)"),
     ];
 
     c.bench_functions("heterogeneous_strings", functions, ());
@@ -69,7 +47,7 @@ fn heterogeneous_string_benches(c: &mut Criterion) {
     let functions = vec![
         create_string_benchmark("alphanumeric_string(16)"),
         create_string_benchmark("alphanumeric_string(128)"),
-        create_string_benchmark("alphanumeric_string(1024)")
+        create_string_benchmark("alphanumeric_string(1024)"),
     ];
 
     c.bench_functions("heterogeneous_strings", functions, ());
@@ -130,5 +108,10 @@ fn writer_benches(c: &mut Criterion) {
     );
 }
 
-criterion_group!(benches, writer_benches, heterogeneous_string_benches, homogeneous_string_benches);
+criterion_group!(
+    benches,
+    writer_benches,
+    heterogeneous_string_benches,
+    homogeneous_string_benches
+);
 criterion_main!(benches);
