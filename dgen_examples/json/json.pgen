@@ -1,7 +1,7 @@
 #!dgen
 # This file is runnable as it is since it ends with an expression.
 # Running this will generate a random json object or array
-# To run this, execute: `pgen run -f pgen_examples/json/json.pgen`
+# To run this, execute: `dgen run -f dgen_examples/json/json.dgen`
 
 # json_number generates a random number, either an integer or a decimal
 def json_number() = select(
@@ -10,7 +10,7 @@ def json_number() = select(
 );
 
 # generates random double quoted strings
-def json_string() = single_or_double_quote(alphanumeric_string(uint(0, 50)));
+def json_string() = single_or_double_quote(ascii_alphanumeric_chars(uint(0, 50)));
 
 # generates either a string or a number
 def string_or_number() = select(json_string(), json_number());
@@ -26,10 +26,10 @@ def single_or_double_quote(value: String) = select(
 
 # creates a random string to use as a key. It may be surrounded by either single or double quotes, or remain unquoted
 def json_key() = select(
-    single_or_double_quote(alphanumeric_string(uint(1, 20))),
+    single_or_double_quote(ascii_alphanumeric_chars(uint(1, 20))),
     concat( # unquoted json keys must start with either a letter or an underscore
         select(uppercase_ascii_string(1), lowercase_ascii_string(1), "_"),
-        alphanumeric_string(uint(0, 19))
+        ascii_alphanumeric_chars(uint(0, 19))
     )
 );
 

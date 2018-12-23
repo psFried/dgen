@@ -1,5 +1,5 @@
-# Uses `http-lib.pgen` to create a series of randomly generated http requests
-# to run this file, execute the following from this directory: `pgen run -f use-http.pgen --lib http-lib.pgen`
+# Uses `http-lib.dgen` to create a series of randomly generated http requests
+# to run this file, execute the following from this directory: `dgen run -f use-http.dgen --lib http-lib.dgen`
 # You can also add the `-n <count>` option to execute this script the given number of times
 
 # picks a random top level domain
@@ -15,7 +15,7 @@ def hostname() = concat(
 # generates a random request path
 def path() = concat(
     "/",
-    repeat_delimited(uint(0, 10), alphanumeric_string(uint(3, 15)), "/")
+    repeat_delimited(uint(0, 10), ascii_alphanumeric_chars(uint(3, 15)), "/")
 );
 
 # generates the body to use with put/post requests

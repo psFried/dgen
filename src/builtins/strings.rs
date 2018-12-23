@@ -295,13 +295,13 @@ mod test {
     #[test]
     fn std_unicode_string_fun() {
         let expected_output = "ༀʡㅱ⻇\u{1714}ⅼפּ𐌷﹗☔\u{243e}ᜇᜈ⤯뻳徻အ𐌇\u{c00}ⓕ\u{3101}⟪Ⓔℒலጴ꒽⧶◯Ѣㅉ \u{242a}☖㎲ඍ∯೦₮\u{20d3}\u{6e4}⽝\u{eb4}⽭ඊㇹ㈤ゼ⡀Ǜԇ𐎒𐎍\u{efd1}\u{fe07}ᙶ﹁き﹛\u{196e}\u{e64}෴Ɯꏕ\u{7a7}ᚇ⫞⟏𝀀ਜ਼ΠᏳᥜჴស႔㩎\u{af4}ὀァ㏔◉むዤβ⟙\u{ec8}ᢟ챞㍇⁽क\u{1007b}\u{fe09}ꇛɔ᧸ꂩ෨﹊";
-        let input = r#"unicode_string(100)"#;
+        let input = r#"unicode_chars(100)"#;
         test_program_success(1, input, expected_output);
     }
 
     #[test]
     fn string_length_returns_length_of_string() {
-        let program = r#"string_length(alphanumeric_string(13))"#;
+        let program = r#"string_length(ascii_alphanumeric_chars(13))"#;
         let expected = "13";
         test_program_success(1, program, expected);
     }
@@ -309,7 +309,7 @@ mod test {
     #[test]
     fn generate_ascii_strings() {
         let expected_output = "a6OqR822C3hoTTf1";
-        let input = "alphanumeric_string(uint(0, 10))";
+        let input = "ascii_alphanumeric_chars(uint(0, 10))";
         test_program_success(4, input, expected_output);
     }
 

@@ -1,6 +1,6 @@
-# PGen Syntax
+# DGen Syntax
 
-The PGen language syntax is intentionally as simple and minimal as possible. Most people will probably only write dgen scripts occasionally, so we want the syntax to be simple and easy to remember. As of right now, the language only has a few types. The grammar of dgen is broken down to function definitions and expressions. 
+The DGen language syntax is intentionally as simple and minimal as possible. Most people will probably only write dgen scripts occasionally, so we want the syntax to be simple and easy to remember. As of right now, the language only has a few types. The grammar of dgen is broken down to function definitions and expressions. 
 
 ## Comments
 The comment character is `#`. Everything after a `#` until the end of the line will be ignored by the interpreter.
@@ -16,22 +16,21 @@ Literals are the simplest type of expression there is. Each literal represents a
 - Boolean: either `true` or `false`
 - Uint: An unsigned 65 bit integer value, for example `123` or `0`
 - Int: A signed 64 bit integer value, for example `-4` or `+789`. A signed int literal must always have the sign present, even for positive numbers.
-- Char: A 32 bit unicode codepoint expressed as a single written character between two single-quotes, for example `'a'` or `'#'`
-- String: Any valid sequence of unicode code points, surrounded by double quote characters. Example, `"foo"` or `"hello world!"`. See the notes below on Strings and Chars for more information and examples.
+- String: Any valid sequence of unicode code points, surrounded by double quote characters. Example, `"foo"` or `"hello world!"`. See the notes below on Strings for more information and examples.
 - Bin: A sequence of comma-separated bytes (can either by in hex or decimal notation) between two square braces, for example: `[0x04, 0xAA]` or `[]` or `[1, 2, 3]`
 
 ### Function calls
 
 A function call takes the form of `function_name(argument1, argument2, ..., argumentN)`. For example, to generate random unsigned integers, you can call the `uint()` function. Alternatively, to generate random unsigned integers within a given range, you can call `uint(7, 33)`. The concept of flat map is also built into the dgen language as a first class citizen. Any function call may optionally include a flat mapping expression by using the syntax: `function_name(arg1, ..., argn) { value ->  <Expression> }`. Within the mapper body, `value` will always refer to the same exact value.
 
-Expressions can be arbitrarily nested. For example, to generate random alphanumeric strings or varying lengths with double quotes around them, you could use `double_quote(alphanumeric_string(uint(3, 40)))`. This will generate strings between 3 and 40 characters long and put quotes around them.
+Expressions can be arbitrarily nested. For example, to generate random alphanumeric strings or varying lengths with double quotes around them, you could use `double_quote(ascii_alphanumeric_chars(uint(3, 40)))`. This will generate strings between 3 and 40 characters long and put quotes around them.
 
 ## Function definitions
 
 You can also define your own functions. Function definitions take the following form:
 `def function_name(argument1_name: <Type>, argument2_name: <Type>, ..., argumentN_name: <Type>) = <Expression>;`
 
-There's kind of a lot there, so let's break it down. First, all function definitions start with the keyword `def`, followed by at least one whitespace character. Then comes the function name. This is of course the name that will be used later when calling the function. After the name comes the names and types of the arguments. `<Type>` can be one of: `Boolean`, `Uint`, `Int`, `Float`, `Bin`, `Char`, or `String`. Functions that take no arguments are also valid, and just have an empty set of parentheses. After the argument list comes a single equals sign (`=`), followed by any expression. Within the body of the function, arguments can be used either by referencing their names directly (without parentheses) or calling them as functions that take no arguments. Within the body of a function, you may omit parentheses for using any arguments that were passed to your function. The end of a function definition is terminated by a mandatory semicolon (`;`).
+There's kind of a lot there, so let's break it down. First, all function definitions start with the keyword `def`, followed by at least one whitespace character. Then comes the function name. This is of course the name that will be used later when calling the function. After the name comes the names and types of the arguments. `<Type>` can be one of: `Boolean`, `Uint`, `Int`, `Float`, `Bin`, or `String`. Functions that take no arguments are also valid, and just have an empty set of parentheses. After the argument list comes a single equals sign (`=`), followed by any expression. Within the body of the function, arguments can be used either by referencing their names directly (without parentheses) or calling them as functions that take no arguments. Within the body of a function, you may omit parentheses for using any arguments that were passed to your function. The end of a function definition is terminated by a mandatory semicolon (`;`).
 
 ### Function Examples
 
@@ -76,7 +75,7 @@ In a mapped function, the `<value>` will always be the same within the scope of 
 
 ```
 uint(1, 10) { string_length ->
-    concat("printing a string with ", to_string(string_length), " ascii characters: ", alphanumeric_string(string_length))
+    concat("printing a string with ", to_string(string_length), " ascii characters: ", ascii_alphanumeric_chars(string_length))
 }
 ```
 
@@ -85,16 +84,16 @@ Mapped functions can be used anywhere a function is called, including in the bod
 ```
 # extract the above expression into a function
 def my_string(len: Uint) = len() { string_length ->
-    concat("printing a string with ", to_string(string_length), " ascii characters: ", alphanumeric_string(string_length))
+    concat("printing a string with ", to_string(string_length), " ascii characters: ", ascii_alphanumeric_chars(string_length))
 };
 
 # calling the function
 my_string(uint(1, 10))
 ```
 
-## Notes on Strings and Chars
+## Notes on Strings
 
-Strings are one of the most important and complex parts of any programming language, and dgen is no exception. Strings in dgen can contain any valid sequence of unicode codepoints. Both String and Char literals can contain any unicode characters. These can either be written directly inline like `"...💩..."`, or as unidode escape sequences such as `"\U{1F4A9}"`. For a Char literal, it would look like: `'\U{1F4A9}'`. Both String and Char literals support the same escape sequences:
+Strings are one of the most important and complex parts of any programming language, and dgen is no exception. Strings in dgen can contain any valid sequence of unicode codepoints. There is no longer any concept of a "character" in dgen. Character functions simply return short strings. String literals can contain any unicode characters. These can either be written directly inline like `"...💩..."`, or as unidode escape sequences such as `"\U{1F4A9}"`. The following escape sequences are supported:
 
 - `\n` for a newline
 - `\r` for a carriage return

@@ -1,6 +1,6 @@
 # This example library can be used to generate random http requests. Something like this could be used, for example, 
 # to test an http parser.
-# To use this library, add the path to this file as a `--lib` argument. Take a look at use-http.pgen for an example that 
+# To use this library, add the path to this file as a `--lib` argument. Take a look at use-http.dgen for an example that 
 # uses this library to generate random http requests.
 
 
@@ -94,6 +94,6 @@ def capitalized_ascii_string() = concat(
 
 def rand_header_key() = repeat_delimited(uint(1, 4), capitalized_ascii_string(), "-");
 
-def rand_header_value() = alphanumeric_string(uint(1, 65));
+def rand_header_value() = ascii_alphanumeric_chars(uint(1, 65));
 
 def random_header() = http_header(rand_header_key(), rand_header_value());

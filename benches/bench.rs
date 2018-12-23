@@ -35,9 +35,9 @@ fn create_string_benchmark<I: fmt::Debug + 'static>(program: &'static str) -> Fu
 
 fn homogeneous_string_benches(c: &mut Criterion) {
     let functions = vec![
-        create_string_benchmark("lowercase_ascii_string(16)"),
-        create_string_benchmark("lowercase_ascii_string(128)"),
-        create_string_benchmark("lowercase_ascii_string(1024)"),
+        create_string_benchmark("lowercase_ascii_chars(16)"),
+        create_string_benchmark("lowercase_ascii_chars(128)"),
+        create_string_benchmark("lowercase_ascii_chars(1024)"),
     ];
 
     c.bench_functions("heterogeneous_strings", functions, ());
@@ -45,9 +45,9 @@ fn homogeneous_string_benches(c: &mut Criterion) {
 
 fn heterogeneous_string_benches(c: &mut Criterion) {
     let functions = vec![
-        create_string_benchmark("alphanumeric_string(16)"),
-        create_string_benchmark("alphanumeric_string(128)"),
-        create_string_benchmark("alphanumeric_string(1024)"),
+        create_string_benchmark("ascii_alphanumeric_chars(16)"),
+        create_string_benchmark("ascii_alphanumeric_chars(128)"),
+        create_string_benchmark("ascii_alphanumeric_chars(1024)"),
     ];
 
     c.bench_functions("heterogeneous_strings", functions, ());
