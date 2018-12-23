@@ -3,20 +3,35 @@ language: rust
 cache: cargo
 env:
   global:
-    - RUST_BACKTRACE=1
+  - RUST_BACKTRACE=1
 rust:
-  - stable
-  - beta
-  - nightly
+- stable
 os:
-  - linux
-  - osx
-matrix:
-  allow_failures:
-    - rust: nightly
-  exclude:
-    - rust: beta
-      os: osx
-    - rust: nightly
-      os: osx
-script: cargo test --all
+- linux
+- osx
+- windows
+jobs:
+  include:
+    - stage: "test"
+      name: "Test"
+      script: "cargo test"
+    - stage: "test"
+      name: "Benchmarks"
+      script: "cargo bench"
+    - stage: "deploy"
+      name: "Publish Release"
+      script: "cargo build --release && mkdir -p target/artifacts/${TRAVIS_OS_NAME} && mv target/release/dgen target/artifacts/${TRAVIS_OS_NAME}/"
+      deploy:
+        provider: releases
+        api_key:
+          secure: DD9KqD6r4eG9Cy2cOaWLfvryuasXxhkrRC3NutOSSl1bxeKhEKbZiuur3SQZIZkibg7TqTHUfXVboyStaVLMXo1f7Z/lCQiT7XzU3HBDc/p9xDaiWC13Ehiodsyvoc/q+ySFjek8nFhGUbh7EXfvrRk5Yj4Fh7FELuPzBos9JYIu9hViEaWecRiCUifyKR0iFdPhwJDS3jlBvvkUv+memZnRiRxq8cZIyITQcwi9XvCsjmxh6vpLat0B34ZMGQJjppj8dJtYDHkcs9jvYSyOLTiYVMg+ezGzJR/2f9IYlblq5VGSuamh77ZwcB5VNNLdfGnVHIu/QNxRu9nWAHqlJ7/x3RqxxPnhMPRkzbOaPg0wq51zIpbY9oIbvp3ggXwitk+V+3cJ1TfTE6AxHbqUYl/1ttZNa+ZH1YHNvRbAqMmzEl9XP40TXUjkCYs9igKmKz8Bm3UpPaKHTy5QG5G0o8K/pVt3gFDi1FI+bVcjvkodAHk8Dvp7sFeXueozrCUwbhgNeEeyHKmq+2K9SUXbpm19DYckFVc6Dr/4X5X8RPeQ74U1mnsz2EOh0TkZR1yhwnA8eMc4EDBdjndh1G6IeHu2/qToGd7xaB0oFXyemaoptMcTvYFWDvHPxOY1Gc/iVT3Mku+bEh2CvPILUjY3E2vgkzPIBNJ1mWYyrlKzpUo=
+        file: target/artifacts/**/*
+        draft: true
+        skipCleanup: true
+        on:
+          repo: psFried/dgen
+          tags: true
+stages:
+  - test
+  - name: deploy
+    if: tag IS present AND branch == master
