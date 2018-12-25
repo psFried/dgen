@@ -69,9 +69,15 @@ impl Repl {
                 }
                 Err(ReadlineError::Eof) => return Ok(()),
                 Err(ReadlineError::Interrupted) => return Ok(()),
-                Err(ReadlineError::Utf8Error) => bail!("UTF8 Error"),
                 Err(ReadlineError::Io(e)) => return Err(e.into()),
+
+                #[cfg(unix)]
                 Err(ReadlineError::Errno(e)) => bail!("Syscall Error: {}", e),
+                #[cfg(unix)]
+                Err(ReadlineError::Utf8Error) => bail!("UTF8 Error"),
+
+                #[cfg(windows)]
+                Decode(e) => bail!("Decoding Error: {}", e),
             };
         }
     }
