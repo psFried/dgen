@@ -300,7 +300,7 @@ mod test {
         let expected = vec!["foo", "bar", "baz", "", "qux"];
         for _ in 0..20 {
             let actual = subject.gen_value(&mut rng).expect("failed to gen value");
-            assert!(expected.contains(&&*actual));
+            assert!(expected.contains(&&*actual), "Expected: '{:?}' did not contain actual: '{:?}'");
         }
     }
 

@@ -3,3 +3,5 @@
 
 # should always have crlf endings
 test-data/crlf-words.txt text eol=crlf
+# should always have lf endings
+test-data/simple-words.txt text eol=lf
