@@ -1,9 +1,9 @@
-use failure::Error;
 use crate::interpreter::{DgenParseError, Interpreter, UnreadSource};
+use crate::{AnyFunction, DataGenOutput, ProgramContext};
+use failure::Error;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 use std::io::{self, Write};
-use crate::{AnyFunction, DataGenOutput, ProgramContext};
 
 const MAX_EMPTY_LINES: u32 = 2;
 
@@ -33,7 +33,8 @@ fn execute_fn(function: AnyFunction, context: &mut ProgramContext) -> Result<(),
                 .and_then(|_| {
                     // probably not necessary but it's good to do the write thing
                     dgen_out.flush().map_err(Into::into)
-                }).map_err(Into::into)
+                })
+                .map_err(Into::into)
         })
     };
 
@@ -57,6 +58,7 @@ impl Repl {
     }
 
     pub fn run(mut self) -> Result<(), Error> {
+        self.help();
         loop {
             let prompt = if self.awaiting_incomplete_input {
                 "> ... "
@@ -84,6 +86,7 @@ impl Repl {
 
     fn handle_new_input(&mut self, new_input: String) -> Result<(), Error> {
         if self.handle_meta_command(new_input.as_str()) {
+            self.editor.add_history_entry(new_input);
             return Ok(());
         }
 
@@ -106,13 +109,16 @@ impl Repl {
             .eval_any(UnreadSource::String(new_combined_input));
         match result {
             Ok(Some(function)) => {
-                let mut command = String::with_capacity(32);
-                ::std::mem::swap(&mut command, &mut self.partial_source);
-                self.editor.add_history_entry(command);
+                let history_entry = self.partial_source.as_str().replace("\n", " ");
+                self.partial_source.clear();
+                self.editor.add_history_entry(history_entry);
                 execute_fn(function, &mut self.context)?;
             }
             Ok(None) => {
                 println!("Added function");
+                let history_entry = self.partial_source.as_str().replace("\n", " ");
+                self.partial_source.clear();
+                self.editor.add_history_entry(history_entry);
                 self.push_partial_source_to_module();
             }
             Err(ref err) if is_unexpected_eof_parse_err(err) => {
@@ -124,8 +130,11 @@ impl Repl {
                 }
             }
             Err(err) => {
-                self.partial_source.clear();
                 println!("Error: {}", err);
+                // still push to the history, just to make it easier for folks to fix typos
+                let history_entry = self.partial_source.as_str().replace("\n", " ");
+                self.partial_source.clear();
+                self.editor.add_history_entry(history_entry);
             }
         }
         self.consecutive_blank_lines = 0;
