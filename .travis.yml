@@ -4,10 +4,14 @@ cache: cargo
 env:
   global:
   - RUST_BACKTRACE=1
+branches:
+  only:
+    - master
 jobs:
   include:
     - stage: "test"
       name: "Test Linux"
+      # Only test the examples on linux since there's little value in testing those on multiple platforms
       script: "cargo test && ./test-examples.sh"
       rust: stable
       os: linux
