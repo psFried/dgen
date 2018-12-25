@@ -1,7 +1,9 @@
 use encoding::ByteWriter;
 use std::fmt::Display;
 use std::io::{self, Write};
-use OutputType;
+use crate::OutputType;
+use crate::ProgramContext;
+use failure::Error;
 
 pub struct TrackingWriter<'a> {
     delegate: &'a mut Write,
@@ -46,34 +48,34 @@ impl<'a> DataGenOutput<'a> {
         }
     }
 
-    pub fn write_bytes(&mut self, bytes: &[u8]) -> io::Result<u64> {
-        self.writer.write_all(bytes).map(|()| bytes.len() as u64)
+    pub fn write_bytes(&mut self, bytes: &[u8]) -> Result<(), Error> {
+        self.writer.write_all(bytes).map_err(|io_err| io_err.into())
     }
 
-    pub fn write_str(&mut self, value: &str) -> io::Result<u64> {
+    pub fn write_str(&mut self, value: &str) -> Result<(), Error> {
         self.write_bytes(value.as_bytes())
     }
 
-    pub fn write_string<D: Display + ?Sized>(&mut self, value: &D) -> io::Result<u64> {
-        let start = self.writer.get_num_bytes_written();
+    pub fn write_string<D: Display + ?Sized>(&mut self, value: &D) -> Result<(), Error> {
+        let _start = self.writer.get_num_bytes_written();
         self.writer
             .write_fmt(format_args!("{}", value))
-            .map(|()| self.writer.get_num_bytes_written() - start)
+            .map_err(|_| {
+                format_err!("Failed to write to output")
+            })
     }
 
-    pub fn write<O: OutputType>(&mut self, value: &O) -> Result<u64, ::failure::Error> {
+    pub fn write<O: OutputType>(&mut self, value: &O) -> Result<(), Error> {
         value.write_output(self)
     }
 
-    pub fn with<F, T>(&mut self, fun: F) -> Result<u64, ::failure::Error>
+    pub fn with<F, T>(&mut self, fun: F) -> Result<(), Error>
     where
         F: FnOnce(&mut DataGenOutput) -> Result<T, ::failure::Error>,
     {
-        let start = self.writer.get_num_bytes_written();
-
+        let _start = self.writer.get_num_bytes_written();
         let _ = fun(self)?;
-        let end = self.writer.get_num_bytes_written();
-        Ok(end - start)
+        Ok(())
     }
 
     pub fn flush(&mut self) -> io::Result<()> {
@@ -91,5 +93,12 @@ impl<'a> ByteWriter for DataGenOutput<'a> {
         self.writer
             .write_all(v)
             .expect("Failed to write output of encoded string");
+    }
+}
+
+
+impl<'a> ::std::fmt::Write for DataGenOutput<'a> {
+    fn write_str(&mut self, s: &str) -> ::std::fmt::Result {
+        self.write_str(s).map(|_| ()).map_err(|_| ::std::fmt::Error)
     }
 }

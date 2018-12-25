@@ -1,28 +1,42 @@
+use crate::IString;
+use crate::{
+    AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput,
+    DynStringFun, DynUintFun, GenType, ProgramContext, RunnableFunction,
+};
 use encoding::label::encoding_from_whatwg_label;
 use encoding::EncoderTrap;
 use failure::Error;
 use std::rc::Rc;
-use IString;
-use {
-    AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput,
-    DynCharFun, DynStringFun, DynUintFun, GenType, ProgramContext,
-    RunnableFunction,
-};
 
 #[derive(Debug)]
 pub struct StringGenerator {
     length_gen: DynUintFun,
-    char_gen: DynCharFun,
+    min_cp_inclusive: DynUintFun,
+    max_cp_inclusive: DynUintFun,
+}
+
+impl StringGenerator {
+    fn gen_char(&self, context: &mut ProgramContext) -> Result<char, Error> {
+        let min = self.min_cp_inclusive.gen_value(context)?;
+        let max = self.max_cp_inclusive.gen_value(context)?;
+
+        let as_u64 = context.gen_range_inclusive(min, max);
+
+        ::std::char::from_u32(as_u64 as u32).ok_or_else(|| {
+            format_err!("Invalid unicode codepoint: {}, generated from range: min_inclusive: {}, max_inclusive: {}", as_u64, min, max)
+        })
+    }
 }
 
 impl RunnableFunction<IString> for StringGenerator {
     fn gen_value(&self, context: &mut ProgramContext) -> Result<IString, Error> {
-        let len = self.length_gen.gen_value(context)?;
-        let mut buf = String::with_capacity(len as usize);
+        let num_iterations = self.length_gen.gen_value(context)? as usize;
 
-        for _ in 0..len {
-            let character = self.char_gen.gen_value(context)?;
-            buf.push(character);
+        let mut buf = String::with_capacity(num_iterations);
+
+        for _ in 0..num_iterations {
+            let c = self.gen_char(context)?;
+            buf.push(c);
         }
         Ok(buf.into())
     }
@@ -31,38 +45,57 @@ impl RunnableFunction<IString> for StringGenerator {
         &self,
         context: &mut ProgramContext,
         out: &mut DataGenOutput,
-    ) -> Result<u64, Error> {
-        let len = self.length_gen.gen_value(context)?;
-        let mut total = 0;
-        for _ in 0..len {
-            total += self.char_gen.write_value(context, out)?;
+    ) -> Result<(), Error> {
+        let num_iterations = self.length_gen.gen_value(context)? as usize;
+
+        let mut i = 0;
+
+        while i < num_iterations {
+            let mut buf = [0u8; 1024];
+            let mut buf_end = 0;
+
+            while i < num_iterations && buf_end < (buf.len() - 6) {
+                let c = self.gen_char(context)?;
+                let slice = c.encode_utf8(&mut buf[buf_end..]);
+                i += slice.len();
+                buf_end += slice.len();
+            }
+            let as_str = unsafe { ::std::str::from_utf8_unchecked(&buf[..buf_end]) };
+            out.write_str(as_str)?;
         }
-        Ok(total)
+
+        Ok(())
     }
 }
 
 fn create_string_gen(args: Arguments) -> CreateFunctionResult {
-    let (length, chars) = args.require_2_args(
+    let (length_gen, min_cp_inclusive, max_cp_inclusive) = args.require_3_args(
         "length",
         AnyFunction::require_uint,
-        "characters",
-        AnyFunction::require_char,
+        "min_codepoint_inclusive",
+        AnyFunction::require_uint,
+        "max_codepoint_inclusive",
+        AnyFunction::require_uint,
     )?;
-
     Ok(AnyFunction::String(Rc::new(StringGenerator {
-        length_gen: length,
-        char_gen: chars,
+        length_gen,
+        max_cp_inclusive,
+        min_cp_inclusive,
     })))
 }
 
-pub const STRING_GEN_BUILTIN: &BuiltinFunctionPrototype =
-    &BuiltinFunctionPrototype {
-        function_name: "string",
-        description: "constructs a string using the given length and character generators",
-        arguments: &[("length", GenType::Uint), ("characters", GenType::Char)],
-        variadic: false,
-        create_fn: &create_string_gen,
-    };
+pub const STRING_GEN_BUILTIN: &BuiltinFunctionPrototype = &BuiltinFunctionPrototype {
+    function_name: "string",
+    description:
+        "constructs a string using the given length and min and max code point values inclusive",
+    arguments: &[
+        ("length", GenType::Uint),
+        ("min_codepoint_inclusive", GenType::Uint),
+        ("max_codepoint_inclusive", GenType::Uint),
+    ],
+    variadic: false,
+    create_fn: &create_string_gen,
+};
 
 #[derive(Debug)]
 struct StringLength {
@@ -73,7 +106,7 @@ impl RunnableFunction<u64> for StringLength {
     fn gen_value(&self, ctx: &mut ProgramContext) -> Result<u64, Error> {
         self.wrapped.gen_value(ctx).map(|value| value.len() as u64)
     }
-    fn write_value(&self, ctx: &mut ProgramContext, out: &mut DataGenOutput) -> Result<u64, Error> {
+    fn write_value(&self, ctx: &mut ProgramContext, out: &mut DataGenOutput) -> Result<(), Error> {
         let len = self.wrapped.gen_value(ctx)?.len() as u64;
         out.write(&len)
     }
@@ -84,14 +117,13 @@ fn create_str_len(args: Arguments) -> CreateFunctionResult {
     Ok(AnyFunction::Uint(Rc::new(StringLength { wrapped })))
 }
 
-pub const STRING_LENGTH_BUILTIN: &BuiltinFunctionPrototype =
-    &BuiltinFunctionPrototype {
-        function_name: "string_length",
-        description: "returns the length in utf8-encoded bytes of the generated string",
-        arguments: &[("string", GenType::String)],
-        variadic: false,
-        create_fn: &create_str_len,
-    };
+pub const STRING_LENGTH_BUILTIN: &BuiltinFunctionPrototype = &BuiltinFunctionPrototype {
+    function_name: "string_length",
+    description: "returns the length in utf8-encoded bytes of the generated string",
+    arguments: &[("string", GenType::String)],
+    variadic: false,
+    create_fn: &create_str_len,
+};
 
 #[derive(Debug)]
 struct StringBytes {
@@ -119,7 +151,7 @@ impl RunnableFunction<Vec<u8>> for StringBytes {
         &self,
         context: &mut ProgramContext,
         out: &mut DataGenOutput,
-    ) -> Result<u64, Error> {
+    ) -> Result<(), Error> {
         let encoding_label = self.encoding.gen_value(context)?;
         if let Some(encoding) = encoding_from_whatwg_label(&*encoding_label) {
             let value = self.string.gen_value(context)?;
@@ -151,19 +183,17 @@ fn create_string_bytes(args: Arguments) -> CreateFunctionResult {
     Ok(AnyFunction::Bin(Rc::new(StringBytes { encoding, string })))
 }
 
-pub const STRING_ENCODE_BUILTIN: &BuiltinFunctionPrototype =
-    &BuiltinFunctionPrototype {
-        function_name: "string_bytes",
-        description:
-            "encodes strings using the given encoding, provided as a WHATWG encoding label",
-        arguments: &[("encoding", GenType::String), ("string", GenType::String)],
-        variadic: false,
-        create_fn: &create_string_bytes,
-    };
+pub const STRING_ENCODE_BUILTIN: &BuiltinFunctionPrototype = &BuiltinFunctionPrototype {
+    function_name: "string_bytes",
+    description: "encodes strings using the given encoding, provided as a WHATWG encoding label",
+    arguments: &[("encoding", GenType::String), ("string", GenType::String)],
+    variadic: false,
+    create_fn: &create_string_bytes,
+};
 
 #[cfg(test)]
 mod test {
-    use fun_test::{assert_bin_output_is_expected, run_program, test_program_success};
+    use crate::fun_test::{assert_bin_output_is_expected, run_program, test_program_success};
 
     #[test]
     fn utf8_bytes_returns_encoded_string() {
@@ -265,13 +295,13 @@ mod test {
     #[test]
     fn std_unicode_string_fun() {
         let expected_output = "ༀʡㅱ⻇\u{1714}ⅼפּ𐌷﹗☔\u{243e}ᜇᜈ⤯뻳徻အ𐌇\u{c00}ⓕ\u{3101}⟪Ⓔℒலጴ꒽⧶◯Ѣㅉ \u{242a}☖㎲ඍ∯೦₮\u{20d3}\u{6e4}⽝\u{eb4}⽭ඊㇹ㈤ゼ⡀Ǜԇ𐎒𐎍\u{efd1}\u{fe07}ᙶ﹁き﹛\u{196e}\u{e64}෴Ɯꏕ\u{7a7}ᚇ⫞⟏𝀀ਜ਼ΠᏳᥜჴស႔㩎\u{af4}ὀァ㏔◉むዤβ⟙\u{ec8}ᢟ챞㍇⁽क\u{1007b}\u{fe09}ꇛɔ᧸ꂩ෨﹊";
-        let input = r#"unicode_string(100)"#;
+        let input = r#"unicode_chars(100)"#;
         test_program_success(1, input, expected_output);
     }
 
     #[test]
     fn string_length_returns_length_of_string() {
-        let program = r#"string_length(alphanumeric_string(13))"#;
+        let program = r#"string_length(ascii_alphanumeric_chars(13))"#;
         let expected = "13";
         test_program_success(1, program, expected);
     }
@@ -279,22 +309,8 @@ mod test {
     #[test]
     fn generate_ascii_strings() {
         let expected_output = "a6OqR822C3hoTTf1";
-        let input = "alphanumeric_string(uint(0, 10))";
+        let input = "ascii_alphanumeric_chars(uint(0, 10))";
         test_program_success(4, input, expected_output);
     }
 
-    #[test]
-    fn use_custom_string_function() {
-        let input = r#"
-            def consonants() = select('b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 
-                    'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z');
-            def vowels() = select('a', 'e', 'i', 'o', 'u');
-
-            def chars() = select(vowels(), consonants());
-
-            string(10, chars())
-        "#;
-        let expected_output = "auspoowhgc";
-        test_program_success(1, input, expected_output);
-    }
 }

@@ -1,11 +1,11 @@
 use failure::Error;
 use std::fmt::{Debug, Display};
 use std::rc::Rc;
-use ::{
+use crate::IString;
+use crate::{
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput, DynFun,
     GenType, OutputType, ProgramContext, RunnableFunction,
 };
-use IString;
 
 #[derive(Debug)]
 struct ToString<T: Display + OutputType> {
@@ -31,7 +31,7 @@ impl<T: Display + Debug + OutputType> RunnableFunction<IString> for ToString<T> 
         let as_str = unsafe { String::from_utf8_unchecked(buffer) };
         Ok(as_str.into())
     }
-    fn write_value(&self, ctx: &mut ProgramContext, out: &mut DataGenOutput) -> Result<u64, Error> {
+    fn write_value(&self, ctx: &mut ProgramContext, out: &mut DataGenOutput) -> Result<(), Error> {
         // just write it out directly, since we know the output type is not binary
         self.gen.write_value(ctx, out)
     }
@@ -45,19 +45,15 @@ fn create_to_string(args: Arguments) -> CreateFunctionResult {
     match fun {
         str_fun @ AnyFunction::String(_) => Ok(str_fun),
         AnyFunction::Boolean(fun) => Ok(ToString::new(fun)),
-        AnyFunction::Char(fun) => Ok(ToString::new(fun)),
         AnyFunction::Decimal(fun) => Ok(ToString::new(fun)),
         AnyFunction::Int(fun) => Ok(ToString::new(fun)),
         AnyFunction::Uint(fun) => Ok(ToString::new(fun)),
-        AnyFunction::Bin(_) => {
-            Err(format_err!("Invalid binary argument to to_string function"))
-        }
+        AnyFunction::Bin(_) => Err(format_err!("Invalid binary argument to to_string function")),
     }
 }
 
 macro_rules! make_to_string {
     ($proto_name:ident, $gen_type:expr) => {
-
         pub const $proto_name: &BuiltinFunctionPrototype = &BuiltinFunctionPrototype {
             function_name: "to_string",
             description: "Converts its input to a string using the default formating",
@@ -69,7 +65,6 @@ macro_rules! make_to_string {
 }
 
 make_to_string!(BOOLEAN_TO_STRING_BUILTIN, GenType::Boolean);
-make_to_string!(CHAR_TO_STRING_BUILTIN, GenType::Char);
 make_to_string!(DECIMAL_TO_STRING_BUILTIN, GenType::Decimal);
 make_to_string!(INT_TO_STRING_BUILTIN, GenType::Int);
 make_to_string!(UINT_TO_STRING_BUILTIN, GenType::Uint);

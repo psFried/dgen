@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use std::fmt::{self, Debug};
 use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, Ordering};
-use ::{AnyFunction, DataGenOutput, DynFun, ProgramContext, RunnableFunction};
+use crate::{AnyFunction, DataGenOutput, DynFun, ProgramContext, RunnableFunction};
 
 pub struct Resetter {
     value: AtomicBool,
@@ -87,7 +87,7 @@ impl<T: Clone> RunnableFunction<T> for MemoizedFunction<T> {
         Ok(self.memoized.borrow().value.as_ref().cloned().unwrap())
     }
 
-    fn write_value(&self, ctx: &mut ProgramContext, out: &mut DataGenOutput) -> Result<u64, Error> {
+    fn write_value(&self, ctx: &mut ProgramContext, out: &mut DataGenOutput) -> Result<(), Error> {
         let MemoizedFunction {
             ref wrapped,
             ref memoized,
@@ -124,7 +124,7 @@ impl<T> RunnableFunction<T> for WrappedMemoizedFunction<T> {
         self.resetter.reset();
         self.usage.gen_value(ctx)
     }
-    fn write_value(&self, ctx: &mut ProgramContext, out: &mut DataGenOutput) -> Result<u64, Error> {
+    fn write_value(&self, ctx: &mut ProgramContext, out: &mut DataGenOutput) -> Result<(), Error> {
         self.resetter.reset();
         self.usage.write_value(ctx, out)
     }
@@ -137,7 +137,6 @@ impl<T: 'static> WrappedMemoizedFunction<T> {
 
 pub fn finish_mapped(resolved: AnyFunction, resetter: Rc<Resetter>) -> AnyFunction {
     match resolved {
-        AnyFunction::Char(fun) => AnyFunction::Char(WrappedMemoizedFunction::new(fun, resetter)),
         AnyFunction::String(fun) => {
             AnyFunction::String(WrappedMemoizedFunction::new(fun, resetter))
         }
@@ -158,7 +157,6 @@ pub fn create_memoized_fun(input: AnyFunction) -> (AnyFunction, Rc<Resetter>) {
     let reset_to_return = resetter.clone();
 
     let fun_to_return = match input {
-        AnyFunction::Char(fun) => AnyFunction::Char(MemoizedFunction::new(fun, resetter)),
         AnyFunction::String(fun) => AnyFunction::String(MemoizedFunction::new(fun, resetter)),
         AnyFunction::Boolean(fun) => AnyFunction::Boolean(MemoizedFunction::new(fun, resetter)),
         AnyFunction::Decimal(fun) => AnyFunction::Decimal(MemoizedFunction::new(fun, resetter)),

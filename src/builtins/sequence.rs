@@ -2,7 +2,7 @@ use failure::Error;
 use std::cell::RefCell;
 use std::fmt::Debug;
 use std::rc::Rc;
-use {
+use crate::{
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput, DynFun,
     GenType, ProgramContext, RunnableFunction,
 };
@@ -36,7 +36,7 @@ impl<T: Debug> RunnableFunction<T> for Sequence<T> {
         &self,
         context: &mut ProgramContext,
         out: &mut DataGenOutput,
-    ) -> Result<u64, Error> {
+    ) -> Result<(), Error> {
         self.next_function().write_value(context, out)
     }
 }
@@ -90,13 +90,6 @@ macro_rules! make_seq_builtin {
 }
 
 make_seq_builtin!(
-    CHAR_WRAPPING_SEQ,
-    CHAR_SEQ,
-    GenType::Char,
-    AnyFunction::Char,
-    AnyFunction::require_char
-);
-make_seq_builtin!(
     STRING_WRAPPING_SEQ,
     STRING_SEQ,
     GenType::String,
@@ -134,21 +127,21 @@ make_seq_builtin!(
 
 #[cfg(test)]
 mod test {
-    use fun_test::{assert_bin_output_is_expected, test_program_success};
+    use crate::fun_test::{assert_bin_output_is_expected, test_program_success};
 
     #[test]
-    fn char_wrapping_sequence() {
+    fn string_wrapping_sequence() {
         let program = r##"
-        wrapping_sequence('a', 'b', 'c')
+        wrapping_sequence("a", "b", "c")
         "##;
         let expected = "abcab";
         test_program_success(5, program, expected);
     }
 
     #[test]
-    fn char_sequence() {
+    fn string_sequence() {
         let program = r##"
-        sequence('a', 'b', 'c')
+        sequence("a", "b", "c")
         "##;
         let expected = "abccc";
         test_program_success(5, program, expected);

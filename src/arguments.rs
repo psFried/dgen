@@ -1,5 +1,5 @@
 use failure::Error;
-use ::{AnyFunction, GenType};
+use crate::{AnyFunction, GenType};
 
 pub struct Arguments(Vec<AnyFunction>);
 

@@ -2,7 +2,7 @@ use failure::Error;
 use std::cell::RefCell;
 use std::fmt::Debug;
 use std::rc::Rc;
-use ::{
+use crate::{
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput, DynFun,
     GenType, ProgramContext, RunnableFunction,
 };
@@ -33,7 +33,7 @@ impl<T: Debug> RunnableFunction<T> for StableSelectFun<T> {
         let fun = self.get_function(ctx);
         fun.gen_value(ctx)
     }
-    fn write_value(&self, ctx: &mut ProgramContext, out: &mut DataGenOutput) -> Result<u64, Error> {
+    fn write_value(&self, ctx: &mut ProgramContext, out: &mut DataGenOutput) -> Result<(), Error> {
         let fun = self.get_function(ctx);
         fun.write_value(ctx, out)
     }
@@ -54,7 +54,7 @@ impl<T: Debug> RunnableFunction<T> for SelectFun<T> {
         let fun = select_fun(ctx, self.wrapped.as_slice());
         fun.gen_value(ctx)
     }
-    fn write_value(&self, ctx: &mut ProgramContext, out: &mut DataGenOutput) -> Result<u64, Error> {
+    fn write_value(&self, ctx: &mut ProgramContext, out: &mut DataGenOutput) -> Result<(), Error> {
         let fun = select_fun(ctx, self.wrapped.as_slice());
         fun.write_value(ctx, out)
     }
@@ -102,16 +102,6 @@ macro_rules! make_select_proto {
     };
 }
 
-make_select_proto!(
-    SELECT_CHAR_BUILTIN,
-    create_select_char,
-    STABLE_SELECT_CHAR_BUILTIN,
-    create_stable_select_char,
-    GenType::Char,
-    AnyFunction::Char,
-    char,
-    AnyFunction::require_char
-);
 
 make_select_proto!(
     SELECT_STRING_BUILTIN,

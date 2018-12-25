@@ -1,9 +1,15 @@
-use failure::Error;
-use writer::DataGenOutput;
+mod help;
 
-use ::interpreter::{Interpreter, UnreadSource};
-use verbosity::Verbosity;
-use ::ProgramContext;
+use failure::Error;
+use crate::interpreter::{Interpreter, UnreadSource};
+use crate::writer::DataGenOutput;
+use crate::ProgramContext;
+
+pub use self::help::Help;
+
+pub trait DgenCommand: Sized {
+    fn execute(self, out: &mut DataGenOutput) -> Result<(), Error>;
+}
 
 pub struct Runner {
     iterations: u64,
@@ -12,18 +18,24 @@ pub struct Runner {
     interpreter: Interpreter,
 }
 
+impl DgenCommand for Runner {
+    fn execute(self, out: &mut DataGenOutput) -> Result<(), Error> {
+        self.run(out)
+    }
+}
+
 impl Runner {
-    pub fn new<T: Into<UnreadSource>>(
-        _verbosity: Verbosity,
+    pub fn new<S: Into<UnreadSource>>(
         iterations: u64,
-        source: T,
+        source: S,
         runtime_context: ProgramContext,
+        interpreter: Interpreter,
     ) -> Runner {
         Runner {
             iterations,
             source: source.into(),
             runtime_context,
-            interpreter: Interpreter::new(),
+            interpreter,
         }
     }
 
@@ -60,20 +72,19 @@ impl Runner {
 fn handle_error(context: &mut ProgramContext, error: &Error) {
     use std::fmt::Write;
 
-    if let Some(mut out) = context.error_output(::verbosity::VERBOSE) {
+    if let Some(mut out) = context.error_output(crate::verbosity::VERBOSE) {
         writeln!(out, "Program Runtime Error: {}", error).expect(MUY_MALO);
-    } 
-    if let Some(mut out) = context.error_output(::verbosity::DGEN_DEBUG) {
+    }
+    if let Some(mut out) = context.error_output(crate::verbosity::DGEN_DEBUG) {
         writeln!(out, "{}", error.backtrace()).expect(MUY_MALO);
     }
-
 
     if let Some(program_error) = context.reset_error() {
         // program_error should not generally indicate an error/bug in dgen itself
         // it is generally caused by invalid code that was passed to the interpreter
-        if let Some(mut out) = context.error_output(::verbosity::QUIET) {
+        if let Some(mut out) = context.error_output(crate::verbosity::QUIET) {
             writeln!(out, "{}", program_error).expect(MUY_MALO);
-        }  
+        }
     }
 }
 

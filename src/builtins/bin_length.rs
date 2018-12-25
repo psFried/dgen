@@ -1,6 +1,6 @@
 use failure::Error;
 use std::rc::Rc;
-use {
+use crate::{
     AnyFunction, Arguments, BuiltinFunctionPrototype, CreateFunctionResult, DataGenOutput,
     DynBinFun, GenType, ProgramContext, RunnableFunction,
 };
@@ -13,11 +13,7 @@ impl RunnableFunction<u64> for BinLength {
         let bin = self.0.gen_value(context)?;
         Ok(bin.len() as u64)
     }
-    fn write_value(
-        &self,
-        context: &mut ProgramContext,
-        out: &mut DataGenOutput,
-    ) -> Result<u64, Error> {
+    fn write_value(&self, context: &mut ProgramContext, out: &mut DataGenOutput) -> Result<(), Error> {
         let value = self.gen_value(context)?;
         out.write(&value)
     }
@@ -39,7 +35,7 @@ pub const BIN_LENGTH: &BuiltinFunctionPrototype = &BuiltinFunctionPrototype {
 
 #[cfg(test)]
 mod test {
-    use fun_test::test_program_success;
+    use crate::fun_test::test_program_success;
 
     #[test]
     fn bin_length_returns_length_of_binary() {

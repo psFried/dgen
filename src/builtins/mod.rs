@@ -1,6 +1,5 @@
 mod bin_length;
 mod byte_order;
-mod chars;
 mod concat;
 mod env;
 mod from_file;
@@ -11,8 +10,8 @@ mod sequence;
 mod strings;
 mod to_string;
 
-use interpreter::Module;
-use ::BuiltinFunctionPrototype;
+use crate::interpreter::Module;
+use crate::BuiltinFunctionPrototype;
 
 const BUILTIN_FNS: &'static [&'static BuiltinFunctionPrototype] = &[
     self::bin_length::BIN_LENGTH,
@@ -22,21 +21,18 @@ const BUILTIN_FNS: &'static [&'static BuiltinFunctionPrototype] = &[
     self::byte_order::INT_BIG_ENDIAN,
     self::byte_order::DECIMAL_LITTLE_ENDIAN,
     self::byte_order::DECIMAL_BIG_ENDIAN,
-    self::chars::CHAR_GEN_BUILTIN,
     self::env::ENV_VAR,
     self::strings::STRING_GEN_BUILTIN,
     self::strings::STRING_LENGTH_BUILTIN,
     self::strings::STRING_ENCODE_BUILTIN,
     self::concat::CONCAT_BUILTIN,
     self::concat::CONCAT_BIN_BUILTIN,
-    self::select::SELECT_CHAR_BUILTIN,
     self::select::SELECT_STRING_BUILTIN,
     self::select::SELECT_BOOLEAN_BUILTIN,
     self::select::SELECT_DECIMAL_BUILTIN,
     self::select::SELECT_UINT_BUILTIN,
     self::select::SELECT_INT_BUILTIN,
     self::select::SELECT_BIN_BUILTIN,
-    self::select::STABLE_SELECT_CHAR_BUILTIN,
     self::select::STABLE_SELECT_STRING_BUILTIN,
     self::select::STABLE_SELECT_BOOLEAN_BUILTIN,
     self::select::STABLE_SELECT_DECIMAL_BUILTIN,
@@ -51,12 +47,9 @@ const BUILTIN_FNS: &'static [&'static BuiltinFunctionPrototype] = &[
     self::from_file::WORDS_BUILTIN,
     self::from_file::SELECT_FROM_FILE_BUILTIN,
     self::to_string::BOOLEAN_TO_STRING_BUILTIN,
-    self::to_string::CHAR_TO_STRING_BUILTIN,
     self::to_string::DECIMAL_TO_STRING_BUILTIN,
     self::to_string::INT_TO_STRING_BUILTIN,
     self::to_string::UINT_TO_STRING_BUILTIN,
-    self::sequence::CHAR_WRAPPING_SEQ,
-    self::sequence::CHAR_SEQ,
     self::sequence::STRING_WRAPPING_SEQ,
     self::sequence::STRING_SEQ,
     self::sequence::BIN_WRAPPING_SEQ,

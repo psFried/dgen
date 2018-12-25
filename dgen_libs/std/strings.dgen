@@ -1,17 +1,5 @@
 
 
-# Generates a string of random alphanumeric characters, using the given length generator
-def alphanumeric_string(length: Uint) = string(length, ascii_alphanumeric_char());
-
-# Generates a string of random lowercase ascii letters (a-z), using the given length generator
-def lowercase_ascii_string(length: Uint) = string(length, lowercase_ascii_char());
-
-# Generates a string of random uppercase ascii letters (A-Z), using the given length generator
-def uppercase_ascii_string(length: Uint) = string(length, uppercase_ascii_char());
-
-# Generates a string of random characters from the unicode basic multilingual plane
-def unicode_string(length: Uint) = string(length, unicode_char());
-
 # adds a newline character to the end of the input
 def trailing_newline(input: String) = concat(input, "\n");
 
@@ -29,3 +17,510 @@ def double_quote(to_quote: String) = surround(to_quote, "\"");
 # Convenience function for getting a Binary representation of a string as utf-8 encoded bytes.
 # For any other encodings, use the `string_bytes` function.
 def utf8_bytes(string: String) = string_bytes("utf-8", string);
+
+# Generates a random string with a single codepoint within the given range, inclusive
+def char(min: Uint, max: Uint) = string(1, min, max);
+
+# Generates a random string of characters within the range of ascii digits 0-9
+def digit_chars(length: Uint) = string(length(), 48, 57);
+
+# Generates a random lowercase string of characters in the range a-z
+def ascii_lowercase_chars(length: Uint) = string(length(), 97, 122);
+
+# Generates a random uppercase string of characters in the range A-Z
+def ascii_uppercase_chars(length: Uint) = string(length(), 65, 90);
+
+# Generates a string of random ascii alphanumeric characters
+def ascii_alphanumeric_chars(length: Uint) =  repeat(
+    length,
+    select(ascii_lowercase_chars(1), ascii_uppercase_chars(1), digit_chars(1))
+);
+
+#  Generates a string of random unicode codepoint in the range: 0x0000, 0x007F
+def basic_latin_chars(length: Uint) = string(length(), 0x0000, 0x007F);
+
+#  Generates a random unicode codepoint in the range: 0x0080, 0x00FF
+def c1_controls_and_latin_1_supplement_chars(length: Uint) = string(length(), 0x0080, 0x00FF);
+
+#  Generates a random unicode codepoint in the range: 0x0100, 0x017F
+def latin_extended_a_chars(length: Uint) = string(length(), 0x0100, 0x017F);
+
+#  Generates a random unicode codepoint in the range: 0x0180, 0x024F
+def latin_extended_b_chars(length: Uint) = string(length(), 0x0180, 0x024F);
+
+#  Generates a random unicode codepoint in the range: 0x0250, 0x02AF
+def ipa_extensions_chars(length: Uint) = string(length(), 0x0250, 0x02AF);
+
+#  Generates a random unicode codepoint in the range: 0x02B0, 0x02FF
+def spacing_modifier_letters_chars(length: Uint) = string(length(), 0x02B0, 0x02FF);
+
+#  Generates a random unicode codepoint in the range: 0x0300, 0x036F
+def combining_diacritical_marks_chars(length: Uint) = string(length(), 0x0300, 0x036F);
+
+#  Generates a random unicode codepoint in the range: 0x0370, 0x03FF
+def greek_coptic_chars(length: Uint) = string(length(), 0x0370, 0x03FF);
+
+#  Generates a random unicode codepoint in the range: 0x0400, 0x04FF
+def cyrillic_chars(length: Uint) = string(length(), 0x0400, 0x04FF);
+
+#  Generates a random unicode codepoint in the range: 0x0500, 0x052F
+def cyrillic_supplement_chars(length: Uint) = string(length(), 0x0500, 0x052F);
+
+#  Generates a random unicode codepoint in the range: 0x0530, 0x058F
+def armenian_chars(length: Uint) = string(length(), 0x0530, 0x058F);
+
+#  Generates a random unicode codepoint in the range: 0x0590, 0x05FF
+def hebrew_chars(length: Uint) = string(length(), 0x0590, 0x05FF);
+
+#  Generates a random unicode codepoint in the range: 0x0600, 0x06FF
+def arabic_chars(length: Uint) = string(length(), 0x0600, 0x06FF);
+
+#  Generates a random unicode codepoint in the range: 0x0700, 0x074F
+def syriac_chars(length: Uint) = string(length(), 0x0700, 0x074F);
+
+#  Generates a random unicode codepoint in the range: 0x0780, 0x07BF
+def thaana_chars(length: Uint) = string(length(), 0x0780, 0x07BF);
+
+#  Generates a random unicode codepoint in the range: 0x0900, 0x097F
+def devanagari_chars(length: Uint) = string(length(), 0x0900, 0x097F);
+
+#  Generates a random unicode codepoint in the range: 0x0980, 0x09FF
+def bengali_assamese_chars(length: Uint) = string(length(), 0x0980, 0x09FF);
+
+#  Generates a random unicode codepoint in the range: 0x0A00, 0x0A7F
+def gurmukhi_chars(length: Uint) = string(length(), 0x0A00, 0x0A7F);
+
+#  Generates a random unicode codepoint in the range: 0x0A80, 0x0AFF
+def gujarati_chars(length: Uint) = string(length(), 0x0A80, 0x0AFF);
+
+#  Generates a random unicode codepoint in the range: 0x0B00, 0x0B7F
+def oriya_chars(length: Uint) = string(length(), 0x0B00, 0x0B7F);
+
+#  Generates a random unicode codepoint in the range: 0x0B80, 0x0BFF
+def tamil_chars(length: Uint) = string(length(), 0x0B80, 0x0BFF);
+
+#  Generates a random unicode codepoint in the range: 0x0C00, 0x0C7F
+def telugu_chars(length: Uint) = string(length(), 0x0C00, 0x0C7F);
+
+#  Generates a random unicode codepoint in the range: 0x0C80, 0x0CFF
+def kannada_chars(length: Uint) = string(length(), 0x0C80, 0x0CFF);
+
+#  Generates a random unicode codepoint in the range: 0x0D00, 0x0DFF
+def malayalam_chars(length: Uint) = string(length(), 0x0D00, 0x0DFF);
+
+#  Generates a random unicode codepoint in the range: 0x0D80, 0x0DFF
+def sinhala_chars(length: Uint) = string(length(), 0x0D80, 0x0DFF);
+
+#  Generates a random unicode codepoint in the range: 0x0E00, 0x0E7F
+def thai_chars(length: Uint) = string(length(), 0x0E00, 0x0E7F);
+
+#  Generates a random unicode codepoint in the range: 0x0E80, 0x0EFF
+def lao_chars(length: Uint) = string(length(), 0x0E80, 0x0EFF);
+
+#  Generates a random unicode codepoint in the range: 0x0F00, 0x0FFF
+def tibetan_chars(length: Uint) = string(length(), 0x0F00, 0x0FFF);
+
+#  Generates a random unicode codepoint in the range: 0x1000, 0x109F
+def myanmar_chars(length: Uint) = string(length(), 0x1000, 0x109F);
+
+#  Generates a random unicode codepoint in the range: 0x10A0, 0x10FF
+def georgian_chars(length: Uint) = string(length(), 0x10A0, 0x10FF);
+
+#  Generates a random unicode codepoint in the range: 0x1100, 0x11FF
+def hangul_jamo_chars(length: Uint) = string(length(), 0x1100, 0x11FF);
+
+#  Generates a random unicode codepoint in the range: 0x1200, 0x137F
+def ethiopic_chars(length: Uint) = string(length(), 0x1200, 0x137F);
+
+#  Generates a random unicode codepoint in the range: 0x13A0, 0x13FF
+def cherokee_chars(length: Uint) = string(length(), 0x13A0, 0x13FF);
+
+#  Generates a random unicode codepoint in the range: 0x1400, 0x167F
+def unified_canadian_aboriginal_syllabics_chars(length: Uint) = string(length(), 0x1400, 0x167F);
+
+#  Generates a random unicode codepoint in the range: 0x1680, 0x169F
+def ogham_chars(length: Uint) = string(length(), 0x1680, 0x169F);
+
+#  Generates a random unicode codepoint in the range: 0x16A0, 0x16FF
+def runic_chars(length: Uint) = string(length(), 0x16A0, 0x16FF);
+
+#  Generates a random unicode codepoint in the range: 0x1700, 0x171F
+def tagalog_chars(length: Uint) = string(length(), 0x1700, 0x171F);
+
+#  Generates a random unicode codepoint in the range: 0x1720, 0x173F
+def hanunoo_chars(length: Uint) = string(length(), 0x1720, 0x173F);
+
+#  Generates a random unicode codepoint in the range: 0x1740, 0x175F
+def buhid_chars(length: Uint) = string(length(), 0x1740, 0x175F);
+
+#  Generates a random unicode codepoint in the range: 0x1760, 0x177F
+def tagbanwa_chars(length: Uint) = string(length(), 0x1760, 0x177F);
+
+#  Generates a random unicode codepoint in the range: 0x1780, 0x17FF
+def khmer_chars(length: Uint) = string(length(), 0x1780, 0x17FF);
+
+#  Generates a random unicode codepoint in the range: 0x1800, 0x18AF
+def mongolian_chars(length: Uint) = string(length(), 0x1800, 0x18AF);
+
+#  Generates a random unicode codepoint in the range: 0x1900, 0x194F
+def limbu_chars(length: Uint) = string(length(), 0x1900, 0x194F);
+
+#  Generates a random unicode codepoint in the range: 0x1950, 0x197F
+def tai_le_chars(length: Uint) = string(length(), 0x1950, 0x197F);
+
+#  Generates a random unicode codepoint in the range: 0x19E0, 0x19FF
+def khmer_symbols_chars(length: Uint) = string(length(), 0x19E0, 0x19FF);
+
+#  Generates a random unicode codepoint in the range: 0x1D00, 0x1D7F
+def phonetic_extensions_chars(length: Uint) = string(length(), 0x1D00, 0x1D7F);
+
+#  Generates a random unicode codepoint in the range: 0x1E00, 0x1EFF
+def latin_extended_additional_chars(length: Uint) = string(length(), 0x1E00, 0x1EFF);
+
+#  Generates a random unicode codepoint in the range: 0x1F00, 0x1FFF
+def greek_extended_chars(length: Uint) = string(length(), 0x1F00, 0x1FFF);
+
+#  Generates a random unicode codepoint in the range: 0x2000, 0x206F
+def general_punctuation_chars(length: Uint) = string(length(), 0x2000, 0x206F);
+
+#  Generates a random unicode codepoint in the range: 0x2070, 0x209F
+def superscripts_and_subscripts_chars(length: Uint) = string(length(), 0x2070, 0x209F);
+
+#  Generates a random unicode codepoint in the range: 0x20A0, 0x20CF
+def currency_symbols_chars(length: Uint) = string(length(), 0x20A0, 0x20CF);
+
+#  Generates a random unicode codepoint in the range: 0x20D0, 0x20FF
+def combining_diacritical_marks_for_symbols_chars(length: Uint) = string(length(), 0x20D0, 0x20FF);
+
+#  Generates a random unicode codepoint in the range: 0x2100, 0x214F
+def letterlike_symbols_chars(length: Uint) = string(length(), 0x2100, 0x214F);
+
+#  Generates a random unicode codepoint in the range: 0x2150, 0x218F
+def number_forms_chars(length: Uint) = string(length(), 0x2150, 0x218F);
+
+#  Generates a random unicode codepoint in the range: 0x2190, 0x21FF
+def arrows_chars(length: Uint) = string(length(), 0x2190, 0x21FF);
+
+#  Generates a random unicode codepoint in the range: 0x2200, 0x22FF
+def mathematical_operators_chars(length: Uint) = string(length(), 0x2200, 0x22FF);
+
+#  Generates a random unicode codepoint in the range: 0x2300, 0x23FF
+def miscellaneous_technical_chars(length: Uint) = string(length(), 0x2300, 0x23FF);
+
+#  Generates a random unicode codepoint in the range: 0x2400, 0x243F
+def control_pictures_chars(length: Uint) = string(length(), 0x2400, 0x243F);
+
+#  Generates a random unicode codepoint in the range: 0x2440, 0x245F
+def optical_character_recognition_chars(length: Uint) = string(length(), 0x2440, 0x245F);
+
+#  Generates a random unicode codepoint in the range: 0x2460, 0x24FF
+def enclosed_alphanumerics_chars(length: Uint) = string(length(), 0x2460, 0x24FF);
+
+#  Generates a random unicode codepoint in the range: 0x2500, 0x257F
+def box_drawing_chars(length: Uint) = string(length(), 0x2500, 0x257F);
+
+#  Generates a random unicode codepoint in the range: 0x2580, 0x259F
+def block_elements_chars(length: Uint) = string(length(), 0x2580, 0x259F);
+
+#  Generates a random unicode codepoint in the range: 0x25A0, 0x25FF
+def geometric_shapes_chars(length: Uint) = string(length(), 0x25A0, 0x25FF);
+
+#  Generates a random unicode codepoint in the range: 0x2600, 0x26FF
+def miscellaneous_symbols_chars(length: Uint) = string(length(), 0x2600, 0x26FF);
+
+#  Generates a random unicode codepoint in the range: 0x2700, 0x27BF
+def dingbats_chars(length: Uint) = string(length(), 0x2700, 0x27BF);
+
+#  Generates a random unicode codepoint in the range: 0x27C0, 0x27EF
+def miscellaneous_mathematical_symbols_a_chars(length: Uint) = string(length(), 0x27C0, 0x27EF);
+
+#  Generates a random unicode codepoint in the range: 0x27F0, 0x27FF
+def supplemental_arrows_a_chars(length: Uint) = string(length(), 0x27F0, 0x27FF);
+
+#  Generates a random unicode codepoint in the range: 0x2800, 0x28FF
+def braille_patterns_chars(length: Uint) = string(length(), 0x2800, 0x28FF);
+
+#  Generates a random unicode codepoint in the range: 0x2900, 0x297F
+def supplemental_arrows_b_chars(length: Uint) = string(length(), 0x2900, 0x297F);
+
+#  Generates a random unicode codepoint in the range: 0x2980, 0x29FF
+def miscellaneous_mathematical_symbols_b_chars(length: Uint) = string(length(), 0x2980, 0x29FF);
+
+#  Generates a random unicode codepoint in the range: 0x2A00, 0x2AFF
+def supplemental_mathematical_operators_chars(length: Uint) = string(length(), 0x2A00, 0x2AFF);
+
+#  Generates a random unicode codepoint in the range: 0x2B00, 0x2BFF
+def miscellaneous_symbols_and_arrows_chars(length: Uint) = string(length(), 0x2B00, 0x2BFF);
+
+#  Generates a random unicode codepoint in the range: 0x2E80, 0x2EFF
+def cjk_radicals_supplement_chars(length: Uint) = string(length(), 0x2E80, 0x2EFF);
+
+#  Generates a random unicode codepoint in the range: 0x2F00, 0x2FDF
+def kangxi_radicals_chars(length: Uint) = string(length(), 0x2F00, 0x2FDF);
+
+#  Generates a random unicode codepoint in the range: 0x2FF0, 0x2FFF
+def ideographic_description_chars(length: Uint) = string(length(), 0x2FF0, 0x2FFF);
+
+#  Generates a random unicode codepoint in the range: 0x3000, 0x303F
+def cjk_symbols_and_punctuation_chars(length: Uint) = string(length(), 0x3000, 0x303F);
+
+#  Generates a random unicode codepoint in the range: 0x3040, 0x309F
+def hiragana_chars(length: Uint) = string(length(), 0x3040, 0x309F);
+
+#  Generates a random unicode codepoint in the range: 0x30A0, 0x30FF
+def katakana_chars(length: Uint) = string(length(), 0x30A0, 0x30FF);
+
+#  Generates a random unicode codepoint in the range: 0x3100, 0x312F
+def bopomofo_chars(length: Uint) = string(length(), 0x3100, 0x312F);
+
+#  Generates a random unicode codepoint in the range: 0x3130, 0x318F
+def hangul_compatibility_jamo_chars(length: Uint) = string(length(), 0x3130, 0x318F);
+
+#  Generates a random unicode codepoint in the range: 0x3190, 0x319F
+def kanbun_chars(length: Uint) = string(length(), 0x3190, 0x319F);
+
+#  Generates a random unicode codepoint in the range: 0x31A0, 0x31BF
+def bopomofo_extended_chars(length: Uint) = string(length(), 0x31A0, 0x31BF);
+
+#  Generates a random unicode codepoint in the range: 0x31F0, 0x31FF
+def katakana_phonetic_extensions_chars(length: Uint) = string(length(), 0x31F0, 0x31FF);
+
+#  Generates a random unicode codepoint in the range: 0x3200, 0x32FF
+def enclosed_cjk_letters_and_months_chars(length: Uint) = string(length(), 0x3200, 0x32FF);
+
+#  Generates a random unicode codepoint in the range: 0x3300, 0x33FF
+def cjk_compatibility_chars(length: Uint) = string(length(), 0x3300, 0x33FF);
+
+#  Generates a random unicode codepoint in the range: 0x3400, 0x4DBF
+def cjk_unified_ideographs_extension_a_chars(length: Uint) = string(length(), 0x3400, 0x4DBF);
+
+#  Generates a random unicode codepoint in the range: 0x4DC0, 0x4DFF
+def yijing_hexagram_symbols_chars(length: Uint) = string(length(), 0x4DC0, 0x4DFF);
+
+#  Generates a random unicode codepoint in the range: 0x4E00, 0x9FAF
+def cjk_unified_ideographs_chars(length: Uint) = string(length(), 0x4E00, 0x9FAF);
+
+#  Generates a random unicode codepoint in the range: 0xA000, 0xA48F
+def yi_syllables_chars(length: Uint) = string(length(), 0xA000, 0xA48F);
+
+#  Generates a random unicode codepoint in the range: 0xA490, 0xA4CF
+def yi_radicals_chars(length: Uint) = string(length(), 0xA490, 0xA4CF);
+
+#  Generates a random unicode codepoint in the range: 0xAC00, 0xD7AF
+def hangul_syllables_chars(length: Uint) = string(length(), 0xAC00, 0xD7AF);
+
+#  Generates a random unicode codepoint in the range: 0xD800, 0xDBFF
+def high_surrogate_area_chars(length: Uint) = string(length(), 0xD800, 0xDBFF);
+
+#  Generates a random unicode codepoint in the range: 0xDC00, 0xDFFF
+def low_surrogate_area_chars(length: Uint) = string(length(), 0xDC00, 0xDFFF);
+
+#  Generates a random unicode codepoint in the range: 0xE000, 0xF8FF
+def private_use_area_chars(length: Uint) = string(length(), 0xE000, 0xF8FF);
+
+#  Generates a random unicode codepoint in the range: 0xF900, 0xFAFF
+def cjk_compatibility_ideographs_chars(length: Uint) = string(length(), 0xF900, 0xFAFF);
+
+#  Generates a random unicode codepoint in the range: 0xFB00, 0xFB4F
+def alphabetic_presentation_forms_chars(length: Uint) = string(length(), 0xFB00, 0xFB4F);
+
+#  Generates a random unicode codepoint in the range: 0xFB50, 0xFDFF
+def arabic_presentation_forms_a_chars(length: Uint) = string(length(), 0xFB50, 0xFDFF);
+
+#  Generates a random unicode codepoint in the range: 0xFE00, 0xFE0F
+def variation_selectors_chars(length: Uint) = string(length(), 0xFE00, 0xFE0F);
+
+#  Generates a random unicode codepoint in the range: 0xFE20, 0xFE2F
+def combining_half_marks_chars(length: Uint) = string(length(), 0xFE20, 0xFE2F);
+
+#  Generates a random unicode codepoint in the range: 0xFE30, 0xFE4F
+def cjk_compatibility_forms_chars(length: Uint) = string(length(), 0xFE30, 0xFE4F);
+
+#  Generates a random unicode codepoint in the range: 0xFE50, 0xFE6F
+def small_form_variants_chars(length: Uint) = string(length(), 0xFE50, 0xFE6F);
+
+#  Generates a random unicode codepoint in the range: 0xFE70, 0xFEFF
+def arabic_presentation_forms_b_chars(length: Uint) = string(length(), 0xFE70, 0xFEFF);
+
+#  Generates a random unicode codepoint in the range: 0xFF00, 0xFFEF
+def halfwidth_and_fullwidth_forms_chars(length: Uint) = string(length(), 0xFF00, 0xFFEF);
+
+#  Generates a random unicode codepoint in the range: 0xFFF0, 0xFFFF
+def specials_chars(length: Uint) = string(length(), 0xFFF0, 0xFFFF);
+
+#  Generates a random unicode codepoint in the range: 0x10000, 0x1007F
+def linear_b_syllabary_chars(length: Uint) = string(length(), 0x10000, 0x1007F);
+
+#  Generates a random unicode codepoint in the range: 0x10080, 0x100FF
+def linear_b_ideograms_chars(length: Uint) = string(length(), 0x10080, 0x100FF);
+
+#  Generates a random unicode codepoint in the range: 0x10100, 0x1013F
+def aegean_numbers_chars(length: Uint) = string(length(), 0x10100, 0x1013F);
+
+#  Generates a random unicode codepoint in the range: 0x10300, 0x1032F
+def old_italic_chars(length: Uint) = string(length(), 0x10300, 0x1032F);
+
+#  Generates a random unicode codepoint in the range: 0x10330, 0x1034F
+def gothic_chars(length: Uint) = string(length(), 0x10330, 0x1034F);
+
+#  Generates a random unicode codepoint in the range: 0x10380, 0x1039F
+def ugaritic_chars(length: Uint) = string(length(), 0x10380, 0x1039F);
+
+#  Generates a random unicode codepoint in the range: 0x10400, 0x1044F
+def deseret_chars(length: Uint) = string(length(), 0x10400, 0x1044F);
+
+#  Generates a random unicode codepoint in the range: 0x10450, 0x1047F
+def shavian_chars(length: Uint) = string(length(), 0x10450, 0x1047F);
+
+#  Generates a random unicode codepoint in the range: 0x10480, 0x104AF
+def osmanya_chars(length: Uint) = string(length(), 0x10480, 0x104AF);
+
+#  Generates a random unicode codepoint in the range: 0x10800, 0x1083F
+def cypriot_syllabary_chars(length: Uint) = string(length(), 0x10800, 0x1083F);
+
+#  Generates a random unicode codepoint in the range: 0x1D000, 0x1D0FF
+def byzantine_musical_symbols_chars(length: Uint) = string(length(), 0x1D000, 0x1D0FF);
+
+#  Generates a random unicode codepoint in the range: 0x1D100, 0x1D1FF
+def musical_symbols_chars(length: Uint) = string(length(), 0x1D100, 0x1D1FF);
+
+#  Generates a random unicode codepoint in the range: 0x1D300, 0x1D35F
+def tai_xuan_jing_symbols_chars(length: Uint) = string(length(), 0x1D300, 0x1D35F);
+
+#  Generates a random unicode codepoint in the range: 0x1D400, 0x1D7FF
+def mathematical_alphanumeric_symbols_chars(length: Uint) = string(length(), 0x1D400, 0x1D7FF);
+
+#  Generates a random unicode codepoint in the range: 0x20000, 0x2A6DF
+def cjk_unified_ideographs_extension_b_chars(length: Uint) = string(length(), 0x20000, 0x2A6DF);
+
+#  Generates a random unicode codepoint in the range: 0x2F800, 0x2FA1F
+def cjk_compatibility_ideographs_supplement_chars(length: Uint) = string(length(), 0x2F800, 0x2FA1F);
+
+# Generates a string of random unicode characters. The range of possible characterss includes
+# whitespace, control characters, combining diacritics, and other things that may
+# cause nasty surprises in strings. This will NOT, however, generate any characterss from
+# the high_surrogate_area_chars or low_surrogate_area_chars ranges, as doing so could
+# result in invalid utf-8.
+def unicode_chars(length: Uint) = repeat(
+    length,
+    select(
+        basic_latin_chars(1),
+        c1_controls_and_latin_1_supplement_chars(1),
+        latin_extended_a_chars(1),
+        latin_extended_b_chars(1),
+        ipa_extensions_chars(1),
+        spacing_modifier_letters_chars(1),
+        combining_diacritical_marks_chars(1),
+        greek_coptic_chars(1),
+        cyrillic_chars(1),
+        cyrillic_supplement_chars(1),
+        armenian_chars(1),
+        hebrew_chars(1),
+        arabic_chars(1),
+        syriac_chars(1),
+        thaana_chars(1),
+        devanagari_chars(1),
+        bengali_assamese_chars(1),
+        gurmukhi_chars(1),
+        gujarati_chars(1),
+        oriya_chars(1),
+        tamil_chars(1),
+        telugu_chars(1),
+        kannada_chars(1),
+        malayalam_chars(1),
+        sinhala_chars(1),
+        thai_chars(1),
+        lao_chars(1),
+        tibetan_chars(1),
+        myanmar_chars(1),
+        georgian_chars(1),
+        hangul_jamo_chars(1),
+        ethiopic_chars(1),
+        cherokee_chars(1),
+        unified_canadian_aboriginal_syllabics_chars(1),
+        ogham_chars(1),
+        runic_chars(1),
+        tagalog_chars(1),
+        hanunoo_chars(1),
+        buhid_chars(1),
+        tagbanwa_chars(1),
+        khmer_chars(1),
+        mongolian_chars(1),
+        limbu_chars(1),
+        tai_le_chars(1),
+        khmer_symbols_chars(1),
+        phonetic_extensions_chars(1),
+        latin_extended_additional_chars(1),
+        greek_extended_chars(1),
+        general_punctuation_chars(1),
+        superscripts_and_subscripts_chars(1),
+        currency_symbols_chars(1),
+        combining_diacritical_marks_for_symbols_chars(1),
+        letterlike_symbols_chars(1),
+        number_forms_chars(1),
+        arrows_chars(1),
+        mathematical_operators_chars(1),
+        miscellaneous_technical_chars(1),
+        control_pictures_chars(1),
+        optical_character_recognition_chars(1),
+        enclosed_alphanumerics_chars(1),
+        box_drawing_chars(1),
+        block_elements_chars(1),
+        geometric_shapes_chars(1),
+        miscellaneous_symbols_chars(1),
+        dingbats_chars(1),
+        miscellaneous_mathematical_symbols_a_chars(1),
+        supplemental_arrows_a_chars(1),
+        braille_patterns_chars(1),
+        supplemental_arrows_b_chars(1),
+        miscellaneous_mathematical_symbols_b_chars(1),
+        supplemental_mathematical_operators_chars(1),
+        miscellaneous_symbols_and_arrows_chars(1),
+        cjk_radicals_supplement_chars(1),
+        kangxi_radicals_chars(1),
+        ideographic_description_chars(1),
+        cjk_symbols_and_punctuation_chars(1),
+        hiragana_chars(1),
+        katakana_chars(1),
+        bopomofo_chars(1),
+        hangul_compatibility_jamo_chars(1),
+        kanbun_chars(1),
+        bopomofo_extended_chars(1),
+        katakana_phonetic_extensions_chars(1),
+        enclosed_cjk_letters_and_months_chars(1),
+        cjk_compatibility_chars(1),
+        cjk_unified_ideographs_extension_a_chars(1),
+        yijing_hexagram_symbols_chars(1),
+        cjk_unified_ideographs_chars(1),
+        yi_syllables_chars(1),
+        yi_radicals_chars(1),
+        hangul_syllables_chars(1),
+        private_use_area_chars(1),
+        cjk_compatibility_ideographs_chars(1),
+        alphabetic_presentation_forms_chars(1),
+        arabic_presentation_forms_a_chars(1),
+        variation_selectors_chars(1),
+        combining_half_marks_chars(1),
+        cjk_compatibility_forms_chars(1),
+        small_form_variants_chars(1),
+        arabic_presentation_forms_b_chars(1),
+        halfwidth_and_fullwidth_forms_chars(1),
+        specials_chars(1),
+        linear_b_syllabary_chars(1),
+        linear_b_ideograms_chars(1),
+        aegean_numbers_chars(1),
+        old_italic_chars(1),
+        gothic_chars(1),
+        ugaritic_chars(1),
+        deseret_chars(1),
+        shavian_chars(1),
+        osmanya_chars(1),
+        cypriot_syllabary_chars(1),
+        byzantine_musical_symbols_chars(1),
+        musical_symbols_chars(1),
+        tai_xuan_jing_symbols_chars(1),
+        mathematical_alphanumeric_symbols_chars(1),
+        cjk_unified_ideographs_extension_b_chars(1),
+        cjk_compatibility_ideographs_supplement_chars(1)
+    )
+);

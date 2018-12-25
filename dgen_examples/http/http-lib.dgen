@@ -1,6 +1,6 @@
-# This example library can be used to generate random http requests. Something like this could be used, for example, 
+# This example library can be used to generate random http requests. Something like this could be used, for example,
 # to test an http parser.
-# To use this library, add the path to this file as a `--lib` argument. Take a look at use-http.pgen for an example that 
+# To use this library, add the path to this file as a `--lib` argument. Take a look at use-http.dgen for an example that
 # uses this library to generate random http requests.
 
 
@@ -11,18 +11,18 @@ def head_request(host: String, path: String) = http_request(host, path, "HEAD", 
 def options_request(host: String, path: String) = http_request(host, path, "OPTIONS", "", "");
 
 # Generates an http GET request for the given host/path
-def get_request(host: String, path: String) = 
+def get_request(host: String, path: String) =
     http_request(host, path, "GET", "", "");
 
 # Generates an http DELETE request for the given host/path
 def delete_request(host: String, path: String) = http_request(host, path, "DELETE", "", "");
 
 # Generates an http PUT request for the given host/path and body
-def put_request(host: String, path: String, body: String) = 
+def put_request(host: String, path: String, body: String) =
     http_req_with_body(host, path, "PUT", "", body);
 
 # Generates an http PUT request for the given host/path and body
-def post_request(host: String, path: String, body: String) = 
+def post_request(host: String, path: String, body: String) =
     http_req_with_body(host, path, "POST", "", body);
 
 # The most versatile way to generate an http request
@@ -35,7 +35,7 @@ def http_request(host: String, path: String, req_method: String, headers: String
         accept_header(),
         user_agent_header(),
         repeat(uint(1, 4), random_header())
-    ), 
+    ),
     newline(),
     req_body
 );
@@ -88,12 +88,12 @@ def rand_user_agent() = select(
 def user_agent_header() = http_header("User-Agent", rand_user_agent());
 
 def capitalized_ascii_string() = concat(
-    uppercase_ascii_string(1),
-    lowercase_ascii_string(uint(1, 30))
+    ascii_uppercase_chars(1),
+    ascii_lowercase_chars(uint(1, 30))
 );
 
 def rand_header_key() = repeat_delimited(uint(1, 4), capitalized_ascii_string(), "-");
 
-def rand_header_value() = alphanumeric_string(uint(1, 65));
+def rand_header_value() = ascii_alphanumeric_chars(uint(1, 65));
 
 def random_header() = http_header(rand_header_key(), rand_header_value());

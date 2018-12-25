@@ -1,9 +1,9 @@
-use ::interpreter::ast::{
+use crate::interpreter::ast::{
     Expr, FunctionCall, FunctionMapper, GenType, MacroArgument, MacroDef, Program, WithSpan, Span,
 };
-use ::interpreter::grammar::ExprParser;
-use ::interpreter::parser::parse_program;
-use IString;
+use crate::interpreter::grammar::ExprParser;
+use crate::interpreter::parser::parse_program;
+use crate::IString;
 
 #[test]
 fn parses_boolean_literal_false_token() {
@@ -83,21 +83,6 @@ fn parses_string_literal_with_unicode_escape_sequences() {
 #[test]
 fn parses_string_literal_that_is_all_whitespace() {
     string_literal_test(r#"" \t \n \r ""#, " \t \n \r ");
-}
-
-#[test]
-fn parses_basic_char_literal() {
-    char_literal_test("'a'", 'a');
-}
-
-#[test]
-fn parses_unicode_char_literal() {
-    char_literal_test(r#"'\u{1f4a9}'"#, '\u{1f4a9}');
-}
-
-#[test]
-fn parses_newline_escaped_char_literal() {
-    char_literal_test(r#"'\n'"#, '\n');
 }
 
 #[test]
@@ -266,11 +251,6 @@ fn string_literal_test(to_parse: &str, expected: &str) {
     assert_eq!(Expr::StringLiteral(s(expected)), actual.value);
 }
 
-fn char_literal_test(to_parse: &str, expected: char) {
-    let actual = ExprParser::new().parse(to_parse).expect("failed to parse");
-    assert_eq!(ch(expected), actual.value);
-}
-
 fn fun(name: &str, args: Vec<WithSpan<Expr>>) -> Expr {
     Expr::Function(FunctionCall {
         function_name: name.into(),
@@ -292,10 +272,6 @@ fn mfun(name: &str, args: Vec<WithSpan<Expr>>, mapper_arg_name: &str, mapper_bod
 
 fn string(s: &str) -> Expr {
     Expr::StringLiteral(s.into())
-}
-
-fn ch(s: char) -> Expr {
-    Expr::CharLiteral(s)
 }
 
 fn int(i: u64) -> Expr {

@@ -4,10 +4,10 @@ use rand::prng::XorShiftRng;
 use rand::{Rng, SeedableRng, FromEntropy};
 use std::fmt;
 use std::io;
-use verbosity::Verbosity;
-use interpreter::SourceRef;
+use crate::verbosity::Verbosity;
+use crate::interpreter::SourceRef;
 use failure::Error;
-use IString;
+use crate::IString;
 
 pub struct ProgramContext {
     rng: XorShiftRng,

@@ -1,8 +1,8 @@
-use interpreter::ast::{WithSpan, Expr, MacroArgument, MacroDef};
-use interpreter::{Source, SourceRef, Compiler, CompileResult, CompileError};
-use ::{AnyFunction, Arguments, GenType};
+use crate::interpreter::ast::{WithSpan, Expr, MacroArgument, MacroDef};
+use crate::interpreter::{Source, SourceRef, Compiler, CompileResult, CompileError};
+use crate::{AnyFunction, Arguments, GenType};
 use std::fmt::{self, Debug, Display};
-use IString;
+use crate::IString;
 use std::sync::Arc;
 
 use failure::Error;

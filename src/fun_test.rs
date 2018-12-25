@@ -1,10 +1,8 @@
+use crate::interpreter::{Interpreter, UnreadSource};
+use crate::program::Runner;
+use crate::writer::DataGenOutput;
+use crate::ProgramContext;
 use failure::Error;
-use program::Runner;
-use writer::DataGenOutput;
-use ProgramContext;
-use interpreter::UnreadSource;
-
-const VERBOSITY: ::verbosity::Verbosity = ::verbosity::NORMAL;
 
 #[test]
 fn signed_integer_functions() {
@@ -17,7 +15,7 @@ fn signed_integer_functions() {
 fn declare_and_use_functions() {
     let expected_output = "aw6OqR822CZggJ42f1aT0";
     let input = r#"
-        def foo(len: Uint) = alphanumeric_string(len);
+        def foo(len: Uint) = ascii_alphanumeric_chars(len);
         def bar() = foo(7);
 
         bar()
@@ -57,7 +55,7 @@ fn use_std_boolean_function() {
 fn declare_and_use_function_with_mapper() {
     let input = r#"
         def repeat_words(times: Uint) = times() { num ->
-            concat(to_string(num), " : ", repeat(num, alphanumeric_string(5) { word ->
+            concat(to_string(num), " : ", repeat(num, ascii_alphanumeric_chars(5) { word ->
                 repeat(num, concat(word, "\n"))
             }))
         };
@@ -76,7 +74,7 @@ fn pass_mapped_function_as_function_argument() {
         def compare_words(word_fun: String) = 
             repeat(3, concat(word_fun, " != ", word_fun, "\n"));
 
-        compare_words(alphanumeric_string(1) { w -> repeat_delimited(3, w, ", ") } )
+        compare_words(ascii_alphanumeric_chars(1) { w -> repeat_delimited(3, w, ", ") } )
     "#;
     let expected = "a, a, a != w, w, w\n6, 6, 6 != O, O, O\nq, q, q != R, R, R\n";
     test_program_success(1, input, expected);
@@ -90,7 +88,7 @@ fn mapping_a_mapped_function() {
                 concat(single_quote(word), " == ", single_quote(word), "\n")
             });
         
-        compare_words(alphanumeric_string(1) { w -> repeat_delimited(3, w, "_") } )
+        compare_words(ascii_alphanumeric_chars(1) { w -> repeat_delimited(3, w, "_") } )
     "#;
     let expected = "\'a_a_a\' == \'a_a_a\'\n\'w_w_w\' == \'w_w_w\'\n\'6_6_6\' == \'6_6_6\'\n";
     test_program_success(1, input, expected);
@@ -106,16 +104,34 @@ fn calling_a_function_with_module_name() {
         def foo() = "lib2foo";
     "##;
 
-    let mut runner = Runner::new(VERBOSITY, 1, "lib2.foo()".to_owned(), create_context());
-    runner.add_library(UnreadSource::Builtin("lib1", lib1)).unwrap();
-    runner.add_library(UnreadSource::Builtin("lib2", lib2)).unwrap();
+    let mut runner = Runner::new(
+        1,
+        "lib2.foo()".to_owned(),
+        create_context(),
+        Interpreter::new(),
+    );
+    runner
+        .add_library(UnreadSource::Builtin("lib1", lib1))
+        .unwrap();
+    runner
+        .add_library(UnreadSource::Builtin("lib2", lib2))
+        .unwrap();
 
     let result = run_to_string(runner);
     assert_eq!("lib2foo", &result);
 
-    let mut runner = Runner::new(VERBOSITY, 1, "lib1.foo()".to_owned(), create_context());
-    runner.add_library(UnreadSource::Builtin("lib1", lib1)).unwrap();
-    runner.add_library(UnreadSource::Builtin("lib2", lib2)).unwrap();
+    let mut runner = Runner::new(
+        1,
+        "lib1.foo()".to_owned(),
+        create_context(),
+        Interpreter::new(),
+    );
+    runner
+        .add_library(UnreadSource::Builtin("lib1", lib1))
+        .unwrap();
+    runner
+        .add_library(UnreadSource::Builtin("lib2", lib2))
+        .unwrap();
 
     let result = run_to_string(runner);
     assert_eq!("lib1foo", &result);
@@ -125,32 +141,43 @@ fn calling_a_function_with_module_name() {
 fn adding_a_library_that_defines_two_functions_with_the_same_signature_returns_error() {
     let lib = r##"
     # the first foo function
-    def foo(i: Uint) = alphanumeric_string(i);
+    def foo(i: Uint) = ascii_alphanumeric_chars(i);
 
     # the second foo function
     def foo(i: Uint) = unicode_string(i);
     "##;
 
-    let mut runner = Runner::new(VERBOSITY, 1, "bar()".to_owned(), create_context());
+    let mut runner = Runner::new(1, "bar()".to_owned(), create_context(), Interpreter::new());
     let result = runner.add_library(lib.to_owned());
     assert!(result.is_err());
     let error = result.unwrap_err();
     let err_str = format!("{}", error);
-    assert!(err_str.contains("Module 'default' contains multiple functions with the same signature"), "Error string was incorrect. Actual error: {}", err_str);
+    assert!(
+        err_str.contains("Module 'default' contains multiple functions with the same signature"),
+        "Error string was incorrect. Actual error: {}",
+        err_str
+    );
 }
 
 const RAND_SEED: &[u8; 16] = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 
 pub fn create_context() -> ProgramContext {
-    ProgramContext::from_seed(*RAND_SEED, ::verbosity::NORMAL)
+    ProgramContext::from_seed(*RAND_SEED, crate::verbosity::NORMAL)
 }
 pub fn run_program(iterations: u64, program: &str) -> Result<Vec<u8>, Error> {
     let mut out = Vec::new();
     {
         let mut output = DataGenOutput::new(&mut out);
-        let mut prog = Runner::new(VERBOSITY, iterations, program.to_owned(), create_context());
+        let mut prog = Runner::new(
+            iterations,
+            program.to_owned(),
+            create_context(),
+            Interpreter::new(),
+        );
         prog.add_std_lib();
-        prog.run(&mut output)?;
+        prog.run(&mut output).map_err(|error| {
+            format_err!("Failed to run program. Eror: {}", error)
+        })?;
     }
 
     Ok(out)

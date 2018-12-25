@@ -12,7 +12,7 @@ The language documentation is pretty sparse at the moment, but this will hopeful
 The following program will print 5 random quoted words, separated by newlines:
 
 ```
-$ dgen run -p 'repeat_delimited(5, double_quote(words()), "\n")'
+$ dgen -p 'repeat_delimited(5, double_quote(words()), "\n")'
 "gule"
 "erugation"
 "avouchment"
@@ -20,7 +20,7 @@ $ dgen run -p 'repeat_delimited(5, double_quote(words()), "\n")'
 "reclusory"
 ```
 
-dgen programs are invoked by calling `dgen run` and providing the program input in one of several ways:
+dgen programs are invoked by calling `dgen` and providing the program input in one of several ways:
 
 - `-p`, `--program`: the program can be provided on the command line. This is easiest for simple expressions.
 - `-f`, `--program-file`: interpret the given file as a program. Nice for more complex programs
@@ -28,9 +28,9 @@ dgen programs are invoked by calling `dgen run` and providing the program input 
 
 You can also add your own libraries to the program scope using the `--lib` option.
 
-`dgen file1 file2 fileN` can also be used as a shortcut for `dgen run --lib file1 --lib file2 -f fileN`. This allows you to run an executable dgen script by simply putting a shebang (`#!dgen`) at the top of the file.
+`dgen file1 file2 fileN` can also be used as a shortcut for `dgen --lib file1 --lib file2 -f fileN`. This allows you to run an executable dgen script by simply putting a shebang (`#!dgen`) at the top of the file.
 
-dGen has a bunch of builtin functions, too. You can list the builtin functions by executing `dgen help`. You can optionally filter the list of functions by name with `dgen help --function <name>`. Of course `dgen -h` will print out info on all of the available options.
+dgen has a bunch of builtin functions, too. You can list the builtin functions by executing `dgen help`. You can optionally filter the list of functions by name with `dgen help --function <name>`. Of course `dgen --help` will print out info on all of the available options.
 
 Take a look at [the examples](dgen_examples/) for more.
 
