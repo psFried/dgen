@@ -65,7 +65,7 @@ impl<'a> DgenCommand for Help<'a> {
             }
             _ => {
                 // print some generic help and a listing of modules
-                writeln!(out, "Available dgen modules: \n");
+                writeln!(out, "Available dgen modules: \n")?;
                 for module in interpreter.module_iterator() {
                     writeln!(out, "{}", module.name)?;
                 }

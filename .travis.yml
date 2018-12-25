@@ -28,7 +28,7 @@ jobs:
       os: windows
     - stage: "test"
       name: "Benchmarks"
-      script: "cargo bench"
+      script: "cargo bench -- --test"
       rust: stable
       os: linux
     - stage: "deploy"

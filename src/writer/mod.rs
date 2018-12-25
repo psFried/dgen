@@ -2,7 +2,6 @@ use encoding::ByteWriter;
 use std::fmt::Display;
 use std::io::{self, Write};
 use crate::OutputType;
-use crate::ProgramContext;
 use failure::Error;
 
 pub struct TrackingWriter<'a> {
