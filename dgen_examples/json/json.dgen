@@ -28,7 +28,7 @@ def single_or_double_quote(value: String) = select(
 def json_key() = select(
     single_or_double_quote(ascii_alphanumeric_chars(uint(1, 20))),
     concat( # unquoted json keys must start with either a letter or an underscore
-        select(uppercase_ascii_chars(1), lowercase_ascii_chars(1), "_"),
+        select(ascii_uppercase_chars(1), ascii_lowercase_chars(1), "_"),
         ascii_alphanumeric_chars(uint(0, 19))
     )
 );

@@ -88,8 +88,8 @@ def rand_user_agent() = select(
 def user_agent_header() = http_header("User-Agent", rand_user_agent());
 
 def capitalized_ascii_string() = concat(
-    uppercase_ascii_chars(1),
-    lowercase_ascii_chars(uint(1, 30))
+    ascii_uppercase_chars(1),
+    ascii_lowercase_chars(uint(1, 30))
 );
 
 def rand_header_key() = repeat_delimited(uint(1, 4), capitalized_ascii_string(), "-");

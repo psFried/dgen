@@ -25,15 +25,15 @@ def char(min: Uint, max: Uint) = string(1, min, max);
 def digit_chars(length: Uint) = string(length(), 48, 57);
 
 # Generates a random lowercase string of characters in the range a-z
-def lowercase_ascii_chars(length: Uint) = string(length(), 97, 122);
+def ascii_lowercase_chars(length: Uint) = string(length(), 97, 122);
 
 # Generates a random uppercase string of characters in the range A-Z
-def uppercase_ascii_chars(length: Uint) = string(length(), 65, 90);
+def ascii_uppercase_chars(length: Uint) = string(length(), 65, 90);
 
 # Generates a string of random ascii alphanumeric characters
 def ascii_alphanumeric_chars(length: Uint) =  repeat(
     length,
-    select(lowercase_ascii_chars(1), uppercase_ascii_chars(1), digit_chars(1))
+    select(ascii_lowercase_chars(1), ascii_uppercase_chars(1), digit_chars(1))
 );
 
 #  Generates a string of random unicode codepoint in the range: 0x0000, 0x007F
@@ -398,11 +398,11 @@ def cjk_compatibility_ideographs_supplement_chars(length: Uint) = string(length(
 
 # Generates a string of random unicode characters. The range of possible characterss includes
 # whitespace, control characters, combining diacritics, and other things that may
-# cause nasty surprises in strings. This will NOT, however, generate any characterss from 
+# cause nasty surprises in strings. This will NOT, however, generate any characterss from
 # the high_surrogate_area_chars or low_surrogate_area_chars ranges, as doing so could
-# result in invalid utf-8. 
+# result in invalid utf-8.
 def unicode_chars(length: Uint) = repeat(
-    length, 
+    length,
     select(
         basic_latin_chars(1),
         c1_controls_and_latin_1_supplement_chars(1),
@@ -521,6 +521,6 @@ def unicode_chars(length: Uint) = repeat(
         tai_xuan_jing_symbols_chars(1),
         mathematical_alphanumeric_symbols_chars(1),
         cjk_unified_ideographs_extension_b_chars(1),
-        cjk_compatibility_ideographs_supplement_chars(1) 
+        cjk_compatibility_ideographs_supplement_chars(1)
     )
 );
