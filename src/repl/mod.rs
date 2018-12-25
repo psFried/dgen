@@ -79,7 +79,9 @@ impl Repl {
                 Err(ReadlineError::Utf8Error) => bail!("UTF8 Error"),
 
                 #[cfg(windows)]
-                Decode(e) => bail!("Decoding Error: {}", e),
+                Err(ReadlineError::Decode(e)) => bail!("Decoding Error: {}", e),
+                #[cfg(windows)]
+                Err(ReadlineError::WindowResize) => return Ok(()),
             };
         }
     }
