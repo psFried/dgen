@@ -7,12 +7,13 @@ env:
 branches:
   only:
   - master
-  - "/^v[0-9]\\.[0-9]\\.[0-9]$/"
+  - "/^release-[0-9]\\.[0-9]"
+  - "/^v[0-9]\\.[0-9]\\.[0-9].*/"
 jobs:
   include:
   - stage: test
     name: Test Linux
-    script: cargo test && ./test-examples.sh
+    script: cargo test && ./scripts/test-examples.sh
     rust: stable
     os: linux
   - stage: test
@@ -61,7 +62,7 @@ jobs:
   - stage: deploy
     name: Publish Windows Release
     os: windows
-    script: cargo build --release && mkdir -p target/artifacts && mv -f target/release/dgen.exe target/artifacts/dgen-${TRAVIS_TAG}-${TRAVIS_OS_NAME}.exe
+    script: "./scripts/travis-release-windows.sh"
     deploy:
       provider: releases
       api_key:
