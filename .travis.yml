@@ -6,73 +6,75 @@ env:
   - RUST_BACKTRACE=1
 branches:
   only:
-    - master
-    - /^v[0-9]\.[0-9]\.[0-9]$/
+  - master
+  - "/^v[0-9]\\.[0-9]\\.[0-9]$/"
 jobs:
   include:
-    - stage: "test"
-      name: "Test Linux"
-      # Only test the examples on linux since there's little value in testing those on multiple platforms
-      script: "cargo test && ./test-examples.sh"
-      rust: stable
-      os: linux
-    - stage: "test"
-      name: "Test Mac"
-      script: "cargo test"
-      rust: stable
-      os: osx
-    - stage: "test"
-      name: "Test Windows"
-      script: "cargo test"
-      rust: stable
-      os: windows
-    - stage: "test"
-      name: "Benchmarks"
-      script: "cargo bench -- --test"
-      rust: stable
-      os: linux
-    - stage: "deploy"
-      name: "Publish Linux Release"
-      script: "cargo build --release && mkdir -p target/artifacts/${TRAVIS_OS_NAME} && mv -f target/release/dgen target/artifacts/${TRAVIS_OS_NAME}/"
-      deploy:
-        provider: releases
-        api_key:
-          secure: DD9KqD6r4eG9Cy2cOaWLfvryuasXxhkrRC3NutOSSl1bxeKhEKbZiuur3SQZIZkibg7TqTHUfXVboyStaVLMXo1f7Z/lCQiT7XzU3HBDc/p9xDaiWC13Ehiodsyvoc/q+ySFjek8nFhGUbh7EXfvrRk5Yj4Fh7FELuPzBos9JYIu9hViEaWecRiCUifyKR0iFdPhwJDS3jlBvvkUv+memZnRiRxq8cZIyITQcwi9XvCsjmxh6vpLat0B34ZMGQJjppj8dJtYDHkcs9jvYSyOLTiYVMg+ezGzJR/2f9IYlblq5VGSuamh77ZwcB5VNNLdfGnVHIu/QNxRu9nWAHqlJ7/x3RqxxPnhMPRkzbOaPg0wq51zIpbY9oIbvp3ggXwitk+V+3cJ1TfTE6AxHbqUYl/1ttZNa+ZH1YHNvRbAqMmzEl9XP40TXUjkCYs9igKmKz8Bm3UpPaKHTy5QG5G0o8K/pVt3gFDi1FI+bVcjvkodAHk8Dvp7sFeXueozrCUwbhgNeEeyHKmq+2K9SUXbpm19DYckFVc6Dr/4X5X8RPeQ74U1mnsz2EOh0TkZR1yhwnA8eMc4EDBdjndh1G6IeHu2/qToGd7xaB0oFXyemaoptMcTvYFWDvHPxOY1Gc/iVT3Mku+bEh2CvPILUjY3E2vgkzPIBNJ1mWYyrlKzpUo=
-        file: target/artifacts/**/*
-        draft: true
-        skip_cleanup: true
-        on:
-          repo: psFried/dgen
-          tags: true
-      os: linux
-    - stage: "deploy"
-      name: "Publish Mac Release"
-      os: osx
-      script: "cargo build --release && mkdir -p target/artifacts/${TRAVIS_OS_NAME} && mv -f target/release/dgen target/artifacts/${TRAVIS_OS_NAME}/"
-      deploy:
-        provider: releases
-        api_key:
-          secure: DD9KqD6r4eG9Cy2cOaWLfvryuasXxhkrRC3NutOSSl1bxeKhEKbZiuur3SQZIZkibg7TqTHUfXVboyStaVLMXo1f7Z/lCQiT7XzU3HBDc/p9xDaiWC13Ehiodsyvoc/q+ySFjek8nFhGUbh7EXfvrRk5Yj4Fh7FELuPzBos9JYIu9hViEaWecRiCUifyKR0iFdPhwJDS3jlBvvkUv+memZnRiRxq8cZIyITQcwi9XvCsjmxh6vpLat0B34ZMGQJjppj8dJtYDHkcs9jvYSyOLTiYVMg+ezGzJR/2f9IYlblq5VGSuamh77ZwcB5VNNLdfGnVHIu/QNxRu9nWAHqlJ7/x3RqxxPnhMPRkzbOaPg0wq51zIpbY9oIbvp3ggXwitk+V+3cJ1TfTE6AxHbqUYl/1ttZNa+ZH1YHNvRbAqMmzEl9XP40TXUjkCYs9igKmKz8Bm3UpPaKHTy5QG5G0o8K/pVt3gFDi1FI+bVcjvkodAHk8Dvp7sFeXueozrCUwbhgNeEeyHKmq+2K9SUXbpm19DYckFVc6Dr/4X5X8RPeQ74U1mnsz2EOh0TkZR1yhwnA8eMc4EDBdjndh1G6IeHu2/qToGd7xaB0oFXyemaoptMcTvYFWDvHPxOY1Gc/iVT3Mku+bEh2CvPILUjY3E2vgkzPIBNJ1mWYyrlKzpUo=
-        file: target/artifacts/**/*
-        draft: true
-        skip_cleanup: true
-        on:
-          repo: psFried/dgen
-          tags: true
-    - stage: "deploy"
-      name: "Publish Windows Release"
-      os: windows
-      script: "cargo build --release && mkdir -p target/artifacts/${TRAVIS_OS_NAME} && mv -f target/release/dgen target/artifacts/${TRAVIS_OS_NAME}/"
-      deploy:
-        provider: releases
-        api_key:
-          secure: DD9KqD6r4eG9Cy2cOaWLfvryuasXxhkrRC3NutOSSl1bxeKhEKbZiuur3SQZIZkibg7TqTHUfXVboyStaVLMXo1f7Z/lCQiT7XzU3HBDc/p9xDaiWC13Ehiodsyvoc/q+ySFjek8nFhGUbh7EXfvrRk5Yj4Fh7FELuPzBos9JYIu9hViEaWecRiCUifyKR0iFdPhwJDS3jlBvvkUv+memZnRiRxq8cZIyITQcwi9XvCsjmxh6vpLat0B34ZMGQJjppj8dJtYDHkcs9jvYSyOLTiYVMg+ezGzJR/2f9IYlblq5VGSuamh77ZwcB5VNNLdfGnVHIu/QNxRu9nWAHqlJ7/x3RqxxPnhMPRkzbOaPg0wq51zIpbY9oIbvp3ggXwitk+V+3cJ1TfTE6AxHbqUYl/1ttZNa+ZH1YHNvRbAqMmzEl9XP40TXUjkCYs9igKmKz8Bm3UpPaKHTy5QG5G0o8K/pVt3gFDi1FI+bVcjvkodAHk8Dvp7sFeXueozrCUwbhgNeEeyHKmq+2K9SUXbpm19DYckFVc6Dr/4X5X8RPeQ74U1mnsz2EOh0TkZR1yhwnA8eMc4EDBdjndh1G6IeHu2/qToGd7xaB0oFXyemaoptMcTvYFWDvHPxOY1Gc/iVT3Mku+bEh2CvPILUjY3E2vgkzPIBNJ1mWYyrlKzpUo=
-        file: target/artifacts/*
-        draft: true
-        skip_cleanup: true
-        on:
-          repo: psFried/dgen
-          tags: true
+  - stage: test
+    name: Test Linux
+    script: cargo test && ./test-examples.sh
+    rust: stable
+    os: linux
+  - stage: test
+    name: Test Mac
+    script: cargo test
+    rust: stable
+    os: osx
+  - stage: test
+    name: Test Windows
+    script: cargo test
+    rust: stable
+    os: windows
+  - stage: test
+    name: Benchmarks
+    script: cargo bench -- --test
+    rust: stable
+    os: linux
+  - stage: deploy
+    name: Publish Linux Release
+    script: cargo build --release && mkdir -p target/artifacts/${TRAVIS_OS_NAME} &&
+      mv -f target/release/dgen target/artifacts/${TRAVIS_OS_NAME}/
+    deploy:
+      provider: releases
+      api_key:
+        secure: EscVlOZdcsPBlxdT2t/Z1LSCoXBPaivgGCqwcbWgk5jldmN4vfNQLMHJNG1qIb+wOtPRjbVTTbolegig3xKOXFjeClCivmnxHFRtLLIF/fhRleb3AMaP6Y8GgE2qJXRXex5tHU56l5hdvNJozAP6OdRa7nd02JaPaGcu9+YT3pwsfCWa3DtT23A7c0fRrD6nVPf9AlWWU1QL0aoS1ajzPAkT15gcdzC8NFaTxBpjHdtxl6ZrBWMbLelmIiJrPdVZyE/iAMTv2B/CZZJLVWl96M2Ri5l3HBUqJ/A91InLnv2ES7+euXezZ6M5fBllvkbQQRAUUTglXIwKs00c9CCOujGCOIdUMGy3v/9W9J/g9uaemnTWSSLxEnl15XTb6kslJgMpPGlv1o9XwsncezpS5YN0u/y0Hcb3xvp0U32DkzWJJpEPUkHgaOvY6zDZ18sck7pZci3BLFwHaSgOM1P57I7QSjgOMM/8OAvDtkMkk/l7bm8/CvqnUYWeFNf4REzZIr2mRX7E1RH1zWyIdAP906VQwEACuxvDV0EAxY6Ar3niJ4MgBvdyUc28MHtMRUXujQ9ZH0ZweKAzsV4Jrplb+N1+Z7WhBPs2QfYBoP8AV0t2zw7+g38gtd8nG9Fc8EXVQDM9vO8Oftf920OcRQ5kG0PjHYlmoqVN16r+kNz4gSE=
+      file: target/artifacts/**/*
+      draft: true
+      skip_cleanup: true
+      on:
+        repo: psFried/dgen
+        tags: true
+    os: linux
+  - stage: deploy
+    name: Publish Mac Release
+    os: osx
+    script: cargo build --release && mkdir -p target/artifacts/${TRAVIS_OS_NAME} &&
+      mv -f target/release/dgen target/artifacts/${TRAVIS_OS_NAME}/
+    deploy:
+      provider: releases
+      api_key:
+        secure: EscVlOZdcsPBlxdT2t/Z1LSCoXBPaivgGCqwcbWgk5jldmN4vfNQLMHJNG1qIb+wOtPRjbVTTbolegig3xKOXFjeClCivmnxHFRtLLIF/fhRleb3AMaP6Y8GgE2qJXRXex5tHU56l5hdvNJozAP6OdRa7nd02JaPaGcu9+YT3pwsfCWa3DtT23A7c0fRrD6nVPf9AlWWU1QL0aoS1ajzPAkT15gcdzC8NFaTxBpjHdtxl6ZrBWMbLelmIiJrPdVZyE/iAMTv2B/CZZJLVWl96M2Ri5l3HBUqJ/A91InLnv2ES7+euXezZ6M5fBllvkbQQRAUUTglXIwKs00c9CCOujGCOIdUMGy3v/9W9J/g9uaemnTWSSLxEnl15XTb6kslJgMpPGlv1o9XwsncezpS5YN0u/y0Hcb3xvp0U32DkzWJJpEPUkHgaOvY6zDZ18sck7pZci3BLFwHaSgOM1P57I7QSjgOMM/8OAvDtkMkk/l7bm8/CvqnUYWeFNf4REzZIr2mRX7E1RH1zWyIdAP906VQwEACuxvDV0EAxY6Ar3niJ4MgBvdyUc28MHtMRUXujQ9ZH0ZweKAzsV4Jrplb+N1+Z7WhBPs2QfYBoP8AV0t2zw7+g38gtd8nG9Fc8EXVQDM9vO8Oftf920OcRQ5kG0PjHYlmoqVN16r+kNz4gSE=
+      file: target/artifacts/**/*
+      draft: true
+      skip_cleanup: true
+      on:
+        repo: psFried/dgen
+        tags: true
+  - stage: deploy
+    name: Publish Windows Release
+    os: windows
+    script: cargo build --release && mkdir -p target/artifacts/${TRAVIS_OS_NAME} &&
+      mv -f target/release/dgen target/artifacts/${TRAVIS_OS_NAME}/
+    deploy:
+      provider: releases
+      api_key:
+        secure: EscVlOZdcsPBlxdT2t/Z1LSCoXBPaivgGCqwcbWgk5jldmN4vfNQLMHJNG1qIb+wOtPRjbVTTbolegig3xKOXFjeClCivmnxHFRtLLIF/fhRleb3AMaP6Y8GgE2qJXRXex5tHU56l5hdvNJozAP6OdRa7nd02JaPaGcu9+YT3pwsfCWa3DtT23A7c0fRrD6nVPf9AlWWU1QL0aoS1ajzPAkT15gcdzC8NFaTxBpjHdtxl6ZrBWMbLelmIiJrPdVZyE/iAMTv2B/CZZJLVWl96M2Ri5l3HBUqJ/A91InLnv2ES7+euXezZ6M5fBllvkbQQRAUUTglXIwKs00c9CCOujGCOIdUMGy3v/9W9J/g9uaemnTWSSLxEnl15XTb6kslJgMpPGlv1o9XwsncezpS5YN0u/y0Hcb3xvp0U32DkzWJJpEPUkHgaOvY6zDZ18sck7pZci3BLFwHaSgOM1P57I7QSjgOMM/8OAvDtkMkk/l7bm8/CvqnUYWeFNf4REzZIr2mRX7E1RH1zWyIdAP906VQwEACuxvDV0EAxY6Ar3niJ4MgBvdyUc28MHtMRUXujQ9ZH0ZweKAzsV4Jrplb+N1+Z7WhBPs2QfYBoP8AV0t2zw7+g38gtd8nG9Fc8EXVQDM9vO8Oftf920OcRQ5kG0PjHYlmoqVN16r+kNz4gSE=
+      file: target/artifacts/*
+      draft: true
+      skip_cleanup: true
+      on:
+        repo: psFried/dgen
+        tags: true
 stages:
   - test
   - name: deploy
