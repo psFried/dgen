@@ -33,12 +33,12 @@ jobs:
   - stage: deploy
     name: Publish Linux Release
     script: cargo build --release && mkdir -p target/artifacts/${TRAVIS_OS_NAME} &&
-      mv -f target/release/dgen target/artifacts/${TRAVIS_OS_NAME}/
+      mv -f target/release/dgen target/artifacts/dgen-${TRAVIS_TAG}-${TRAVIS_OS_NAME}
     deploy:
       provider: releases
       api_key:
         secure: EscVlOZdcsPBlxdT2t/Z1LSCoXBPaivgGCqwcbWgk5jldmN4vfNQLMHJNG1qIb+wOtPRjbVTTbolegig3xKOXFjeClCivmnxHFRtLLIF/fhRleb3AMaP6Y8GgE2qJXRXex5tHU56l5hdvNJozAP6OdRa7nd02JaPaGcu9+YT3pwsfCWa3DtT23A7c0fRrD6nVPf9AlWWU1QL0aoS1ajzPAkT15gcdzC8NFaTxBpjHdtxl6ZrBWMbLelmIiJrPdVZyE/iAMTv2B/CZZJLVWl96M2Ri5l3HBUqJ/A91InLnv2ES7+euXezZ6M5fBllvkbQQRAUUTglXIwKs00c9CCOujGCOIdUMGy3v/9W9J/g9uaemnTWSSLxEnl15XTb6kslJgMpPGlv1o9XwsncezpS5YN0u/y0Hcb3xvp0U32DkzWJJpEPUkHgaOvY6zDZ18sck7pZci3BLFwHaSgOM1P57I7QSjgOMM/8OAvDtkMkk/l7bm8/CvqnUYWeFNf4REzZIr2mRX7E1RH1zWyIdAP906VQwEACuxvDV0EAxY6Ar3niJ4MgBvdyUc28MHtMRUXujQ9ZH0ZweKAzsV4Jrplb+N1+Z7WhBPs2QfYBoP8AV0t2zw7+g38gtd8nG9Fc8EXVQDM9vO8Oftf920OcRQ5kG0PjHYlmoqVN16r+kNz4gSE=
-      file: target/artifacts/**/*
+      file: target/artifacts/*
       draft: true
       skip_cleanup: true
       on:
@@ -48,13 +48,13 @@ jobs:
   - stage: deploy
     name: Publish Mac Release
     os: osx
-    script: cargo build --release && mkdir -p target/artifacts/${TRAVIS_OS_NAME} &&
-      mv -f target/release/dgen target/artifacts/${TRAVIS_OS_NAME}/
+    script: cargo build --release && mkdir -p target/artifacts &&
+      mv -f target/release/dgen target/artifacts/dgen-${TRAVIS_TAG}-${TRAVIS_OS_NAME}
     deploy:
       provider: releases
       api_key:
         secure: EscVlOZdcsPBlxdT2t/Z1LSCoXBPaivgGCqwcbWgk5jldmN4vfNQLMHJNG1qIb+wOtPRjbVTTbolegig3xKOXFjeClCivmnxHFRtLLIF/fhRleb3AMaP6Y8GgE2qJXRXex5tHU56l5hdvNJozAP6OdRa7nd02JaPaGcu9+YT3pwsfCWa3DtT23A7c0fRrD6nVPf9AlWWU1QL0aoS1ajzPAkT15gcdzC8NFaTxBpjHdtxl6ZrBWMbLelmIiJrPdVZyE/iAMTv2B/CZZJLVWl96M2Ri5l3HBUqJ/A91InLnv2ES7+euXezZ6M5fBllvkbQQRAUUTglXIwKs00c9CCOujGCOIdUMGy3v/9W9J/g9uaemnTWSSLxEnl15XTb6kslJgMpPGlv1o9XwsncezpS5YN0u/y0Hcb3xvp0U32DkzWJJpEPUkHgaOvY6zDZ18sck7pZci3BLFwHaSgOM1P57I7QSjgOMM/8OAvDtkMkk/l7bm8/CvqnUYWeFNf4REzZIr2mRX7E1RH1zWyIdAP906VQwEACuxvDV0EAxY6Ar3niJ4MgBvdyUc28MHtMRUXujQ9ZH0ZweKAzsV4Jrplb+N1+Z7WhBPs2QfYBoP8AV0t2zw7+g38gtd8nG9Fc8EXVQDM9vO8Oftf920OcRQ5kG0PjHYlmoqVN16r+kNz4gSE=
-      file: target/artifacts/**/*
+      file: target/artifacts/*
       draft: true
       skip_cleanup: true
       on:
@@ -63,8 +63,8 @@ jobs:
   - stage: deploy
     name: Publish Windows Release
     os: windows
-    script: cargo build --release && mkdir -p target/artifacts/${TRAVIS_OS_NAME} &&
-      mv -f target/release/dgen target/artifacts/${TRAVIS_OS_NAME}/
+    script: cargo build --release && mkdir -p target/artifacts &&
+      mv -f target/release/dgen.exe target/artifacts/dgen-${TRAVIS_TAG}-${TRAVIS_OS_NAME}.exe
     deploy:
       provider: releases
       api_key:
