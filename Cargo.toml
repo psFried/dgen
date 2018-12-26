@@ -14,7 +14,7 @@ autobenches = false
 edition = "2018"
 
 [profile.release]
-debug = true
+lto = true
 
 [dev-dependencies]
 criterion = "0.2"
