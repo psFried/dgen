@@ -20,8 +20,9 @@ mkdir -p target/artifacts/${ARTIFACT_NAME}
 # for some reason, mv is giving an "are the same file" error so we'll just use cp for now
 cp "target/release/dgen${EXTENSION}" "target/artifacts/${ARTIFACT_NAME}/"
 
+cd target/artifacts
 if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
-    7z a -tzip -r target/artifacts/${ARTIFACT_NAME}.zip target/artifacts/${ARTIFACT_NAME}/
+    7z a -tzip -r ${ARTIFACT_NAME}.zip ${ARTIFACT_NAME}/
 else
-    zip -r target/artifacts/${ARTIFACT_NAME}.zip target/artifacts/${ARTIFACT_NAME}/
+    zip -r ${ARTIFACT_NAME}.zip ${ARTIFACT_NAME}/
 fi
