@@ -9,7 +9,7 @@ ARTIFACT_NAME="dgen-${TRAVIS_TAG:-dev}-${TRAVIS_OS_NAME:-$OSTYPE}"
 COMMAND="zip"
 EXTENSION=""
 if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
-    COMMAND="7za"
+    COMMAND="7z"
     EXTENSION=".exe"
 fi
 

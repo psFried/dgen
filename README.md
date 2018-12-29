@@ -52,7 +52,7 @@ DGen focuses on how data is _represented_. Take JSON for example. It's easy to f
 
 ### Build
 
-dgen is built with [Rust](https://www.rust-lang.org/), and requires version 1.26 or later. Just a simple `cargo build --release` is all it takes to get a release binary. The build is currently tested only on OSX and GNU/Linux, but the intent is to start testing on Windows as well soon™️.
+dgen is built with [Rust](https://www.rust-lang.org/), and requires version 1.31 or later. Just a simple `cargo build --release` is all it takes to get a release binary. The build is currently tested only on OSX and GNU/Linux, but the intent is to start testing on Windows as well soon™️.
 
 ### Stability
 
