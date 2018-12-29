@@ -21,7 +21,7 @@ mkdir -p target/artifacts/${ARTIFACT_NAME}
 cp "target/release/dgen${EXTENSION}" "target/artifacts/${ARTIFACT_NAME}/"
 
 if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
-    7z -r target/artifacts/${ARTIFACT_NAME}.zip target/artifacts/${ARTIFACT_NAME}/
+    7z a -tzip -r target/artifacts/${ARTIFACT_NAME}.zip target/artifacts/${ARTIFACT_NAME}/
 else
     zip -r target/artifacts/${ARTIFACT_NAME}.zip target/artifacts/${ARTIFACT_NAME}/
 fi
