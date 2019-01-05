@@ -119,9 +119,9 @@ impl Repl {
             Ok(None) => {
                 println!("Added function");
                 let history_entry = self.partial_source.as_str().replace("\n", " ");
-                self.partial_source.clear();
                 self.editor.add_history_entry(history_entry);
                 self.push_partial_source_to_module();
+                self.partial_source.clear();
             }
             Err(ref err) if is_unexpected_eof_parse_err(err) => {
                 if self.consecutive_blank_lines >= MAX_EMPTY_LINES {
