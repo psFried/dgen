@@ -7,6 +7,7 @@ pub(crate) mod parser;
 mod source;
 pub(crate) mod prototype;
 mod runtime_wrapper;
+mod lexer;
 
 #[cfg(test)]
 mod parse_test;
